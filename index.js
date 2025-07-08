@@ -35,7 +35,6 @@ for (const file of eventFiles) {
   console.log(`✅ イベント読み込み成功: ${file}`);
 }
 
-client.on('messageCreate', require('./events/interactionCreate.js').messageCreate);
 client.login(process.env.DISCORD_TOKEN);
 
 // HTTP サーバー（ポート 3000）
