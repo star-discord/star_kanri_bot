@@ -48,4 +48,3 @@ pm2 start index.js --name chat_gpt_bot
 pm2 save
 
 echo "✅ Bot 更新完了 🎉"
-
