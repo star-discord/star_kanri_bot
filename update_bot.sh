@@ -1,50 +1,37 @@
 #!/bin/bash
 
-echo "📦 Bot 更新処理を開始..."
+echo "🚀 star_kanri_bot 更新処理開始"
 
-# PM2 Bot 停止
-echo "🛑 Bot 停止..."
-pm2 stop chat_gpt_bot
+# dataフォルダのみバックアップ
+DATE=$(date '+%Y%m%d_%H%M')
+BACKUP_DIR="$HOME/star_kanri_bot_data_backup_$DATE"
+echo "📁 dataフォルダのバックアップ作成: $BACKUP_DIR"
+mkdir -p "$BACKUP_DIR"
+cp -r ~/star_kanri_bot/data "$BACKUP_DIR"
 
-# 古い Bot フォルダ削除
-echo "🧹 古いフォルダ削除..."
-rm -rf ~/chat_gpt_bot
+# 更新処理
+cd ~/star_kanri_bot || exit 1
 
-# ZIP 解凍（中間ディレクトリに一旦展開）
-echo "📂 ZIP 解凍..."
-unzip -q ~/chat_gpt_bot.zip -d ~/chat_gpt_bot_tmp
-
-# chat_gpt_bot フォルダが入れ子になっているのを修正
-mv ~/chat_gpt_bot_tmp/chat_gpt_bot ~/chat_gpt_bot
-rm -rf ~/chat_gpt_bot_tmp
-
-# ZIP 削除
-echo "🗑️ ZIP 削除..."
-rm -f ~/chat_gpt_bot.zip
-
-# コマンド再デプロイ & 依存パッケージのインストール
-echo "📡 コマンド再デプロイ & 依存パッケージインストール..."
-cd ~/chat_gpt_bot
-
-# package.json 存在チェック
-if [ ! -f "package.json" ]; then
-  echo "❌ package.json が見つかりません。"
+echo "🔄 Git Pull 実行"
+git pull origin main || {
+  echo "❌ git pull 失敗。処理を中止します。"
   exit 1
-fi
+}
 
-# npm install
+echo "📦 npm install 実行"
 npm install
 
-# deploy-commands.js 実行
-if [ -f "deploy-commands.js" ]; then
-  node deploy-commands.js
-else
-  echo "⚠️ deploy-commands.js が見つかりません。スキップします。"
-fi
+echo "📡 スラッシュコマンドをデプロイ中..."
+node deploy-commands.js || {
+  echo "❌ スラッシュコマンドのデプロイに失敗しました。"
+  exit 1
+}
 
-# PM2 再起動
-echo "🚀 PM2 再起動..."
-pm2 start index.js --name chat_gpt_bot
+echo "🔁 PM2 再起動"
+pm2 restart star-kanri-bot
 pm2 save
 
-echo "✅ Bot 更新完了 🎉"
+echo "📄 最新ログ（10行）"
+pm2 logs star-kanri-bot --lines 10 --nostream
+
+echo "✅ star_kanri_bot 更新完了"
