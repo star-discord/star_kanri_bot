@@ -3,61 +3,52 @@ const fs = require('fs');
 const path = require('path');
 
 /**
- * 安全なファイル名かどうかを判定
- * @param {string} str
- * @returns {boolean}
- */
-function isSafeName(str) {
-  return typeof str === 'string' && /^[a-zA-Z0-9_\-:]+$/.test(str);
-}
-
-/**
  * モーダル送信後の処理
  * @param {import('discord.js').ModalSubmitInteraction} interaction
  */
 async function handleModal(interaction) {
   const customId = interaction.customId;
 
-  // 固定のパターン: "コマンド名:アクション" or "コマンド名:アクション:uuid" など
-  const [commandName, action, ...args] = customId.split(':');
+  const dirs = fs.readdirSync(__dirname, { withFileTypes: true }).filter(d => d.isDirectory());
 
-  if (!isSafeName(commandName) || !isSafeName(action)) {
-    console.warn(`⚠️ 不正な customId: ${customId}`);
-    return await interaction.reply({
-      content: '⚠️ 無効なモーダル操作です。',
-      ephemeral: true
-    });
+  for (const dir of dirs) {
+    const modalsDir = path.join(__dirname, dir.name, 'modals');
+    if (!fs.existsSync(modalsDir)) continue;
+
+    const files = fs.readdirSync(modalsDir).filter(f => f.endsWith('.js'));
+
+    for (const file of files) {
+      const handlerPath = path.join(modalsDir, file);
+      const handler = require(handlerPath);
+
+      if (handler?.customIdStart && customId.startsWith(handler.customIdStart)) {
+        try {
+          const args = customId.replace(handler.customIdStart, '').split(':');
+          await handler.handle(interaction, ...args);
+          return;
+        } catch (err) {
+          console.error(`❌ モーダルエラー: ${customId}`, err);
+          if (!interaction.replied && !interaction.deferred) {
+            await interaction.reply({
+              content: '❌ モーダル処理中にエラーが発生しました。',
+              ephemeral: true
+            });
+          }
+          return;
+        }
+      }
+    }
   }
 
-  // モーダルの処理ファイル（例: utils/<commandName>/modals/<action>.js）
-  const handlerPath = path.join(__dirname, commandName, 'modals', `${action}.js`);
-
-  if (!fs.existsSync(handlerPath)) {
-    console.warn(`⚠️ モーダル処理ファイルが存在しません: ${handlerPath}`);
-    return await interaction.reply({
-      content: '⚠️ このモーダルは現在利用できません。',
+  // 対応なし
+  console.warn(`⚠️ モーダル未対応: ${customId}`);
+  if (!interaction.replied && !interaction.deferred) {
+    await interaction.reply({
+      content: '⚠️ このモーダルは未対応です。',
       ephemeral: true
     });
-  }
-
-  try {
-    const handler = require(handlerPath);
-    if (typeof handler.handle !== 'function') {
-      throw new Error('handler.handle が存在しません');
-    }
-
-    await handler.handle(interaction, ...args);
-
-  } catch (err) {
-    console.error(`❌ モーダル処理エラー: ${customId}`, err);
-
-    if (!interaction.replied && !interaction.deferred) {
-      await interaction.reply({
-        content: '❌ モーダル処理中にエラーが発生しました。',
-        ephemeral: true
-      });
-    }
   }
 }
 
 module.exports = { handleModal };
+
