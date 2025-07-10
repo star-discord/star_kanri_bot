@@ -9,12 +9,17 @@ const {
 } = require('discord.js');
 
 module.exports = {
-  customIdStart: 'tousuna_edit_',
+  customIdStart: 'totsusuna_setti:編集:',
 
+  /**
+   * 凸スナ本文編集モーダル表示
+   * @param {import('discord.js').ButtonInteraction} interaction
+   */
   async handle(interaction) {
     const guildId = interaction.guildId;
     const customId = interaction.customId;
-    const uuid = customId.replace('tousuna_edit_', '');
+
+    const uuid = customId.replace(this.customIdStart, '');
 
     const filePath = path.join(__dirname, '../../../data', guildId, `${guildId}.json`);
     if (!fs.existsSync(filePath)) {
@@ -35,7 +40,7 @@ module.exports = {
     }
 
     const modal = new ModalBuilder()
-      .setCustomId(`tousuna_edit_modal_${uuid}`)
+      .setCustomId(`tousuna_edit_modal:${uuid}`)
       .setTitle('📘 凸スナ本文の編集');
 
     const input = new TextInputBuilder()
