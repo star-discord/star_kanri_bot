@@ -1,7 +1,13 @@
 // commands/totusuna_config.js
 const fs = require('fs');
 const path = require('path');
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType } = require('discord.js');
+const {
+  SlashCommandBuilder,
+  EmbedBuilder,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+} = require('discord.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -41,7 +47,12 @@ module.exports = {
         .setLabel('⚙ 設定を編集')
         .setStyle(ButtonStyle.Secondary);
 
-      const row = new ActionRowBuilder().addComponents(editButton);
+      const resendButton = new ButtonBuilder()
+        .setCustomId(`tousuna_resend_button_${instance.uuid}`)
+        .setLabel('🔁 再送信')
+        .setStyle(ButtonStyle.Primary);
+
+      const row = new ActionRowBuilder().addComponents(editButton, resendButton);
 
       rows.push({ embed, row });
     }
@@ -53,4 +64,3 @@ module.exports = {
     }
   },
 };
-
