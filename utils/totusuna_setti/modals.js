@@ -1,66 +1,61 @@
 // utils/totusuna_setti/modals.js
-const path = require('path');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const fs = require('fs');
-const { writeToSheet } = require('./spreadSheet');
+const path = require('path');
 
-module.exports = {
-  async handle(interaction) {
-    const modalId = interaction.customId;
-    const match = modalId.match(/^tousuna_modal_(.+)$/);
-    if (!match) return;
+module.exports = async function handleTotusunaModal(interaction, client, userTotusunaSetupMap) {
+  if (interaction.customId !== 'totusuna_content_modal') return;
 
-    const instanceId = match[1];
-    const guildId = interaction.guildId;
-    const username = interaction.user.username;
+  const userId = interaction.user.id;
+  const guildId = interaction.guildId;
+  const body = interaction.fields.getTextInputValue('main_body');
 
-    const group = interaction.fields.getTextInputValue('group');
-    const name = interaction.fields.getTextInputValue('name');
-    const table1 = interaction.fields.getTextInputValue('table1');
-    const table2 = interaction.fields.getTextInputValue('table2');
-    const table3 = interaction.fields.getTextInputValue('table3');
-    const table4 = interaction.fields.getTextInputValue('table4');
-    const detail = interaction.fields.getTextInputValue('detail') || '';
+  const setup = userTotusunaSetupMap.get(userId);
+  if (!setup || !setup.mainChannelId) {
+    await interaction.reply({ content: '⚠️ チャンネル設定が見つかりません。', ephemeral: true });
+    return;
+  }
 
-    const now = new Date();
-    const yearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    const dataPath = path.join(__dirname, `../../../data/${guildId}/${guildId}.json`);
+  const mainChannel = await client.channels.fetch(setup.mainChannelId);
 
-    if (!fs.existsSync(dataPath)) {
-      await interaction.reply({ content: '❌ 報告処理に失敗しました。(設定ファイル未存在)', ephemeral: true });
-      return;
+  // 古いメッセージを削除
+  if (setup.lastMessageId) {
+    try {
+      const oldMsg = await mainChannel.messages.fetch(setup.lastMessageId);
+      await oldMsg.delete();
+    } catch (e) {
+      console.warn('古いメッセージ削除失敗:', e);
     }
+  }
 
-    const data = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
-    const instance = data?.tousuna?.instances?.find(i => i.id === instanceId);
+  // 新しいエンベッド＋ボタン投稿
+  const embed = new EmbedBuilder()
+    .setTitle('📢 凸スナ報告はこちら')
+    .setDescription(body)
+    .setColor(0x0099ff);
 
-    if (!instance) {
-      await interaction.reply({ content: '❌ この設置は存在しません。', ephemeral: true });
-      return;
-    }
+  const row = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId('tousuna_report_button')
+      .setLabel('凸スナ報告')
+      .setStyle(ButtonStyle.Primary)
+  );
 
-    const entry = {
-      date: now.toISOString(),
-      group,
-      name,
-      table1,
-      table2,
-      table3,
-      table4,
-      detail,
-      username,
-    };
+  const sent = await mainChannel.send({ embeds: [embed], components: [row] });
 
-    await writeToSheet(guildId, yearMonth, entry);
+  // 保存先に記録
+  const saveDir = path.join(__dirname, `../../data/${guildId}`);
+  if (!fs.existsSync(saveDir)) fs.mkdirSync(saveDir, { recursive: true });
+  const savePath = path.join(saveDir, `${guildId}.json`);
 
-    const tableText = [table1, table2, table3, table4].filter(Boolean).map((v, i) => `- 卓${i + 1}: ${v}`).join('\n');
+  const json = {
+    buttonChannelId: setup.mainChannelId,
+    cloneChannelIds: setup.cloneChannelIds || [],
+    lastMessageId: sent.id,
+    content: body,
+  };
+  fs.writeFileSync(savePath, JSON.stringify(json, null, 2));
 
-    const report = `📝 **凸スナ報告**\n組: ${group}組\n名: ${name}名\n卓:\n${tableText || '(なし)'}\n詳細: ${detail || '(なし)'}`;
-
-    const messageChannel = await interaction.guild.channels.fetch(instance.messageChannelId);
-    if (messageChannel) {
-      await messageChannel.send({ content: report });
-    }
-
-    await interaction.reply({ content: '✅ 凸スナ報告を送信・保存しました！', ephemeral: true });
-  },
+  await interaction.reply({ content: '✅ 本文付きメッセージを設置しました！', ephemeral: true });
+  userTotusunaSetupMap.delete(userId);
 };
