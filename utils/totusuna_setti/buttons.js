@@ -1,19 +1,20 @@
+// utils/totusuna_setti/buttons.js
 const {
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
-  ActionRowBuilder,
+  ActionRowBuilder
 } = require('discord.js');
 
 module.exports = {
-  async open_content_modal(interaction) {
+  async openContentModal(interaction) {
     const modal = new ModalBuilder()
       .setCustomId('totusuna_content_modal')
-      .setTitle('本文入力（設置用）');
+      .setTitle('凸スナ 本文入力（設置用）');
 
     const bodyInput = new TextInputBuilder()
       .setCustomId('main_body')
-      .setLabel('本文（記載ルール含めて記述）')
+      .setLabel('本文（ルール含む）')
       .setStyle(TextInputStyle.Paragraph)
       .setRequired(true);
 
