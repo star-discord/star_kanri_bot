@@ -16,10 +16,11 @@ function isAdmin(input) {
     if (!fs.existsSync(configPath)) return false;
 
     const config = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
-    const adminRoleId = config?.star_config?.adminRoleId;
-    if (!adminRoleId) return false;
+    const adminRoleIds = config?.star_config?.adminRoleIds;
 
-    return member.roles.cache.has(adminRoleId);
+    if (!Array.isArray(adminRoleIds) || adminRoleIds.length === 0) return false;
+
+    return member.roles.cache.some(role => adminRoleIds.includes(role.id));
   } catch (err) {
     console.error(`❌ 管理者判定エラー (${guildId}):`, err);
     return false;
