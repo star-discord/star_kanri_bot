@@ -5,6 +5,32 @@ const path = require('path');
 const commands = new Map();
 
 const commandsPath = path.join(__dirname, '../commands');
+
+/**
+ * .js ファイルだけに限定するフィルタ関数
+ */
+function isJSFile(fileName) {
+  return fileName.endsWith('.js');
+}
+
+/**
+ * 指定パスからコマンドを読み込む
+ */
+function loadCommand(filePath, logPrefix = '') {
+  try {
+    const command = require(filePath);
+    if (command?.data?.name && typeof command.execute === 'function') {
+      commands.set(command.data.name, command);
+      console.log(`✅ ${logPrefix}コマンド読み込み: ${command.data.name}`);
+    } else {
+      console.warn(`⚠️ ${logPrefix}無効なコマンド形式: ${filePath}`);
+    }
+  } catch (err) {
+    console.error(`❌ ${logPrefix}読み込み失敗: ${filePath}`, err);
+  }
+}
+
+// 🔄 コマンドフォルダを再帰的に読み込み
 const entries = fs.readdirSync(commandsPath);
 
 for (const entry of entries) {
@@ -12,42 +38,38 @@ for (const entry of entries) {
   const stat = fs.statSync(entryPath);
 
   if (stat.isDirectory()) {
-    // 📁 サブフォルダ内の .js を読み込む
-    const commandFiles = fs.readdirSync(entryPath).filter(file => file.endsWith('.js'));
+    const commandFiles = fs.readdirSync(entryPath).filter(isJSFile);
     for (const file of commandFiles) {
-      const command = require(path.join(entryPath, file));
-      if (command?.data && command?.execute) {
-        commands.set(command.data.name, command);
-        console.log(`✅ コマンド読み込み: ${command.data.name}`);
-      }
+      loadCommand(path.join(entryPath, file), `${entry}/`);
     }
-  } else if (entry.endsWith('.js')) {
-    // 📄 単独ファイルとしての .js コマンド
-    const command = require(entryPath);
-    if (command?.data && command?.execute) {
-      commands.set(command.data.name, command);
-      console.log(`✅ コマンド読み込み: ${command.data.name}`);
-    }
+  } else if (isJSFile(entry)) {
+    loadCommand(entryPath);
   }
 }
 
+// 🌐 インタラクション実行ハンドラ
 module.exports = {
   async execute(interaction) {
+    if (!interaction.isChatInputCommand()) return;
+
+    const command = commands.get(interaction.commandName);
+    if (!command) {
+      return await interaction.reply({
+        content: '❌ このコマンドは存在しません。',
+        ephemeral: true
+      });
+    }
+
     try {
-      if (!interaction.isChatInputCommand()) return;
-      const command = commands.get(interaction.commandName);
-      if (!command) {
-        await interaction.reply({ content: 'このコマンドは存在しません。', ephemeral: true });
-        return;
-      }
       await command.execute(interaction);
     } catch (error) {
-      console.error('❌ interactionCreate 全体エラー:', error);
+      console.error(`❌ コマンド実行エラー (${interaction.commandName}):`, error);
       if (interaction.replied || interaction.deferred) {
-        await interaction.followUp({ content: 'エラーが発生しました。', ephemeral: true });
+        await interaction.followUp({ content: '⚠️ コマンド実行中にエラーが発生しました。', ephemeral: true });
       } else {
-        await interaction.reply({ content: 'エラーが発生しました。', ephemeral: true });
+        await interaction.reply({ content: '⚠️ コマンド実行中にエラーが発生しました。', ephemeral: true });
       }
     }
   }
 };
+
