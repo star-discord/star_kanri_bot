@@ -1,30 +1,30 @@
-// utils/totusuna_setti/buttons.js
-
-const fs = require('fs');
+// utils/totusuna_setti/modals.js
 const path = require('path');
 
-const buttonsDir = path.join(__dirname, 'buttons');
-
-// ボタンモジュール読み込み
-const buttonModules = fs.readdirSync(buttonsDir)
-  .filter(file => file.endsWith('.js'))
-  .map(file => require(path.join(buttonsDir, file)));
-
-// 中継ハンドラー
 module.exports = {
   async handle(interaction) {
     const customId = interaction.customId;
 
-    for (const mod of buttonModules) {
-      // 明示的な customId 定義を優先（customId or customIdStart）
-      if (mod.customId && mod.customId === customId) {
-        return mod.handle(interaction);
-      }
-      if (mod.customIdStart && customId.startsWith(mod.customIdStart)) {
-        return mod.handle(interaction);
-      }
+    // 凸スナ本文入力モーダル
+    if (customId === 'totusuna_content_modal') {
+      const handler = require('./modals/本文入力をする.js');
+      return await handler.handle(interaction);
     }
 
-    console.warn(`❗ 未対応のボタン: ${customId}`);
+    // 凸スナ報告モーダル（例: tousuna_modal_<uuid>）
+    if (customId.startsWith('tousuna_modal_')) {
+      const uuid = customId.split('tousuna_modal_')[1];
+      const handler = require('./modals/凸スナ報告.js');
+      return await handler.handle(interaction, uuid);
+    }
+
+    // 凸スナ設定編集モーダル（例: tousuna_edit_modal_<uuid>）
+    if (customId.startsWith('tousuna_edit_modal_')) {
+      const uuid = customId.split('tousuna_edit_modal_')[1];
+      const handler = require('./modals/設定を編集.js');
+      return await handler.handle(interaction, uuid);
+    }
+
+    console.warn('[modals.js] 未対応の customId:', customId);
   }
 };
