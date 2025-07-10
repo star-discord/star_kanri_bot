@@ -5,6 +5,7 @@ const {
   TextInputBuilder,
   TextInputStyle,
   ActionRowBuilder,
+  InteractionResponseFlags,
 } = require('discord.js');
 
 module.exports = {
@@ -17,14 +18,20 @@ module.exports = {
 
     const filePath = path.join(__dirname, '../../../data', guildId, `${guildId}.json`);
     if (!fs.existsSync(filePath)) {
-      return await interaction.reply({ content: '⚠ データが存在しません。', flags: InteractionResponseFlags.Ephemeral });
+      return await interaction.reply({
+        content: '⚠ データが存在しません。',
+        flags: InteractionResponseFlags.Ephemeral,
+      });
     }
 
     const json = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-    const target = json.totsusuna?.[uuid];
+    const target = json.tousuna?.instances?.find(i => i.id === uuid);
 
     if (!target) {
-      return await interaction.reply({ content: '⚠ 該当する凸スナが見つかりません。', flags: InteractionResponseFlags.Ephemeral });
+      return await interaction.reply({
+        content: '⚠ 該当する凸スナが見つかりません。',
+        flags: InteractionResponseFlags.Ephemeral,
+      });
     }
 
     const modal = new ModalBuilder()
@@ -43,4 +50,3 @@ module.exports = {
     await interaction.showModal(modal);
   },
 };
-
