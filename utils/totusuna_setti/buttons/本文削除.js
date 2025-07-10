@@ -7,33 +7,33 @@ module.exports = {
     const guildId = interaction.guildId;
     const dataPath = path.join(__dirname, '../../../data', guildId, `${guildId}.json`);
 
-    // ファイル存在チェック
     if (!fs.existsSync(dataPath)) {
-      return interaction.reply({ content: '❌ 設定ファイルが見つかりません。', ephemeral: true });
+      return await interaction.reply({ content: '⚠️ データファイルが見つかりません。', ephemeral: true });
     }
 
-    const data = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
-    const instance = data?.totsusuna?.[uuid];
+    const json = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
 
-    if (!instance) {
-      return interaction.reply({ content: '⚠️ 該当する本文が見つかりません。', ephemeral: true });
+    if (!json.totsusuna || !json.totsusuna[uuid]) {
+      return await interaction.reply({ content: '⚠️ 指定された設置は存在しません。', ephemeral: true });
     }
 
-    // メッセージ削除処理
+    const target = json.totsusuna[uuid];
+
+    // メッセージ削除（可能であれば）
     try {
-      const channel = await interaction.guild.channels.fetch(instance.installChannelId);
-      if (channel && instance.messageId) {
-        const message = await channel.messages.fetch(instance.messageId).catch(() => null);
+      const channel = await interaction.guild.channels.fetch(target.installChannelId);
+      if (channel && target.messageId) {
+        const message = await channel.messages.fetch(target.messageId).catch(() => null);
         if (message) await message.delete();
       }
-    } catch (e) {
-      console.warn(`[削除] メッセージ削除失敗: ${e}`);
+    } catch (err) {
+      console.warn(`メッセージ削除に失敗: ${err.message}`);
     }
 
-    // JSONから削除して保存
-    delete data.totsusuna[uuid];
-    fs.writeFileSync(dataPath, JSON.stringify(data, null, 2));
+    // JSONから削除
+    delete json.totsusuna[uuid];
+    fs.writeFileSync(dataPath, JSON.stringify(json, null, 2));
 
-    await interaction.reply({ content: '🗑️ 本文とボタンを削除しました。', ephemeral: true });
-  }
+    await interaction.reply({ content: '🗑 本文を削除しました。', ephemeral: true });
+  },
 };
