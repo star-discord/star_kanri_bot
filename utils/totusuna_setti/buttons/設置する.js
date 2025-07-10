@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, InteractionResponseFlags } = require('discord.js');
 const { v4: uuidv4 } = require('uuid');
 
 // 一時保存された本文・選択内容（ユーザーID単位）
@@ -42,19 +42,23 @@ module.exports = {
     const dataFile = path.join(dataDir, `${guildId}.json`);
     if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
 
-    let json = { totsusuna: {} };
+    let json = {};
     if (fs.existsSync(dataFile)) {
       json = JSON.parse(fs.readFileSync(dataFile, 'utf8'));
     }
 
-    if (!json.totsusuna) json.totsusuna = {};
-    json.totsusuna[uuid] = {
-      uuid,
+    if (!json.tousuna) json.tousuna = {};
+    if (!Array.isArray(json.tousuna.instances)) json.tousuna.instances = [];
+
+    // 新しい設置情報を追加
+    json.tousuna.instances.push({
+      id: uuid,
       body: state.body,
       installChannelId: state.installChannelId,
       replicateChannelIds: state.replicateChannelIds || [],
+      messageChannelId: state.installChannelId,
       messageId: sentMessage.id,
-    };
+    });
 
     fs.writeFileSync(dataFile, JSON.stringify(json, null, 2));
 
