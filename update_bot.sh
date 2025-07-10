@@ -47,4 +47,3 @@ echo "📄 最新ログ（10行）"
 pm2 logs star-kanri-bot --lines 10 --nostream
 
 echo "✅ star_kanri_bot 更新完了"
-
