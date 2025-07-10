@@ -6,7 +6,6 @@ const {
   ButtonBuilder,
   ButtonStyle,
 } = require('discord.js');
-
 const { ensureGuildJSON, readJSON } = require('../utils/fileHelper');
 
 module.exports = {
@@ -18,12 +17,11 @@ module.exports = {
     try {
       const guildId = interaction.guildId;
 
-      // JSONファイル確保
+      // JSONファイルの確保と読み込み
       const filePath = ensureGuildJSON(guildId);
       const data = readJSON(filePath);
 
-      const instancesObj = data.tousuna?.instances || {};
-      const instances = Object.values(instancesObj);
+      const instances = Object.values(data.tousuna?.instances || {});
 
       if (instances.length === 0) {
         return interaction.reply({
@@ -32,22 +30,21 @@ module.exports = {
         });
       }
 
-      // 初期返信（件数）
+      // 件数の初期応答
       await interaction.reply({
         content: `🛠 設置済み凸スナ一覧：${instances.length}件`,
         ephemeral: true,
       });
 
+      // 各インスタンスをEmbed＋ボタンで表示
       for (const instance of instances) {
         const embed = new EmbedBuilder()
           .setTitle('📌 凸スナ設置情報')
-          .setDescription(instance.body
-            ? instance.body.length > 150
-              ? instance.body.slice(0, 150) + '...'
-              : instance.body
-            : '（本文がありません）'
-          )
           .setColor(0x00bfff)
+          .setDescription(instance.body?.length > 150
+            ? instance.body.slice(0, 150) + '...'
+            : (instance.body || '（本文が未入力です）')
+          )
           .addFields(
             {
               name: '設置チャンネル',
@@ -56,8 +53,7 @@ module.exports = {
             },
             {
               name: '複製チャンネル',
-              value:
-                (instance.replicateChannelIds || []).map(id => `<#${id}>`).join('\n') || 'なし',
+              value: (instance.replicateChannelIds || []).map(id => `<#${id}>`).join('\n') || 'なし',
               inline: true,
             }
           )
@@ -83,11 +79,13 @@ module.exports = {
       }
 
     } catch (err) {
-      console.error('❌ /凸スナ設定 エラー:', err);
-      await interaction.reply({
-        content: '❌ 凸スナ設定の取得中にエラーが発生しました。',
-        ephemeral: true,
-      });
+      console.error('❌ /凸スナ設定 実行中にエラー:', err);
+      if (!interaction.replied) {
+        await interaction.reply({
+          content: '❌ 凸スナ設定の取得中にエラーが発生しました。',
+          ephemeral: true,
+        });
+      }
     }
   },
 };
