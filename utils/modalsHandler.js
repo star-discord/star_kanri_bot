@@ -28,6 +28,7 @@ async function handleModal(interaction) {
     for (const file of files) {
       const filePath = path.join(fullDir, file);
       try {
+        delete require.cache[require.resolve(filePath)]; // 開発中の変更反映用
         const mod = require(filePath);
         if (mod && typeof mod.handle === 'function' && typeof mod.customIdStart === 'string') {
           if (customId.startsWith(mod.customIdStart)) {
@@ -48,6 +49,3 @@ async function handleModal(interaction) {
 }
 
 module.exports = { handleModal };
-
-module.exports = { handleModal };
-
