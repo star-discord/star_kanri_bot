@@ -1,16 +1,14 @@
 // utils/spreadsheetHandler.js
+require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
 const ExcelJS = require('exceljs');
+const { uploadFile, downloadFile, getFileContents, saveFileContents } = require('./storage');
 
 /**
- * スプレッドシート保存先のフルパスを取得
- * ファイル名形式: <guildId>-YYYY-MM[-suffix].xlsx
- * @param {string} guildId - DiscordのギルドID
- * @param {string} [suffix=''] - ファイル名の末尾（例: '凸スナ報告'）
- * @returns {string} 絶対パス
+ * 保存ファイルの絶対パスを取得
  */
-function getSpreadsheetPath(guildId, suffix = '') {
+function getLocalSpreadsheetPath(guildId, suffix = '') {
   const now = new Date();
   const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   const fileName = `${guildId}-${ym}${suffix ? `-${suffix}` : ''}.xlsx`;
@@ -25,40 +23,61 @@ function getSpreadsheetPath(guildId, suffix = '') {
 }
 
 /**
- * Excelファイルを読み込むか新規作成し、ワークシートを返す
- * シートが存在しない場合は作成し、ヘッダーも追加
- * @param {string} filePath - Excelファイルのフルパス
- * @param {string} [sheetName='報告'] - 対象シート名
- * @returns {Promise<{ workbook: ExcelJS.Workbook, sheet: ExcelJS.Worksheet }>}
+ * Google Cloud Storage 上のパスを取得
  */
-async function loadOrCreateWorkbook(filePath, sheetName = '報告') {
+function getGCSPath(guildId, suffix = '') {
+  const now = new Date();
+  const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  return `spreadsheet/${guildId}/${guildId}-${ym}${suffix ? `-${suffix}` : ''}.xlsx`;
+}
+
+/**
+ * Excel ファイルをローカル or GCS からロードしてワークブックを返す
+ */
+async function loadOrCreateWorkbook(guildId, suffix = '', sheetName = '報告') {
+  const localPath = getLocalSpreadsheetPath(guildId, suffix);
+  const gcsPath = getGCSPath(guildId, suffix);
   const workbook = new ExcelJS.Workbook();
 
-  if (fs.existsSync(filePath)) {
-    await workbook.xlsx.readFile(filePath);
+  // GCSからダウンロードしてローカルに保存（なければスキップ）
+  try {
+    if (!fs.existsSync(localPath)) {
+      await downloadFile(gcsPath, localPath);
+      console.log(`☁️ GCSからダウンロード: ${gcsPath}`);
+    }
+  } catch (err) {
+    console.warn(`⚠️ GCSからのダウンロードに失敗: ${gcsPath}`, err);
   }
 
+  // ローカルファイルが存在するなら読み込み
+  if (fs.existsSync(localPath)) {
+    await workbook.xlsx.readFile(localPath);
+  }
+
+  // シートがなければ追加
   let sheet = workbook.getWorksheet(sheetName);
   if (!sheet) {
     sheet = workbook.addWorksheet(sheetName);
-    sheet.addRow([
-      '日時',
-      '何組',
-      '何名',
-      '卓1',
-      '卓2',
-      '卓3',
-      '卓4',
-      '詳細',
-      '名前'
-    ]);
+    sheet.addRow(['日時', '何組', '何名', '卓1', '卓2', '卓3', '卓4', '詳細', '名前']);
   }
 
-  return { workbook, sheet };
+  return { workbook, sheet, localPath, gcsPath };
+}
+
+/**
+ * Excelファイルを保存し、GCSにアップロードする
+ */
+async function saveAndSyncWorkbook(workbook, localPath, gcsPath) {
+  await workbook.xlsx.writeFile(localPath);
+  console.log(`💾 ローカル保存: ${localPath}`);
+
+  await uploadFile(localPath, gcsPath);
+  console.log(`☁️ GCSへアップロード: ${gcsPath}`);
 }
 
 module.exports = {
-  getSpreadsheetPath,
-  loadOrCreateWorkbook
+  getLocalSpreadsheetPath,
+  getGCSPath,
+  loadOrCreateWorkbook,
+  saveAndSyncWorkbook
 };
-
