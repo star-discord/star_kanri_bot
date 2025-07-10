@@ -1,32 +1,43 @@
 const fs = require('fs');
 const path = require('path');
-const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
+const {
+  ModalBuilder,
+  TextInputBuilder,
+  TextInputStyle,
+  ActionRowBuilder
+} = require('discord.js');
 
 module.exports = {
-  async handle(interaction) {
-    const guildId = interaction.guildId;
-    const uuid = interaction.customId.replace('tousuna_edit_button_', '');
-    const filePath = path.join(__dirname, `../../../data/${guildId}/${guildId}.json`);
+  customId: 'totusuna_config:設定を編集',
 
-    if (!fs.existsSync(filePath)) {
-      return interaction.reply({
-        content: '⚠ データファイルが存在しません。',
-        flags: 1 << 6 // Ephemeral
+  /**
+   * 凸スナ本文の編集モーダル表示
+   * @param {import('discord.js').ButtonInteraction} interaction
+   * @param {string} uuid
+   */
+  async handle(interaction, uuid) {
+    const guildId = interaction.guildId;
+    const dataPath = path.join(__dirname, '../../../data', guildId, `${guildId}.json`);
+
+    if (!fs.existsSync(dataPath)) {
+      return await interaction.reply({
+        content: '⚠️ データファイルが見つかりません。',
+        ephemeral: true
       });
     }
 
-    const json = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-    const instance = json.totsusuna?.[uuid];
+    const json = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
+    const instance = json.tousuna?.instances?.find(i => i.id === uuid);
 
     if (!instance) {
-      return interaction.reply({
-        content: '⚠ 指定されたデータが見つかりません。',
-        flags: 1 << 6 // Ephemeral
+      return await interaction.reply({
+        content: '⚠️ 指定された設置が見つかりません。',
+        ephemeral: true
       });
     }
 
     const modal = new ModalBuilder()
-      .setCustomId(`edit_body_modal_${uuid}`)
+      .setCustomId(`tousuna_config_edit_modal_${uuid}`)
       .setTitle('📄 本文の修正');
 
     const bodyInput = new TextInputBuilder()
@@ -39,6 +50,5 @@ module.exports = {
     modal.addComponents(new ActionRowBuilder().addComponents(bodyInput));
 
     await interaction.showModal(modal);
-  },
+  }
 };
-
