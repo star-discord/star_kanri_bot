@@ -4,20 +4,19 @@ const fs = require('fs');
 
 const commands = new Map();
 
-// 📁 /commands 内の .js ファイルをすべて読み込む
-const commandFiles = fs
-  .readdirSync(path.join(__dirname, '../commands'))
-  .filter(file => file.endsWith('.js'));
+// ✅ /commands フォルダ内の .js ファイルだけを対象にする
+const commandsDir = path.join(__dirname, '../commands');
+const commandFiles = fs.readdirSync(commandsDir).filter(file => file.endsWith('.js'));
 
 for (const file of commandFiles) {
-  const filePath = path.join(__dirname, '../commands', file);
+  const filePath = path.join(commandsDir, file);
   const command = require(filePath);
 
   if (command && command.data && command.execute) {
     commands.set(command.data.name, command);
     console.log(`✅ コマンド読み込み: ${command.data.name}`);
   } else {
-    console.warn(`⚠️ 不正なコマンドファイル: ${file}`);
+    console.warn(`⚠️ 無効なコマンド形式: ${file}`);
   }
 }
 
@@ -38,18 +37,17 @@ module.exports = {
       await command.execute(interaction);
     } catch (error) {
       console.error('❌ interactionCreate 全体エラー:', error);
-      const replyData = {
+      const replyContent = {
         content: 'エラーが発生しました。もう一度お試しください。',
         ephemeral: true,
       };
 
       if (interaction.replied || interaction.deferred) {
-        await interaction.followUp(replyData);
+        await interaction.followUp(replyContent);
       } else {
-        await interaction.reply(replyData);
+        await interaction.reply(replyContent);
       }
     }
   },
 };
-
 
