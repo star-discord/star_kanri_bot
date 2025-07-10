@@ -1,4 +1,11 @@
-const { SlashCommandBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, PermissionFlagsBits } = require('discord.js');
+const {
+  SlashCommandBuilder,
+  ModalBuilder,
+  TextInputBuilder,
+  TextInputStyle,
+  ActionRowBuilder,
+  PermissionFlagsBits,
+} = require('discord.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -13,12 +20,24 @@ module.exports = {
 
     const input = new TextInputBuilder()
       .setCustomId('body')
-      .setLabel('本文を入力してください')
+      .setLabel('本文（プレースホルダー）')
+      .setPlaceholder('本文を入力してください')
       .setStyle(TextInputStyle.Paragraph)
       .setRequired(true);
 
-    modal.addComponents(new ActionRowBuilder().addComponents(input));
+    const row = new ActionRowBuilder().addComponents(input);
+    modal.addComponents(row);
 
-    await interaction.showModal(modal);
+    try {
+      await interaction.showModal(modal);
+    } catch (err) {
+      console.error('❌ モーダル表示エラー:', err);
+      if (!interaction.replied && !interaction.deferred) {
+        await interaction.reply({
+          content: '❌ モーダルの表示に失敗しました。',
+          flags: 1 << 6,
+        });
+      }
+    }
   },
 };
