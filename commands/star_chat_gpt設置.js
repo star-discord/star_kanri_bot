@@ -2,7 +2,7 @@ const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = re
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('star_chat_gpt設置')
+    .setName('star_chat_gpt_set')  // 英数字かつ小文字のみ
     .setDescription('指定チャンネルにChatGPT案内メッセージとボタンを設置します。'),
 
   async execute(interaction) {
@@ -18,7 +18,7 @@ module.exports = {
 
       await interaction.reply({ content, components: [row], ephemeral: false });
     } catch (error) {
-      console.error('star_chat_gpt設置 コマンド実行エラー:', error);
+      console.error('star_chat_gpt_set コマンド実行エラー:', error);
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({ content: 'エラーが発生しました。', ephemeral: true });
       }
