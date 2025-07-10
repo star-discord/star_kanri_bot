@@ -1,7 +1,7 @@
 // utils/buttonsHandler.js
 const path = require('path');
 
-module.exports = async function handleButton(interaction) {
+async function handleButton(interaction) {
   const customId = interaction.customId;
   const [commandName, action] = customId.split(':');
 
@@ -17,7 +17,6 @@ module.exports = async function handleButton(interaction) {
   } catch (err) {
     console.error(`❌ ボタンハンドラー読み込みエラー: ${customId}`, err);
   }
-};
-
+}
 
 module.exports = { handleButton };
