@@ -1,27 +1,39 @@
 // utils/totusuna_setti/modals/編集.js
 const fs = require('fs');
 const path = require('path');
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const {
+  EmbedBuilder,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  InteractionResponseFlags,
+} = require('discord.js');
 
 module.exports = {
-  customIdStart: 'tousuna_edit_modal_',
+  customIdStart: 'totusuna_edit_modal_', // ← 修正済み
 
   async handle(interaction) {
     const guildId = interaction.guildId;
     const customId = interaction.customId;
-    const uuid = customId.replace('tousuna_edit_modal_', '');
+    const uuid = customId.replace('totusuna_edit_modal_', ''); // ← 修正済み
     const newBody = interaction.fields.getTextInputValue('body');
 
     const filePath = path.join(__dirname, '../../../data', guildId, `${guildId}.json`);
     if (!fs.existsSync(filePath)) {
-      return await interaction.reply({ content: '⚠ データファイルが見つかりません。', flags: InteractionResponseFlags.Ephemeral });
+      return await interaction.reply({
+        content: '⚠ データファイルが見つかりません。',
+        flags: InteractionResponseFlags.Ephemeral,
+      });
     }
 
     const json = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-    const target = json.totsusuna?.[uuid];
+    const target = json.totusuna?.[uuid]; // ← 修正済み
 
     if (!target) {
-      return await interaction.reply({ content: '⚠ 設定が見つかりません。', flags: InteractionResponseFlags.Ephemeral });
+      return await interaction.reply({
+        content: '⚠ 設定が見つかりません。',
+        flags: InteractionResponseFlags.Ephemeral,
+      });
     }
 
     target.body = newBody;
@@ -37,7 +49,7 @@ module.exports = {
         .setColor(0x00bfff);
 
       const button = new ButtonBuilder()
-        .setCustomId(`tousuna_report_button_${uuid}`)
+        .setCustomId(`tousuna_report_button_${uuid}`) // ここは保持でOK（buttonHandlerで識別してる場合）
         .setLabel('凸スナ報告')
         .setStyle(ButtonStyle.Primary);
 
@@ -50,6 +62,9 @@ module.exports = {
 
     fs.writeFileSync(filePath, JSON.stringify(json, null, 2));
 
-    await interaction.reply({ content: '✅ 本文を更新しました！', flags: InteractionResponseFlags.Ephemeral });
+    await interaction.reply({
+      content: '✅ 本文を更新しました！',
+      flags: InteractionResponseFlags.Ephemeral,
+    });
   },
 };
