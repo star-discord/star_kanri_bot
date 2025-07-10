@@ -1,72 +1,42 @@
-const { addShop, addTargets } = require('../utils/kpiFileUtil');
+const { SlashCommandBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
 
-async function handleKpiSettingModal(interaction) {
-  if (interaction.customId !== 'kpi_setting_modal') return false;
+module.exports = {
+  data: new SlashCommandBuilder()
+    .setName('kpi_setting')
+    .setDescription('KPI設定用のモーダルを表示します'),
 
-  try {
-    const newShopRaw = interaction.fields.getTextInputValue('newShop').trim();
-    const targetDate = interaction.fields.getTextInputValue('targetDate').trim();
-    const targetCount = interaction.fields.getTextInputValue('targetCount').trim();
+  async execute(interaction) {
+    // モーダル作成
+    const modal = new ModalBuilder()
+      .setCustomId('kpi_setting_modal')
+      .setTitle('KPI設定');
 
-    if (!targetDate) {
-      await interaction.reply({ content: '対象日は必須です。', ephemeral: true });
-      return true;
-    }
+    const newShopInput = new TextInputBuilder()
+      .setCustomId('newShop')
+      .setLabel('店舗名（カンマ区切りで複数追加可）')
+      .setStyle(TextInputStyle.Short)
+      .setRequired(false);
 
-    if (!targetCount || isNaN(targetCount) || Number(targetCount) <= 0) {
-      await interaction.reply({ content: '目標人数は正の数字で入力してください。', ephemeral: true });
-      return true;
-    }
+    const targetDateInput = new TextInputBuilder()
+      .setCustomId('targetDate')
+      .setLabel('対象日 (YYYY-MM-DD)')
+      .setStyle(TextInputStyle.Short)
+      .setRequired(true);
 
-    // 店舗名をカンマで分割・重複除去
-    const newShops = [...new Set(
-      newShopRaw.split(',').map(s => s.trim()).filter(s => s.length > 0)
-    )];
+    const targetCountInput = new TextInputBuilder()
+      .setCustomId('targetCount')
+      .setLabel('目標人数')
+      .setStyle(TextInputStyle.Short)
+      .setRequired(true);
 
-    if (newShops.length === 0) {
-      await interaction.reply({ content: '店舗名が入力されなかったため、目標設定は保存されませんでした。', ephemeral: true });
-      return true;
-    }
+    // アクションロウにテキスト入力をセット
+    const row1 = new ActionRowBuilder().addComponents(newShopInput);
+    const row2 = new ActionRowBuilder().addComponents(targetDateInput);
+    const row3 = new ActionRowBuilder().addComponents(targetCountInput);
 
-    // 並列で店舗追加
-    const results = await Promise.all(newShops.map(shop => addShop(shop)));
-    const failedShops = newShops.filter((_, i) => !results[i].success);
+    modal.addComponents(row1, row2, row3);
 
-    if (failedShops.length > 0) {
-      console.warn('⚠️ 一部店舗の追加に失敗:', failedShops.join(', '));
-    }
-
-    // KPI目標保存
-    const targetResult = await addTargets(newShops, targetDate, targetCount, interaction.user.tag);
-
-    if (!targetResult.success) {
-      console.error('📛 KPI目標の保存失敗:', targetResult.reason, targetResult.error || '');
-      await interaction.reply({
-        content: `KPI目標の保存に失敗しました。\n理由: ${targetResult.reason}`,
-        ephemeral: true,
-      });
-      return true;
-    }
-
-    // 成功レスポンス
-    await interaction.reply({
-      content: `✅ 以下の店舗に目標を設定しました。\n` +
-               `店舗: ${newShops.join(', ')}\n` +
-               `対象日: ${targetDate}\n` +
-               `目標人数: ${targetCount}` +
-               (failedShops.length > 0 ? `\n⚠️ 追加失敗: ${failedShops.join(', ')}` : ''),
-      ephemeral: true,
-    });
-
-    return true;
-
-  } catch (error) {
-    console.error('モーダル処理で予期せぬエラー:', error);
-    if (!interaction.replied && !interaction.deferred) {
-      await interaction.reply({ content: '処理中にエラーが発生しました。', ephemeral: true });
-    }
-    return true;
-  }
-}
-
-module.exports = { handleKpiSettingModal };
+    // モーダル表示
+    await interaction.showModal(modal);
+  },
+};
