@@ -5,7 +5,7 @@ const { writeCsvRow } = require('../../spreadsheetHandler');
 const { InteractionResponseFlags } = require('discord.js');
 
 module.exports = {
-  customIdStart: 'tousuna_modal_', // ← 追加（tousuna_report_button_ → tousuna_modal_）
+  customIdStart: 'totusuna_modal_', // ← 変更済み
 
   /**
    * 凸スナ報告モーダル送信後処理
@@ -32,10 +32,7 @@ module.exports = {
       .map((t, i) => `卓${i + 1}: ${t}`)
       .join('\n');
 
-    const report = `📝 **凸スナ報告**
-組: ${group}組
-名: ${name}名
-${tableText ? `${tableText}\n` : ''}詳細: ${detail || 'なし'}`;
+    const report = `📝 **凸スナ報告**\n組: ${group}組\n名: ${name}名\n${tableText ? `${tableText}\n` : ''}詳細: ${detail || 'なし'}`;
 
     const dataPath = path.join(__dirname, '../../../data', guildId, `${guildId}.json`);
     if (!fs.existsSync(dataPath)) {
@@ -46,7 +43,7 @@ ${tableText ? `${tableText}\n` : ''}詳細: ${detail || 'なし'}`;
     }
 
     const json = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
-    const install = Object.values(json.tousuna?.instances || {}).find(v => v?.installChannelId);
+    const install = Object.values(json.totusuna?.instances || {}).find(v => v?.installChannelId);
 
     if (!install) {
       return await interaction.reply({
