@@ -7,6 +7,8 @@ const {
 } = require('discord.js');
 
 module.exports = {
+  customIdStart: 'tousuna_report_button_', // ← 追加！
+
   /**
    * 凸スナ報告ボタン押下 → モーダル表示
    * @param {import('discord.js').ButtonInteraction} interaction
@@ -36,44 +38,4 @@ module.exports = {
     const table1 = new TextInputBuilder()
       .setCustomId('table1')
       .setLabel('卓1（任意）')
-      .setStyle(TextInputStyle.Short)
-      .setRequired(false);
-
-    const table2 = new TextInputBuilder()
-      .setCustomId('table2')
-      .setLabel('卓2（任意）')
-      .setStyle(TextInputStyle.Short)
-      .setRequired(false);
-
-    const table3 = new TextInputBuilder()
-      .setCustomId('table3')
-      .setLabel('卓3（任意）')
-      .setStyle(TextInputStyle.Short)
-      .setRequired(false);
-
-    const table4 = new TextInputBuilder()
-      .setCustomId('table4')
-      .setLabel('卓4（任意）')
-      .setStyle(TextInputStyle.Short)
-      .setRequired(false);
-
-    const detailInput = new TextInputBuilder()
-      .setCustomId('detail')
-      .setLabel('詳細（任意）')
-      .setStyle(TextInputStyle.Paragraph)
-      .setRequired(false);
-
-    modal.addComponents(
-      new ActionRowBuilder().addComponents(groupInput),
-      new ActionRowBuilder().addComponents(nameInput),
-      new ActionRowBuilder().addComponents(table1),
-      new ActionRowBuilder().addComponents(table2),
-      new ActionRowBuilder().addComponents(table3),
-      new ActionRowBuilder().addComponents(table4),
-      new ActionRowBuilder().addComponents(detailInput)
-    );
-
-    await interaction.showModal(modal);
-  },
-};
-
+      .setStyle(TextInputStyle.Sh
