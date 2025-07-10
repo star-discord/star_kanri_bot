@@ -7,7 +7,6 @@ const {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
-  ChannelType,
 } = require('discord.js');
 
 module.exports = {
@@ -32,16 +31,18 @@ module.exports = {
 
     const rows = [];
 
-    for (const instance of instances) {
+    for (const [i, instance] of instances.entries()) {
       const embed = new EmbedBuilder()
-        .setTitle('📌 凸スナ設置情報')
-        .setDescription(instance.body.length > 150 ? instance.body.slice(0, 150) + '...' : instance.body)
+        .setTitle(`📌 凸スナ設置情報 #${i + 1}`)
+        .setDescription(instance.body?.slice(0, 150) || '（本文未入力）')
         .setColor(0x00bfff)
         .addFields(
           { name: '設置チャンネル', value: `<#${instance.installChannelId}>`, inline: true },
           {
             name: '複製チャンネル',
-            value: instance.replicateChannelIds?.map(id => `<#${id}>`).join('\n') || 'なし',
+            value: Array.isArray(instance.replicateChannelIds)
+              ? instance.replicateChannelIds.map(id => `<#${id}>`).join('\n') || 'なし'
+              : 'なし',
             inline: true,
           },
         )
