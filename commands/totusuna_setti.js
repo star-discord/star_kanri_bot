@@ -4,7 +4,6 @@ const {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
-  ComponentType,
   ChannelType,
 } = require('discord.js');
 
@@ -19,7 +18,7 @@ module.exports = {
     if (!isAdmin(interaction)) {
       return await interaction.reply({
         content: '❌ あなたにはこのコマンドを使用する権限がありません。',
-        flags: InteractionResponseFlags.Ephemeral,
+        flags: 1 << 6 // ephemeral: true の代替
       });
     }
 
@@ -55,7 +54,8 @@ module.exports = {
     await interaction.reply({
       content: '🎯 以下の設定を行ってください。',
       components: [row1, row2, row3],
-      flags: InteractionResponseFlags.Ephemeral,
+      flags: 1 << 6 // ephemeral: true の代替
     });
   },
 };
+
