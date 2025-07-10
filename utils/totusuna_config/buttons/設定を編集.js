@@ -9,14 +9,20 @@ module.exports = {
     const filePath = path.join(__dirname, `../../../data/${guildId}/${guildId}.json`);
 
     if (!fs.existsSync(filePath)) {
-      return interaction.reply({ content: '⚠ データファイルが存在しません。', flags: InteractionResponseFlags.Ephemeral });
+      return interaction.reply({
+        content: '⚠ データファイルが存在しません。',
+        flags: 1 << 6 // Ephemeral
+      });
     }
 
     const json = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
     const instance = json.totsusuna?.[uuid];
 
     if (!instance) {
-      return interaction.reply({ content: '⚠ 指定されたデータが見つかりません。', flags: InteractionResponseFlags.Ephemeral });
+      return interaction.reply({
+        content: '⚠ 指定されたデータが見つかりません。',
+        flags: 1 << 6 // Ephemeral
+      });
     }
 
     const modal = new ModalBuilder()
@@ -35,3 +41,4 @@ module.exports = {
     await interaction.showModal(modal);
   },
 };
+
