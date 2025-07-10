@@ -1,148 +1,53 @@
 // utils/interactionHandler.js
-const {
-  EmbedBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  ActionRowBuilder,
-  InteractionResponseFlags,
-} = require('discord.js');
-const fs = require('fs');
 const path = require('path');
-const { sendToMultipleChannels } = require('./sendToMultipleChannels');
-const { writeToSheet } = require('./totusuna_setti/spreadSheet.js');
-const config = require('../config.json');
-const { handleButton } = require('./buttonsHandler');
+const fs = require('fs');
 
-const userTotusunaSetupMap = new Map();
+const commandFolders = fs.readdirSync(path.join(__dirname, '../commands'));
+
+const commands = new Map();
+
+for (const folder of commandFolders) {
+  const commandFiles = fs.readdirSync(path.join(__dirname, '../commands', folder)).filter(file => file.endsWith('.js'));
+
+  for (const file of commandFiles) {
+    const filePath = path.join(__dirname, '../commands', folder, file);
+    const command = require(filePath);
+    if (command && command.data && command.execute) {
+      commands.set(command.data.name, command);
+    }
+  }
+}
 
 module.exports = {
-  name: 'interactionCreate',
-  async execute(interaction, client) {
+  async execute(interaction) {
     try {
-      // 1. スラッシュコマンド処理
-      if (interaction.isChatInputCommand()) {
-        const command = client.commands.get(interaction.commandName);
-        if (!command) return;
+      if (!interaction.isChatInputCommand()) return;
 
-        try {
-          await command.execute(interaction, client, userTotusunaSetupMap);
-        } catch (error) {
-          console.error(`コマンド実行エラー: ${interaction.commandName}`, error);
-          const msg = { content: '❌ コマンド実行中にエラーが発生しました。', flags: InteractionResponseFlags.Ephemeral };
-          interaction.replied || interaction.deferred ? await interaction.followUp(msg) : await interaction.reply(msg);
-        }
+      const command = commands.get(interaction.commandName);
+
+      if (!command) {
+        await interaction.reply({
+          content: 'このコマンドは存在しません。',
+          ephemeral: true
+        });
         return;
       }
 
-      // 2. ボタン処理
-      if (interaction.isButton()) {
-        return handleButton(interaction);
-      }
-
-      // 3. セレクトメニュー処理
-      if (interaction.isChannelSelectMenu()) {
-        const userId = interaction.user.id;
-        const guildId = interaction.guild.id;
-        const customId = interaction.customId;
-
-        if (!userTotusunaSetupMap.has(userId)) {
-          userTotusunaSetupMap.set(userId, {});
-        }
-        const current = userTotusunaSetupMap.get(userId);
-
-        if (customId === 'totusuna_setti:select_main_channel') {
-          current.mainChannelId = interaction.values[0];
-          await interaction.reply({ content: '✅ ボタン設置チャンネルを記録しました。', flags: InteractionResponseFlags.Ephemeral });
-        } else if (customId === 'totusuna_setti:select_clone_channels') {
-          current.cloneChannelIds = interaction.values;
-          await interaction.reply({ content: '✅ 複製送信チャンネルを記録しました。', flags: InteractionResponseFlags.Ephemeral });
-        }
-        return;
-      }
-
-      // 4. モーダル送信処理
-      if (interaction.isModalSubmit()) {
-        const userId = interaction.user.id;
-        const guildId = interaction.guild.id;
-        const customId = interaction.customId;
-
-        if (customId === 'totusuna_content_modal') {
-          const body = interaction.fields.getTextInputValue('main_body');
-          const setup = userTotusunaSetupMap.get(userId);
-
-          if (!setup || !setup.mainChannelId) {
-            return await interaction.reply({ content: '⚠️ チャンネル情報が見つかりません。', flags: InteractionResponseFlags.Ephemeral });
-          }
-
-          const mainChannel = await client.channels.fetch(setup.mainChannelId);
-          const embed = new EmbedBuilder()
-            .setTitle('📢 凸スナ報告はこちら')
-            .setDescription(body)
-            .setColor(0x0099ff);
-
-          const row = new ActionRowBuilder().addComponents(
-            new ButtonBuilder()
-              .setCustomId('tousuna_report_button')
-              .setLabel('凸スナ報告')
-              .setStyle(ButtonStyle.Primary)
-          );
-
-          const sent = await mainChannel.send({ embeds: [embed], components: [row] });
-
-          const saveDir = path.join(__dirname, `../data/${guildId}`);
-          if (!fs.existsSync(saveDir)) fs.mkdirSync(saveDir, { recursive: true });
-
-          const data = {
-            buttonChannelId: setup.mainChannelId,
-            cloneChannelIds: setup.cloneChannelIds || [],
-            lastMessageId: sent.id,
-          };
-
-          fs.writeFileSync(path.join(saveDir, `${guildId}.json`), JSON.stringify(data, null, 2));
-
-          await interaction.reply({ content: '✅ 本文メッセージを投稿しました！', flags: InteractionResponseFlags.Ephemeral });
-          userTotusunaSetupMap.delete(userId);
-          return;
-        }
-
-        if (customId === 'tousuna_modal') {
-          const group = interaction.fields.getTextInputValue('group');
-          const name = interaction.fields.getTextInputValue('name');
-          const detail = interaction.fields.getTextInputValue('detail') || '(なし)';
-          const tableInputs = ['table1', 'table2', 'table3', 'table4'].map(id =>
-            interaction.fields.getTextInputValue(id) || ''
-          );
-
-          const report = `📝 **凸スナ報告**\n組: ${group}組\n名: ${name}名\n卓:\n${tableInputs.map((t, i) => `- 卓${i + 1}: ${t || '未記入'}`).join('\n')}\n詳細: ${detail}`;
-
-          await sendToMultipleChannels(client, config.tousunaReportChannels, report);
-
-          const now = new Date();
-          const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-
-          await writeToSheet(guildId, ym, {
-            date: now.toISOString(),
-            group,
-            name,
-            detail,
-            table1: tableInputs[0],
-            table2: tableInputs[1],
-            table3: tableInputs[2],
-            table4: tableInputs[3],
-            username: interaction.user.username,
-          });
-
-          await interaction.reply({ content: '✅ 報告を送信しました！', flags: InteractionResponseFlags.Ephemeral });
-          return;
-        }
-
-        console.warn(`⚠️ 未知のモーダルID: ${customId}`);
-      }
-    } catch (err) {
-      console.error('❌ interactionCreate 全体エラー:', err);
-      if (!interaction.replied && !interaction.deferred) {
-        await interaction.reply({ content: '❌ 予期せぬエラーが発生しました。', flags: InteractionResponseFlags.Ephemeral });
+      await command.execute(interaction);
+    } catch (error) {
+      console.error('❌ interactionCreate 全体エラー:', error);
+      if (interaction.replied || interaction.deferred) {
+        await interaction.followUp({
+          content: 'エラーが発生しました。もう一度お試しください。',
+          ephemeral: true
+        });
+      } else {
+        await interaction.reply({
+          content: 'エラーが発生しました。もう一度お試しください。',
+          ephemeral: true
+        });
       }
     }
-  },
+  }
 };
+
