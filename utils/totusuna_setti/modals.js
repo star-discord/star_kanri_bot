@@ -18,11 +18,10 @@ module.exports = {
       return await handler.handle(interaction, uuid);
     }
 
-    // 凸スナ設定編集モーダル（例: tousuna_edit_modal_<uuid>）
+    // 凸スナ本文 編集モーダル
     if (customId.startsWith('tousuna_edit_modal_')) {
-      const uuid = customId.split('tousuna_edit_modal_')[1];
-      const handler = require('./modals/設定を編集.js');
-      return await handler.handle(interaction, uuid);
+      const handler = require('./modals/本文編集.js');
+      return await handler.handle(interaction);
     }
 
     console.warn('[modals.js] 未対応の customId:', customId);
