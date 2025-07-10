@@ -10,13 +10,18 @@ const {
 } = require('discord.js');
 
 module.exports = {
+  customIdStart: 'totsusuna_setti:再送信:',
+
   /**
-   * 再送信ボタンの処理
+   * 凸スナの再送信処理（再設置）
    * @param {import('discord.js').ButtonInteraction} interaction
-   * @param {string} uuid - 対象の凸スナUUID
    */
-  async handle(interaction, uuid) {
+  async handle(interaction) {
     const guildId = interaction.guildId;
+    const customId = interaction.customId;
+
+    const uuid = customId.replace(this.customIdStart, '');
+
     const dataPath = path.join(__dirname, '../../../data', guildId, `${guildId}.json`);
     if (!fs.existsSync(dataPath)) {
       return await interaction.reply({
@@ -88,4 +93,5 @@ module.exports = {
     }
   },
 };
+
 
