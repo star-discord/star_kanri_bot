@@ -43,7 +43,7 @@ pm2 restart star-kanri-bot
 pm2 save
 
 # ログ確認
-echo "📄 最新ログ（10行）"
-pm2 logs star-kanri-bot --lines 10 --nostream
+echo "📄 最新ログ（50行）"
+pm2 logs star-kanri-bot --lines 50 --nostream
 
 echo "✅ star_kanri_bot 更新完了"
