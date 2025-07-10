@@ -1,10 +1,24 @@
 // utils/totusuna_setti/buttons/reportButton.js
-const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
+const {
+  ModalBuilder,
+  TextInputBuilder,
+  TextInputStyle,
+  ActionRowBuilder,
+} = require('discord.js');
 
 module.exports = {
+  /**
+   * 凸スナ報告ボタン押下 → モーダル表示
+   * @param {import('discord.js').ButtonInteraction} interaction
+   */
   async handle(interaction) {
+    const customId = interaction.customId;
+
+    // UUIDをボタンIDから抽出（例: tousuna_report_button_<UUID>）
+    const uuid = customId.split('_').slice(-1)[0];
+
     const modal = new ModalBuilder()
-      .setCustomId('tousuna_modal')
+      .setCustomId(`tousuna_modal_${uuid}`) // uuidを付与して特定
       .setTitle('凸スナ報告');
 
     const groupInput = new TextInputBuilder()
@@ -62,3 +76,4 @@ module.exports = {
     await interaction.showModal(modal);
   },
 };
+
