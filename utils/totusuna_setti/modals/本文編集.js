@@ -1,12 +1,18 @@
 // utils/totusuna_setti/modals/本文編集.js
 const fs = require('fs');
 const path = require('path');
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const {
+  EmbedBuilder,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  InteractionResponseFlags
+} = require('discord.js');
 
 module.exports = {
   async handle(interaction) {
     const modalId = interaction.customId;
-    const match = modalId.match(/^tousuna_edit_modal_(.+)$/);
+    const match = modalId.match(/^totusuna_edit_modal_(.+)$/); // ← 修正
     if (!match) return;
 
     const uuid = match[1];
@@ -17,14 +23,20 @@ module.exports = {
     const dataFile = path.join(dataDir, `${guildId}.json`);
 
     if (!fs.existsSync(dataFile)) {
-      return await interaction.reply({ content: '⚠ 設定ファイルが見つかりません。', flags: InteractionResponseFlags.Ephemeral });
+      return await interaction.reply({
+        content: '⚠ 設定ファイルが見つかりません。',
+        flags: InteractionResponseFlags.Ephemeral
+      });
     }
 
     const json = JSON.parse(fs.readFileSync(dataFile, 'utf-8'));
-    const target = json.totsusuna?.[uuid];
+    const target = json.totusuna?.[uuid]; // ← 修正
 
     if (!target) {
-      return await interaction.reply({ content: '⚠ 指定された設置情報が存在しません。', flags: InteractionResponseFlags.Ephemeral });
+      return await interaction.reply({
+        content: '⚠ 指定された設置情報が存在しません。',
+        flags: InteractionResponseFlags.Ephemeral
+      });
     }
 
     // 本文の更新
@@ -51,9 +63,15 @@ module.exports = {
       await message.edit({ embeds: [embed], components: [row] });
     } catch (err) {
       console.error('⚠ メッセージの再取得・編集に失敗:', err);
-      return await interaction.reply({ content: '⚠ メッセージの更新に失敗しました。', flags: InteractionResponseFlags.Ephemeral });
+      return await interaction.reply({
+        content: '⚠ メッセージの更新に失敗しました。',
+        flags: InteractionResponseFlags.Ephemeral
+      });
     }
 
-    await interaction.reply({ content: '✅ 本文を更新し、表示も変更しました。', flags: InteractionResponseFlags.Ephemeral });
+    await interaction.reply({
+      content: '✅ 本文を更新し、表示も変更しました。',
+      flags: InteractionResponseFlags.Ephemeral
+    });
   },
 };
