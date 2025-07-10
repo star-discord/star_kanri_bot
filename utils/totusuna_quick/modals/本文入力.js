@@ -61,7 +61,7 @@ module.exports = {
 
     await interaction.reply({
       content: '✅ 本文を保存し、凸スナボタンを設置しました。',
-      flags: InteractionResponseFlags.Ephemeral,
+      flags: 1 << 6, // ephemeral
     });
   },
 };
