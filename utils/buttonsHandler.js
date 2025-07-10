@@ -1,40 +1,23 @@
+// utils/buttonsHandler.js
 const path = require('path');
-const fs = require('fs');
 
-async function handleButton(interaction, client) {
+module.exports = async function handleButton(interaction) {
+  const customId = interaction.customId;
+  const [commandName, action] = customId.split(':');
+
   try {
-    const customId = interaction.customId;
+    const handlerPath = path.resolve(__dirname, `./${commandName}/buttons.js`);
+    const handlers = require(handlerPath);
 
-    // どのコマンドのボタンか推測（customIdを "totusuna:～" のように設計しておく）
-    const [baseName, action] = customId.split(':');
-    if (!baseName || !action) {
-      console.warn('⚠️ customId の形式が不正です:', customId);
-      return;
+    if (typeof handlers[action] === 'function') {
+      await handlers[action](interaction);
+    } else {
+      console.warn(`❓ 不明なアクション: ${action} (${customId})`);
     }
-
-    const handlerPath = path.join(__dirname, baseName, 'buttons.js');
-
-    if (!fs.existsSync(handlerPath)) {
-      console.warn(`⚠️ ボタンハンドラが存在しません: ${handlerPath}`);
-      return;
-    }
-
-    const buttonModule = require(handlerPath);
-    if (typeof buttonModule[action] !== 'function') {
-      console.warn(`⚠️ ${baseName}/buttons.js に ${action} 関数が定義されていません`);
-      return;
-    }
-
-    await buttonModule[action](interaction, client);
   } catch (err) {
-    console.error('❌ ボタンハンドリング中にエラー:', err);
-    if (!interaction.replied && !interaction.deferred) {
-      await interaction.reply({
-        content: '❌ ボタン処理中にエラーが発生しました。',
-        ephemeral: true,
-      });
-    }
+    console.error(`❌ ボタンハンドラー読み込みエラー: ${customId}`, err);
   }
-}
+};
+
 
 module.exports = { handleButton };
