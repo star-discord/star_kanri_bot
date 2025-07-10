@@ -1,7 +1,14 @@
+// utils/＜適切なディレクトリ＞/modals/edit_body_modal.js
 const fs = require('fs');
 const path = require('path');
 
 module.exports = {
+  customIdStart: 'edit_body_modal_',
+
+  /**
+   * 本文編集モーダル送信後処理
+   * @param {import('discord.js').ModalSubmitInteraction} interaction
+   */
   async handle(interaction) {
     const guildId = interaction.guildId;
     const uuid = interaction.customId.replace('edit_body_modal_', '');
@@ -26,8 +33,6 @@ module.exports = {
     }
 
     instance.body = newBody;
-
-    // 保存
     fs.writeFileSync(filePath, JSON.stringify(json, null, 2));
 
     await interaction.reply({
@@ -36,3 +41,4 @@ module.exports = {
     });
   }
 };
+
