@@ -5,6 +5,7 @@ const {
   RoleSelectMenuBuilder,
   ComponentType,
 } = require('discord.js');
+const { MessageFlags } = require('discord-api-types/v10');
 const { readJSON, writeJSON, ensureGuildJSON } = require('../utils/fileHelper');
 
 module.exports = {
@@ -17,22 +18,22 @@ module.exports = {
     const filePath = ensureGuildJSON(guildId);
     const data = readJSON(filePath);
 
-    // UI生成：ロール選択メニュー（最大5個まで）
+    // ロールセレクトメニュー（最大5個まで）
     const roleSelect = new RoleSelectMenuBuilder()
       .setCustomId('admin_role_select')
       .setPlaceholder('管理者として許可するロールを選択')
       .setMinValues(1)
-      .setMaxValues(5);
+      .setMaxValues(10);
 
     const row = new ActionRowBuilder().addComponents(roleSelect);
 
     await interaction.reply({
       content: '👤 管理者ロールを選択してください（複数可）',
       components: [row],
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
 
-    // コンポーネント応答を待機（30秒以内）
+    // コンポーネント応答を待機（30秒）
     const collector = interaction.channel.createMessageComponentCollector({
       componentType: ComponentType.RoleSelect,
       time: 30000,
@@ -43,7 +44,7 @@ module.exports = {
       if (selectInteraction.user.id !== interaction.user.id) {
         return await selectInteraction.reply({
           content: '❌ この操作はコマンドを実行したユーザーのみが行えます。',
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
 
@@ -58,7 +59,7 @@ module.exports = {
         console.error('❌ JSON保存失敗:', err);
         return await selectInteraction.reply({
           content: '❌ ロールの保存に失敗しました。',
-          ephemeral: true,
+          flags: MessageFlags.Ephemeral,
         });
       }
 
@@ -70,9 +71,9 @@ module.exports = {
       });
     });
 
-    collector.on('end', collected => {
-      if (collected.size === 0 && !(interaction.replied || interaction.deferred)) {
-        interaction.editReply({
+    collector.on('end', async collected => {
+      if (collected.size === 0 && interaction.replied) {
+        await interaction.editReply({
           content: '⏱️ 時間切れのためロール設定はキャンセルされました。',
           components: [],
         });
@@ -80,3 +81,4 @@ module.exports = {
     });
   }
 };
+
