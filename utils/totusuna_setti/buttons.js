@@ -1,24 +1,24 @@
 // utils/totusuna_setti/buttons.js
-module.exports = {
-  async handle(interaction) {
-    const customId = interaction.customId;
+const path = require('path');
+const fs = require('fs');
 
-    // 凸スナ報告ボタン → reportButton.js
-    if (customId.startsWith('tousuna_report_button_')) {
-      return require('./buttons/reportButton').handle(interaction);
+module.exports = async function handleTotusunaButton(interaction) {
+  const customId = interaction.customId;
+  const baseId = customId.split(':')[0]; // 例: 'tousuna_report_button'
+
+  const buttonsDir = path.join(__dirname, 'buttons');
+  const files = fs.readdirSync(buttonsDir);
+
+  for (const file of files) {
+    if (!file.endsWith('.js')) continue;
+
+    const buttonId = path.basename(file, '.js');
+    if (baseId === buttonId) {
+      const handler = require(path.join(buttonsDir, file));
+      return handler(interaction);
     }
+  }
 
-    // 本文入力ボタン（設置者用）→ inputButton.js
-    if (customId === 'input_body_button') {
-      return require('./buttons/inputButton').handle(interaction);
-    }
-
-    // 編集・削除ボタン → editButton.js
-    if (customId.startsWith('edit_tousuna_') || customId.startsWith('delete_tousuna_')) {
-      return require('./buttons/editButton').handle(interaction);
-    }
-
-    console.warn(`[不明なボタンID] ${customId}`);
-  },
+  console.warn(`[buttons.js] 未知のボタン: ${customId}`);
+  await interaction.reply({ content: '⚠️ 未知のボタンです。', ephemeral: true });
 };
-
