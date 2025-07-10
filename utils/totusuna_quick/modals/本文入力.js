@@ -4,7 +4,7 @@ const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('
 const { v4: uuidv4 } = require('uuid');
 
 module.exports = {
-  customIdStart: 'tousuna_quick_modal_', // ← 追加（modalsHandlerが必要とする識別子）
+  customIdStart: 'totusuna_quick_modal_', // ← 追加（modalsHandlerが必要とする識別子）
 
   /**
    * クイック設置の本文モーダル送信後の処理
