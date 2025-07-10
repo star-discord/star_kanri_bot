@@ -11,7 +11,7 @@ module.exports = {
    */
   async handle(interaction) {
     const guildId = interaction.guildId;
-    const uuid = interaction.customId.replace('tousuna_delete_', '');
+    const uuid = interaction.customId.replace(this.customIdStart, '');
     const filePath = path.join(__dirname, '../../../data', guildId, `${guildId}.json`);
 
     if (!fs.existsSync(filePath)) {
@@ -52,7 +52,7 @@ module.exports = {
       }
     }
 
-    // 削除して保存
+    // 配列から削除して保存
     list.splice(targetIndex, 1);
     fs.writeFileSync(filePath, JSON.stringify(json, null, 2));
 
