@@ -5,6 +5,7 @@ const {
   TextInputStyle,
   ActionRowBuilder,
   PermissionFlagsBits,
+  InteractionResponseFlags,
 } = require('discord.js');
 
 module.exports = {
@@ -14,8 +15,9 @@ module.exports = {
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 
   async execute(interaction) {
+    // モーダル作成
     const modal = new ModalBuilder()
-      .setCustomId('quick_input_modal')
+      .setCustomId('totusuna_quick_modal_新規') // 他と揃える
       .setTitle('クイック凸スナ本文入力');
 
     const input = new TextInputBuilder()
@@ -31,11 +33,11 @@ module.exports = {
     try {
       await interaction.showModal(modal);
     } catch (err) {
-      console.error('❌ モーダル表示エラー:', err);
+      console.error('❌ モーダル表示エラー:', err, 'interactionId:', interaction.id);
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({
           content: '❌ モーダルの表示に失敗しました。',
-          flags: 1 << 6,
+          flags: InteractionResponseFlags.Ephemeral,
         });
       }
     }
