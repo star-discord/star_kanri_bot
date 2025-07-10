@@ -1,20 +1,17 @@
 // utils/interactionHandler.js
 const fs = require('fs');
 const path = require('path');
+const { handleButton } = require('./buttonsHandler');
+const { handleModal } = require('./modalsHandler'); // 後で実装する場合
+// const { handleSelectMenu } = require('./selectHandler'); ←必要になったら追加
 
 const commands = new Map();
 const commandsPath = path.join(__dirname, '../commands');
 
-/**
- * .js ファイルだけに限定するフィルタ関数
- */
 function isJSFile(fileName) {
   return fileName.endsWith('.js');
 }
 
-/**
- * 指定パスからコマンドを読み込む
- */
 function loadCommand(filePath, logPrefix = '') {
   try {
     const command = require(filePath);
@@ -29,9 +26,6 @@ function loadCommand(filePath, logPrefix = '') {
   }
 }
 
-/**
- * コマンドディレクトリを再帰的に読み込む
- */
 function loadCommandsFromDir(dir, prefix = '') {
   const entries = fs.readdirSync(dir, { withFileTypes: true });
 
@@ -45,29 +39,47 @@ function loadCommandsFromDir(dir, prefix = '') {
   }
 }
 
-// 🔁 すべてのコマンドを読み込む
+// 🔁 コマンド読み込み
 loadCommandsFromDir(commandsPath);
 
-// 🌐 インタラクション実行ハンドラ
+// 🌐 インタラクション実行ハンドラー
 module.exports = {
+  /**
+   * Discord.js の interaction イベント用メインエントリ
+   * @param {import('discord.js').Interaction} interaction
+   */
   async execute(interaction) {
-    if (!interaction.isChatInputCommand()) return;
-
-    const command = commands.get(interaction.commandName);
-    if (!command) {
-      return await interaction.reply({
-        content: '❌ このコマンドは存在しません。',
-        ephemeral: true
-      });
-    }
-
     try {
-      await command.execute(interaction);
+      if (interaction.isChatInputCommand()) {
+        const command = commands.get(interaction.commandName);
+        if (!command) {
+          return await interaction.reply({
+            content: '❌ このコマンドは存在しません。',
+            ephemeral: true
+          });
+        }
+
+        await command.execute(interaction);
+      }
+
+      else if (interaction.isButton()) {
+        await handleButton(interaction);
+      }
+
+      else if (interaction.isModalSubmit()) {
+        await handleModal(interaction);
+      }
+
+      // 追加する場合（例: RoleSelectMenu）
+      // else if (interaction.isAnySelectMenu()) {
+      //   await handleSelectMenu(interaction);
+      // }
+
     } catch (err) {
-      console.error(`❌ コマンド実行エラー (${interaction.commandName}):`, err);
+      console.error('❌ インタラクション処理中にエラー:', err);
 
       const errorReply = {
-        content: '⚠️ コマンド実行中にエラーが発生しました。',
+        content: '⚠️ 処理中に予期せぬエラーが発生しました。',
         ephemeral: true
       };
 
@@ -79,4 +91,3 @@ module.exports = {
     }
   }
 };
-
