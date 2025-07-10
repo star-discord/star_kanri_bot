@@ -1,5 +1,13 @@
-await interaction.reply({
-  content: `
+const { SlashCommandBuilder } = require('discord.js');
+
+module.exports = {
+  data: new SlashCommandBuilder()
+    .setName('siyousyo')
+    .setDescription('KPI Bot の仕様書を表示します'),
+
+  async execute(interaction) {
+    await interaction.reply({
+      content: `
 📌 **KPI申請Bot 仕様書（要点）**
 
 🔧 /kpi_設定
@@ -17,6 +25,8 @@ await interaction.reply({
 ✅ Render 対応済み。Persistent Disk によって再起動後もデータ保持
 
 📎 詳細は GitHub または管理者まで。
-  `,
-  flags: 64, // ephemeral=true の代わりにこちらを推奨
-});
+      `,
+      ephemeral: true // ✅ 非公開メッセージ
+    });
+  },
+};
