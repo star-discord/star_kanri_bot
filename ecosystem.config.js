@@ -4,7 +4,7 @@ require('dotenv').config(); // ← .env 読み込み
 module.exports = {
   apps: [
     {
-      name: "keihi-bot",             // PM2で表示されるアプリ名
+      name: "star-kanri-bot",             // PM2で表示されるアプリ名
       script: "./index.js",          // 起動スクリプト
       watch: false,                  // 変更監視（falseが安全）
 
