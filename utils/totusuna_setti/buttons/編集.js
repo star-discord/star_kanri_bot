@@ -1,4 +1,3 @@
-// utils/totusuna_setti/buttons/編集.js
 const fs = require('fs');
 const path = require('path');
 const {
@@ -9,40 +8,39 @@ const {
 } = require('discord.js');
 
 module.exports = {
-  customIdStart: 'tousuna_edit_button_',
+  customIdStart: 'tousuna_edit_',
 
   async handle(interaction) {
     const guildId = interaction.guildId;
-    const userId = interaction.user.id;
+    const customId = interaction.customId;
+    const uuid = customId.replace('tousuna_edit_', '');
 
-    const uuid = interaction.customId.replace('tousuna_edit_button_', '');
-    const dataPath = path.join(__dirname, '../../../data', guildId, `${guildId}.json`);
-
-    if (!fs.existsSync(dataPath)) {
-      return interaction.reply({ content: '⚠ 設定ファイルが見つかりません。', ephemeral: true });
+    const filePath = path.join(__dirname, '../../../data', guildId, `${guildId}.json`);
+    if (!fs.existsSync(filePath)) {
+      return await interaction.reply({ content: '⚠ データが存在しません。', ephemeral: true });
     }
 
-    const json = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
+    const json = JSON.parse(fs.readFileSync(filePath, 'utf8'));
     const target = json.totsusuna?.[uuid];
 
     if (!target) {
-      return interaction.reply({ content: '⚠ 該当する設置データが見つかりません。', ephemeral: true });
+      return await interaction.reply({ content: '⚠ 該当する凸スナが見つかりません。', ephemeral: true });
     }
 
     const modal = new ModalBuilder()
       .setCustomId(`tousuna_edit_modal_${uuid}`)
-      .setTitle('📘 凸スナ設定の編集');
+      .setTitle('📘 凸スナ本文の編集');
 
-    const bodyInput = new TextInputBuilder()
+    const input = new TextInputBuilder()
       .setCustomId('body')
       .setLabel('本文')
       .setStyle(TextInputStyle.Paragraph)
       .setRequired(true)
-      .setValue(target.body.slice(0, 4000)); // Discord制限対応
+      .setValue(target.body || '');
 
-    const row1 = new ActionRowBuilder().addComponents(bodyInput);
-    modal.addComponents(row1);
+    modal.addComponents(new ActionRowBuilder().addComponents(input));
 
     await interaction.showModal(modal);
   },
 };
+
