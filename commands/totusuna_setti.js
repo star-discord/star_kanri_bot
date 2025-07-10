@@ -18,11 +18,10 @@ module.exports = {
     if (!isAdmin(interaction)) {
       return await interaction.reply({
         content: '❌ あなたにはこのコマンドを使用する権限がありません。',
-        flags: 1 << 6 // ephemeral: true の代替
+        flags: 1 << 6 // ephemeral 相当
       });
     }
 
-    // UI表示
     const channelSelect = new ChannelSelectMenuBuilder()
       .setCustomId('tousuna_select_main')
       .setPlaceholder('📌 ボタン設置チャンネルを選択')
@@ -54,8 +53,7 @@ module.exports = {
     await interaction.reply({
       content: '🎯 以下の設定を行ってください。',
       components: [row1, row2, row3],
-      flags: 1 << 6 // ephemeral: true の代替
+      flags: 1 << 6 // ephemeral
     });
   },
 };
-
