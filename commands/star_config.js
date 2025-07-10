@@ -23,16 +23,27 @@ module.exports = {
     // star_config セクションがなければ初期化
     if (!data.star_config) data.star_config = {};
 
+    // 同じロールがすでに設定されていた場合の通知（任意）
+    if (data.star_config.adminRoleId === role.id) {
+      return await interaction.reply({
+        content: `⚠️ 既に <@&${role.id}> は管理者ロールに設定されています。`,
+        flags: 1 << 6 // Ephemeral 相当
+      });
+    }
+
     // 管理者ロールIDの設定
     data.star_config.adminRoleId = role.id;
 
     // 保存
     writeJSON(filePath, data);
 
-    // 応答
+    // ログ出力
+    console.log(`🛠️ ${interaction.guild.name} (${guildId}) の管理者ロールを ${role.name} に設定`);
+
+    // 応答（flags で ephemeral）
     await interaction.reply({
       content: `✅ 管理者ロールを <@&${role.id}> に設定しました。`,
-      ephemeral: true
+      flags: 1 << 6
     });
   }
 };
