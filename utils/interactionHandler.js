@@ -3,7 +3,6 @@ const fs = require('fs');
 const path = require('path');
 
 const commands = new Map();
-
 const commandsPath = path.join(__dirname, '../commands');
 
 /**
@@ -30,22 +29,24 @@ function loadCommand(filePath, logPrefix = '') {
   }
 }
 
-// 🔄 コマンドフォルダを再帰的に読み込み
-const entries = fs.readdirSync(commandsPath);
+/**
+ * コマンドディレクトリを再帰的に読み込む
+ */
+function loadCommandsFromDir(dir, prefix = '') {
+  const entries = fs.readdirSync(dir, { withFileTypes: true });
 
-for (const entry of entries) {
-  const entryPath = path.join(commandsPath, entry);
-  const stat = fs.statSync(entryPath);
-
-  if (stat.isDirectory()) {
-    const commandFiles = fs.readdirSync(entryPath).filter(isJSFile);
-    for (const file of commandFiles) {
-      loadCommand(path.join(entryPath, file), `${entry}/`);
+  for (const entry of entries) {
+    const entryPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      loadCommandsFromDir(entryPath, `${prefix}${entry.name}/`);
+    } else if (isJSFile(entry.name)) {
+      loadCommand(entryPath, prefix);
     }
-  } else if (isJSFile(entry)) {
-    loadCommand(entryPath);
   }
 }
+
+// 🔁 すべてのコマンドを読み込む
+loadCommandsFromDir(commandsPath);
 
 // 🌐 インタラクション実行ハンドラ
 module.exports = {
@@ -62,12 +63,18 @@ module.exports = {
 
     try {
       await command.execute(interaction);
-    } catch (error) {
-      console.error(`❌ コマンド実行エラー (${interaction.commandName}):`, error);
+    } catch (err) {
+      console.error(`❌ コマンド実行エラー (${interaction.commandName}):`, err);
+
+      const errorReply = {
+        content: '⚠️ コマンド実行中にエラーが発生しました。',
+        ephemeral: true
+      };
+
       if (interaction.replied || interaction.deferred) {
-        await interaction.followUp({ content: '⚠️ コマンド実行中にエラーが発生しました。', ephemeral: true });
+        await interaction.followUp(errorReply);
       } else {
-        await interaction.reply({ content: '⚠️ コマンド実行中にエラーが発生しました。', ephemeral: true });
+        await interaction.reply(errorReply);
       }
     }
   }
