@@ -1,14 +1,24 @@
 const fs = require('fs');
 const path = require('path');
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, InteractionResponseFlags } = require('discord.js');
+const {
+  EmbedBuilder,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  InteractionResponseFlags,
+} = require('discord.js');
 const { v4: uuidv4 } = require('uuid');
 
-// 一時保存された本文・選択内容（ユーザーID単位）
+// ユーザー単位の一時状態
 const tempState = require('../../state/totsusunaTemp');
 
 module.exports = {
-  customId: 'tousuna_create_instance',
+  customId: 'totsusuna_setti:設置する',
 
+  /**
+   * 凸スナ設置処理
+   * @param {import('discord.js').ButtonInteraction} interaction
+   */
   async handle(interaction) {
     const userId = interaction.user.id;
     const guildId = interaction.guildId;
@@ -22,6 +32,7 @@ module.exports = {
     }
 
     const uuid = uuidv4();
+
     const embed = new EmbedBuilder()
       .setTitle('📣 凸スナ報告受付中')
       .setDescription(state.body)
@@ -35,9 +46,12 @@ module.exports = {
     const row = new ActionRowBuilder().addComponents(button);
 
     const installChannel = await interaction.guild.channels.fetch(state.installChannelId);
-    const sentMessage = await installChannel.send({ embeds: [embed], components: [row] });
+    const sentMessage = await installChannel.send({
+      embeds: [embed],
+      components: [row],
+    });
 
-    // 保存ファイル読み込み
+    // JSON保存処理
     const dataDir = path.join(__dirname, '../../../data', guildId);
     const dataFile = path.join(dataDir, `${guildId}.json`);
     if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
@@ -50,7 +64,6 @@ module.exports = {
     if (!json.tousuna) json.tousuna = {};
     if (!Array.isArray(json.tousuna.instances)) json.tousuna.instances = [];
 
-    // 新しい設置情報を追加
     json.tousuna.instances.push({
       id: uuid,
       body: state.body,
@@ -62,7 +75,6 @@ module.exports = {
 
     fs.writeFileSync(dataFile, JSON.stringify(json, null, 2));
 
-    // 状態クリア
     tempState.delete(userId);
 
     await interaction.reply({
