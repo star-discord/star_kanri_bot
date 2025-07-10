@@ -8,7 +8,7 @@ module.exports = {
 
     if (customId === 'set_admin_roles') {
       const guildId = interaction.guild.id;
-      const selectedRoles = interaction.values; // role IDの配列
+      const selectedRoles = interaction.values;
 
       const dir = path.join(__dirname, '../../../data', guildId);
       if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
@@ -18,7 +18,7 @@ module.exports = {
 
       await interaction.reply({
         content: '✅ 管理者ロールを保存しました。',
-        ephemeral: true,
+        ephemeral: true
       });
     }
   }
