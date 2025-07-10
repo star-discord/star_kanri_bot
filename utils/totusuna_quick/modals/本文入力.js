@@ -1,10 +1,16 @@
 const fs = require('fs');
 const path = require('path');
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const {
+  EmbedBuilder,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  InteractionResponseFlags,
+} = require('discord.js');
 const { v4: uuidv4 } = require('uuid');
 
 module.exports = {
-  customIdStart: 'totusuna_quick_modal_', // ← 追加（modalsHandlerが必要とする識別子）
+  customIdStart: 'totusuna_quick_modal_',
 
   /**
    * クイック設置の本文モーダル送信後の処理
@@ -26,8 +32,8 @@ module.exports = {
       json = JSON.parse(fs.readFileSync(dataFile, 'utf-8'));
     }
 
-    if (!json.tousuna) json.tousuna = {};
-    if (!json.tousuna.instances) json.tousuna.instances = [];
+    if (!json.totusuna) json.totusuna = {};
+    if (!json.totusuna.instances) json.totusuna.instances = [];
 
     const newInstance = {
       id: uuid,
@@ -36,16 +42,13 @@ module.exports = {
       replicateChannelIds: [],
     };
 
-    json.tousuna.instances.push(newInstance);
-    fs.writeFileSync(dataFile, JSON.stringify(json, null, 2));
-
     const embed = new EmbedBuilder()
       .setTitle('📣 凸スナ報告受付中')
       .setDescription(body)
       .setColor(0x00bfff);
 
     const button = new ButtonBuilder()
-      .setCustomId(`tousuna_report_button_${uuid}`)
+      .setCustomId(`totsusuna_report_button_${uuid}`)
       .setLabel('凸スナ報告')
       .setStyle(ButtonStyle.Primary);
 
@@ -57,12 +60,12 @@ module.exports = {
     });
 
     newInstance.messageId = sentMessage.id;
+    json.totusuna.instances.push(newInstance);
     fs.writeFileSync(dataFile, JSON.stringify(json, null, 2));
 
     await interaction.reply({
       content: '✅ 本文を保存し、凸スナボタンを設置しました。',
-      ephemeral: true,
+      flags: InteractionResponseFlags.Ephemeral,
     });
   },
 };
-
