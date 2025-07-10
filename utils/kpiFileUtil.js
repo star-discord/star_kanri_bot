@@ -1,5 +1,5 @@
-import fs from 'fs/promises';
-import path from 'path';
+const fs = require('fs').promises;
+const path = require('path');
 
 const dataDir = path.resolve('./data');
 const shopsFilePath = path.join(dataDir, 'kpi_shops.json');
@@ -13,7 +13,7 @@ async function waitUnlock() {
   }
 }
 
-export async function readShopList() {
+async function readShopList() {
   try {
     await waitUnlock();
     await fs.mkdir(dataDir, { recursive: true });
@@ -26,7 +26,7 @@ export async function readShopList() {
   }
 }
 
-export async function addShop(shopName) {
+async function addShop(shopName) {
   await waitUnlock();
   fileLock = true;
   try {
@@ -46,7 +46,7 @@ export async function addShop(shopName) {
   }
 }
 
-export async function readTargets() {
+async function readTargets() {
   try {
     await waitUnlock();
     await fs.mkdir(dataDir, { recursive: true });
@@ -59,7 +59,7 @@ export async function readTargets() {
   }
 }
 
-export async function saveTargets(targets) {
+async function saveTargets(targets) {
   await waitUnlock();
   fileLock = true;
   try {
@@ -74,7 +74,7 @@ export async function saveTargets(targets) {
   }
 }
 
-export async function addTargets(shops, date, targetCount, setBy) {
+async function addTargets(shops, date, targetCount, setBy) {
   try {
     const targets = await readTargets();
 
@@ -102,9 +102,17 @@ export async function addTargets(shops, date, targetCount, setBy) {
     } else {
       return { success: false, reason: 'save_failed' };
     }
-
   } catch (e) {
     console.error('KPI目標登録エラー:', e);
     return { success: false, reason: 'exception', error: e };
   }
 }
+
+module.exports = {
+  readShopList,
+  addShop,
+  readTargets,
+  saveTargets,
+  addTargets,
+};
+
