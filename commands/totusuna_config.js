@@ -1,65 +1,56 @@
 // commands/totusuna_config.js
-const { SlashCommandBuilder, ChannelType, PermissionFlagsBits, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const path = require('path');
 const fs = require('fs');
+const path = require('path');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ChannelType } = require('discord.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('凸スナ設定')
-    .setDescription('凸スナの設置・送信設定を確認・編集・削除する')
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+    .setDescription('設置済みの凸スナ一覧を表示し、内容の確認・編集ができます'),
 
   async execute(interaction) {
     const guildId = interaction.guildId;
     const dataPath = path.join(__dirname, `../data/${guildId}/${guildId}.json`);
 
     if (!fs.existsSync(dataPath)) {
-      await interaction.reply({ content: '設定データが見つかりません。まず /凸スナ設置 を実行してください。', ephemeral: true });
-      return;
+      return interaction.reply({ content: '❌ 凸スナ設置情報が存在しません。', ephemeral: true });
     }
 
-    const json = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
-    const instances = json?.tousuna?.instances || [];
+    const json = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
+    const instances = Object.values(json.totsusuna || {});
 
     if (instances.length === 0) {
-      await interaction.reply({ content: '現在設定されている凸スナ設置はありません。', ephemeral: true });
-      return;
+      return interaction.reply({ content: '📭 凸スナはまだ設置されていません。', ephemeral: true });
     }
 
-    const components = [];
-    const rows = await Promise.all(instances.map(async (i, index) => {
-      const setupCh = await interaction.guild.channels.fetch(i.messageChannelId).catch(() => null);
-      const copyChs = await Promise.all((i.copyChannelIds || []).map(id => interaction.guild.channels.fetch(id).catch(() => null)));
-      const setupName = setupCh?.name || '不明なチャンネル';
-      const copyNames = copyChs.filter(c => !!c).map(c => `#${c.name}`).join(', ') || 'なし';
-      const body = i.bodyText?.slice(0, 100) || '(本文なし)';
+    const rows = [];
 
-      components.push(
-        new ActionRowBuilder().addComponents(
-          new ButtonBuilder()
-            .setCustomId(`edit_tousuna_${i.id}`)
-            .setLabel(`✏️ 編集：設置${index + 1}`)
-            .setStyle(ButtonStyle.Secondary),
-          new ButtonBuilder()
-            .setCustomId(`delete_tousuna_${i.id}`)
-            .setLabel(`🗑️ 削除：設置${index + 1}`)
-            .setStyle(ButtonStyle.Danger)
+    for (const instance of instances) {
+      const embed = new EmbedBuilder()
+        .setTitle('📌 凸スナ設置情報')
+        .setDescription(instance.body.length > 150 ? instance.body.slice(0, 150) + '...' : instance.body)
+        .setColor(0x00bfff)
+        .addFields(
+          { name: '設置チャンネル', value: `<#${instance.installChannelId}>`, inline: true },
+          { name: '複製チャンネル', value: instance.replicateChannelIds.map(id => `<#${id}>`).join('\n') || 'なし', inline: true },
         )
-      );
+        .setFooter({ text: `UUID: ${instance.uuid}` });
 
-      return `🔹 **設置${index + 1}**
-設置チャンネル: <#${i.messageChannelId}> (${setupName})
-複製チャンネル: ${copyNames}
-本文:
-\`\`\`
-${body}
-\`\`\``;
-    }));
+      const editButton = new ButtonBuilder()
+        .setCustomId(`tousuna_edit_button_${instance.uuid}`)
+        .setLabel('⚙ 設定を編集')
+        .setStyle(ButtonStyle.Secondary);
 
-    await interaction.reply({
-      content: `**現在の凸スナ設置一覧：**\n\n${rows.join('\n\n')}`,
-      components,
-      ephemeral: true
-    });
+      const row = new ActionRowBuilder().addComponents(editButton);
+
+      rows.push({ embed, row });
+    }
+
+    await interaction.reply({ content: `🛠 設置済み凸スナ一覧：${rows.length}件`, ephemeral: true });
+
+    for (const { embed, row } of rows) {
+      await interaction.followUp({ embeds: [embed], components: [row], ephemeral: true });
+    }
   },
 };
+
