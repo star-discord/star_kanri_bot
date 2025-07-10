@@ -4,5 +4,6 @@
 # Node.jsの依存パッケージフォルダ
 node_modules/
 
-# GCP認証情報
-keihi-discord-bot-232654693810.json
+# Google Cloud 認証ファイルを無視
+star-discord-bot-*.json
+data/star-discord-bot-*.json
