@@ -1,46 +1,53 @@
-const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const fs = require('fs');
-const path = require('path');
-const config = require('../config.json');
+const {
+  SlashCommandBuilder,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  ChannelSelectMenuBuilder
+} = require('discord.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('凸スナ設置')
-    .setDescription('凸スナ報告ボタンを送信'),
+    .setDescription('凸スナ報告用の設定を開始します'),
 
   async execute(interaction) {
-    const guildId = interaction.guild.id;
-    const targetChannel = await interaction.client.channels.fetch(config.tousunaMainChannelId);
+    // ボタン設置チャンネル（1つ選択）
+    const mainChannelSelect = new ChannelSelectMenuBuilder()
+      .setCustomId('totsusuna_select_main')
+      .setPlaceholder('ボタン設置チャンネルを選択')
+      .setMinValues(1)
+      .setMaxValues(1)
+      .addDefaultChannelTypes([0]); // 0 = GUILD_TEXT
 
-    const messageContent = '📣 **凸スナ報告受付中！**\nボタンを押して報告してください。';
+    // 複製送信チャンネル（複数選択）
+    const duplicateChannelSelect = new ChannelSelectMenuBuilder()
+      .setCustomId('totsusuna_select_duplicates')
+      .setPlaceholder('複製送信チャンネルを選択（任意）')
+      .setMinValues(0)
+      .setMaxValues(5);
 
-    const button = new ButtonBuilder()
-      .setCustomId('tousuna_report_button')
-      .setLabel('凸スナ報告')
+    // 本文入力ボタン（押すとモーダル表示予定）
+    const inputButton = new ButtonBuilder()
+      .setCustomId('totsusuna_input_body')
+      .setLabel('本文を入力')
+      .setStyle(ButtonStyle.Secondary);
+
+    // 設置ボタン（押すとEmbed送信）
+    const confirmButton = new ButtonBuilder()
+      .setCustomId('totsusuna_confirm_setup')
+      .setLabel('凸スナを設置')
       .setStyle(ButtonStyle.Primary);
 
-    const row = new ActionRowBuilder().addComponents(button);
+    const row1 = new ActionRowBuilder().addComponents(mainChannelSelect);
+    const row2 = new ActionRowBuilder().addComponents(duplicateChannelSelect);
+    const row3 = new ActionRowBuilder().addComponents(inputButton, confirmButton);
 
-    const message = await targetChannel.send({ content: messageContent, components: [row] });
-
-    // ===== 保存処理開始 =====
-    const dataDir = path.join(__dirname, '..', 'data', guildId);
-    const dataPath = path.join(dataDir, `${guildId}.json`);
-
-    if (!fs.existsSync(dataDir)) {
-      fs.mkdirSync(dataDir, { recursive: true });
-    }
-
-    const data = {
-      messageId: message.id,
-      channelId: message.channel.id,
-      createdAt: new Date().toISOString(),
-      createdBy: interaction.user.id,
-    };
-
-    fs.writeFileSync(dataPath, JSON.stringify(data, null, 2));
-    // ===== 保存処理終了 =====
-
-    await interaction.reply({ content: '凸スナ設置しました！', ephemeral: true });
-  },
+    await interaction.reply({
+      content: '以下の項目を設定してください：',
+      components: [row1, row2, row3],
+      ephemeral: true
+    });
+  }
 };
+
