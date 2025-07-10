@@ -1,14 +1,17 @@
 {
   "name": "star-chatgpt-discord-bot",
   "version": "0.2.0",
-  "description": "STAR ChatGPT Discord Bot + 管理BOT統合",
+  "description": "STAR専用 ChatGPT + 管理用 Discord ボット（凸スナ・ロール管理など統合）",
   "main": "index.js",
   "type": "commonjs",
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
     "deploy": "node deploy-commands.js",
-    "pm2-start": "pm2 start index.js --name star-kanri-bot"
+    "pm2-start": "pm2 start index.js --name star-chatgpt-discord-bot",
+    "logs": "pm2 logs star-chatgpt-discord-bot",
+    "restart": "pm2 restart star-chatgpt-discord-bot",
+    "stop": "pm2 stop star-chatgpt-discord-bot"
   },
   "engines": {
     "node": ">=18"
@@ -18,7 +21,6 @@
     "csv-writer": "^1.6.0",
     "discord.js": "^14.21.0",
     "dotenv": "^16.4.5",
-    "fs-extra": "^11.2.0",
     "openai": "^4.24.0",
     "pm2": "^5.3.0"
   },
