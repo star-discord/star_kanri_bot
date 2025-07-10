@@ -1,15 +1,14 @@
 // utils/star_config/buttons.js
-const fs = require('fs');
+const fconst fs = require('fs');
 const path = require('path');
 const { MessageFlags } = require('discord-api-types/v10');
 
 /**
  * ボタン: set_admin_roles
- * ロール選択後、data/<guildId>/<guildId>.json に保存（star_config.adminRoleId）
+ * ロール選択後、data/<guildId>/<guildId>.json に保存（star_config.adminRoleIds）
  */
 module.exports = async function(interaction) {
   const customId = interaction.customId;
-
   if (customId !== 'set_admin_roles') return;
 
   const guildId = interaction.guild.id;
@@ -37,13 +36,16 @@ module.exports = async function(interaction) {
 
     if (!data.star_config) data.star_config = {};
 
-    // 単一ロールを保存（必要に応じて複数対応も可）
-    data.star_config.adminRoleId = selectedRoles[0];
+    // ✅ 複数のロールIDを保存
+    data.star_config.adminRoleIds = selectedRoles;
 
     fs.writeFileSync(jsonPath, JSON.stringify(data, null, 2), 'utf8');
 
+    // ロールメンションのリスト作成
+    const mentionText = selectedRoles.map(id => `<@&${id}>`).join(', ');
+
     await interaction.reply({
-      content: `✅ 管理者ロールを <@&${selectedRoles[0]}> に設定しました。`,
+      content: `✅ 管理者ロールを以下の通り設定しました:\n${mentionText}`,
       flags: MessageFlags.Ephemeral
     });
 
