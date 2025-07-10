@@ -1,53 +1,93 @@
+// commands/totusuna_setti.js
+const fs = require('fs');
+const path = require('path');
+const { v4: uuidv4 } = require('uuid');
 const {
   SlashCommandBuilder,
-  ActionRowBuilder,
+  ChannelType,
+  PermissionFlagsBits,
+  EmbedBuilder,
   ButtonBuilder,
   ButtonStyle,
-  ChannelSelectMenuBuilder
+  ActionRowBuilder
 } = require('discord.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('凸スナ設置')
-    .setDescription('凸スナ報告用の設定を開始します'),
+    .setDescription('凸スナ報告ボタンを設置します')
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+    .addChannelOption(option =>
+      option.setName('設置チャンネル')
+        .setDescription('ボタンを設置するチャンネル')
+        .setRequired(true)
+        .addChannelTypes(ChannelType.GuildText))
+    .addChannelOption(option =>
+      option.setName('本文送信チャンネル')
+        .setDescription('本文を送信するチャンネル')
+        .setRequired(true)
+        .addChannelTypes(ChannelType.GuildText))
+    .addStringOption(option =>
+      option.setName('本文')
+        .setDescription('ボタン設置時に表示するメッセージ本文')
+        .setRequired(true)),
 
   async execute(interaction) {
-    // ボタン設置チャンネル（1つ選択）
-    const mainChannelSelect = new ChannelSelectMenuBuilder()
-      .setCustomId('totsusuna_select_main')
-      .setPlaceholder('ボタン設置チャンネルを選択')
-      .setMinValues(1)
-      .setMaxValues(1)
-      .addDefaultChannelTypes([0]); // 0 = GUILD_TEXT
+    const guildId = interaction.guild.id;
+    const setupChannel = interaction.options.getChannel('設置チャンネル');
+    const messageChannel = interaction.options.getChannel('本文送信チャンネル');
+    const messageContent = interaction.options.getString('本文');
 
-    // 複製送信チャンネル（複数選択）
-    const duplicateChannelSelect = new ChannelSelectMenuBuilder()
-      .setCustomId('totsusuna_select_duplicates')
-      .setPlaceholder('複製送信チャンネルを選択（任意）')
-      .setMinValues(0)
-      .setMaxValues(5);
+    const instanceId = uuidv4();
 
-    // 本文入力ボタン（押すとモーダル表示予定）
-    const inputButton = new ButtonBuilder()
-      .setCustomId('totsusuna_input_body')
-      .setLabel('本文を入力')
-      .setStyle(ButtonStyle.Secondary);
+    const instance = {
+      id: instanceId,
+      setupChannelId: setupChannel.id,
+      messageChannelId: messageChannel.id,
+      cloneChannelIds: [], // 今後複製チャンネル追加予定
+      messageContent,
+      createdAt: new Date().toISOString()
+    };
 
-    // 設置ボタン（押すとEmbed送信）
-    const confirmButton = new ButtonBuilder()
-      .setCustomId('totsusuna_confirm_setup')
-      .setLabel('凸スナを設置')
+    // 保存先のパス
+    const dirPath = path.join(__dirname, `../../data/${guildId}`);
+    const filePath = path.join(dirPath, `${guildId}.json`);
+
+    if (!fs.existsSync(dirPath)) {
+      fs.mkdirSync(dirPath, { recursive: true });
+    }
+
+    let data = {};
+    if (fs.existsSync(filePath)) {
+      data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    }
+
+    data.tousuna ??= {};
+    data.tousuna.instances ??= [];
+    data.tousuna.instances.push(instance);
+
+    // Embedメッセージ + ボタンを送信
+    const embed = new EmbedBuilder()
+      .setTitle('📣 凸スナ報告受付中！')
+      .setDescription(messageContent)
+      .setColor(0x00BFFF);
+
+    const button = new ButtonBuilder()
+      .setCustomId(`tousuna_report_button_${instanceId}`)
+      .setLabel('凸スナ報告')
       .setStyle(ButtonStyle.Primary);
 
-    const row1 = new ActionRowBuilder().addComponents(mainChannelSelect);
-    const row2 = new ActionRowBuilder().addComponents(duplicateChannelSelect);
-    const row3 = new ActionRowBuilder().addComponents(inputButton, confirmButton);
+    const row = new ActionRowBuilder().addComponents(button);
+
+    const sent = await setupChannel.send({ embeds: [embed], components: [row] });
+    instance.messageId = sent.id; // 送信メッセージIDを保存
+
+    // 再保存
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
 
     await interaction.reply({
-      content: '以下の項目を設定してください：',
-      components: [row1, row2, row3],
-      ephemeral: true
+      content: `✅ 凸スナ設置を保存しました！\n設置チャンネル: ${setupChannel}\n本文送信チャンネル: ${messageChannel}`,
+      ephemeral: true,
     });
-  }
+  },
 };
-
