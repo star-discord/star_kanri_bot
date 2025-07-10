@@ -1,49 +1,36 @@
 // utils/totusuna_setti/spreadSheet.js
 const path = require('path');
-const { getSpreadsheetPath, loadOrCreateWorkbook } = require('../../utils/spreadsheetHandler');
+const fs = require('fs');
 
-/**
- * 凸スナ報告内容をスプレッドシートに追記
- * @param {string} guildId - サーバーID
- * @param {{
- *   group: string,
- *   name: string,
- *   detail: string,
- *   tables: string[],      // 卓1〜4
- *   reporterName: string   // 報告者名（例: ユーザー名やニックネーム）
- * }} data
- */
-async function writeTotusunaReport(guildId, data) {
-  try {
-    const filePath = getSpreadsheetPath(guildId, '凸スナ報告');
-    const { workbook, sheet } = await loadOrCreateWorkbook(filePath);
+async function writeToSheet(guildId, yearMonth, entry) {
+  const dir = path.join(__dirname, `../../../data/${guildId}`);
+  const csvPath = path.join(dir, `${guildId}-${yearMonth}-凸スナ報告.csv`);
 
-    const now = new Date();
-    const formattedDate = now.toLocaleString('ja-JP', {
-      year: 'numeric', month: '2-digit', day: '2-digit',
-      hour: '2-digit', minute: '2-digit', second: '2-digit'
-    });
-
-    const row = [
-      formattedDate,
-      data.group,
-      data.name,
-      data.tables[0] || '',
-      data.tables[1] || '',
-      data.tables[2] || '',
-      data.tables[3] || '',
-      data.detail,
-      data.reporterName  // 報告者名
-    ];
-
-    sheet.addRow(row);
-    await workbook.xlsx.writeFile(filePath);
-  } catch (err) {
-    console.error('❌ スプレッドシート書き込み失敗:', err);
-    throw err;
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
   }
+
+  // CSVへの追記
+  const headers = ['報告者名', '日時', '何組', '何名', '卓1', '卓2', '卓3', '卓4', '詳細'];
+  const values = [
+    entry.username,
+    entry.date,
+    entry.group,
+    entry.name,
+    entry.table1 || '',
+    entry.table2 || '',
+    entry.table3 || '',
+    entry.table4 || '',
+    entry.detail || ''
+  ];
+
+  const csvLine = `${values.map(v => `"${v}"`).join(',')}\n`;
+  if (!fs.existsSync(csvPath)) {
+    fs.writeFileSync(csvPath, `${headers.join(',')}\n`, 'utf8');
+  }
+  fs.appendFileSync(csvPath, csvLine, 'utf8');
 }
 
 module.exports = {
-  writeTotusunaReport
+  writeToSheet,
 };
