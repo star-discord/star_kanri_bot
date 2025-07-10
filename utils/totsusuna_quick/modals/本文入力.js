@@ -1,3 +1,5 @@
+// /utils/totsusuna_quick/modals ← 不要なら削除 or 正しく
+
 const fs = require('fs');
 const path = require('path');
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
