@@ -1,59 +1,64 @@
 // utils/storage.js
-require('dotenv').config(); // ← .env を読み込む
-
 const { Storage } = require('@google-cloud/storage');
 const path = require('path');
+const fs = require('fs');
 
-const keyPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
-const bucketName = process.env.GCS_BUCKET_NAME;
+// 必要な環境変数（.env に定義）
+const BUCKET_NAME = process.env.GCS_BUCKET_NAME;
+const PROJECT_ID = process.env.GCP_PROJECT_ID;
+const KEY_FILE = process.env.GCP_CREDENTIALS_JSON || 'gcp-service-account.json';
 
-if (!keyPath || !bucketName) {
-  throw new Error('GOOGLE_APPLICATION_CREDENTIALS または GCS_BUCKET_NAME が .env に定義されていません');
+if (!BUCKET_NAME || !PROJECT_ID || !fs.existsSync(KEY_FILE)) {
+  console.warn('⚠️ GCS設定が正しく行われていません。storage.js の使用は制限されます。');
 }
 
-// Storage クライアント初期化
 const storage = new Storage({
-  keyFilename: path.resolve(keyPath)
+  projectId: PROJECT_ID,
+  keyFilename: KEY_FILE
 });
 
-module.exports = {
-  /**
-   * 指定したローカルファイルを GCS にアップロード
-   * @param {string} localPath - ローカルのファイルパス
-   * @param {string} destination - GCS 上の保存先パス
-   */
-  async uploadFile(localPath, destination) {
-    await storage.bucket(bucketName).upload(localPath, {
-      destination
-    });
-  },
+const bucket = storage.bucket(BUCKET_NAME);
 
-  /**
-   * GCS 上のファイルをローカルにダウンロード
-   * @param {string} srcFilename - GCS 内のファイルパス
-   * @param {string} destPath - ローカル保存先パス
-   */
-  async downloadFile(srcFilename, destPath) {
-    const options = { destination: destPath };
-    await storage.bucket(bucketName).file(srcFilename).download(options);
-  },
+/**
+ * GCS へファイルをアップロード
+ * @param {string} localFilePath - ローカルファイルのパス
+ * @param {string} destinationPath - GCS上の保存パス（例: guildId/2025-07-凸スナ報告.xlsx）
+ * @returns {Promise<void>}
+ */
+async function uploadFile(localFilePath, destinationPath) {
+  if (!BUCKET_NAME || !fs.existsSync(localFilePath)) return;
 
-  /**
-   * GCS 上のファイルをテキストで読み取る
-   * @param {string} filename - GCS ファイルパス
-   * @returns {Promise<string>}
-   */
-  async getFileContents(filename) {
-    const [contents] = await storage.bucket(bucketName).file(filename).download();
-    return contents.toString('utf8');
-  },
+  await bucket.upload(localFilePath, {
+    destination: destinationPath,
+    gzip: true,
+    metadata: {
+      cacheControl: 'no-cache',
+    }
+  });
 
-  /**
-   * GCS 上のファイルにテキストを書き込む（上書き）
-   * @param {string} filename - GCS ファイルパス
-   * @param {string|Buffer} contents - 保存内容
-   */
-  async saveFileContents(filename, contents) {
-    await storage.bucket(bucketName).file(filename).save(contents);
+  console.log(`☁️ アップロード完了: ${destinationPath}`);
+}
+
+/**
+ * GCS からファイルをダウンロード
+ * @param {string} destinationPath - GCS上の保存パス
+ * @param {string} localFilePath - 保存先ローカルパス
+ * @returns {Promise<boolean>} - 成功時 true、失敗時 false
+ */
+async function downloadFile(destinationPath, localFilePath) {
+  if (!BUCKET_NAME) return false;
+
+  try {
+    await bucket.file(destinationPath).download({ destination: localFilePath });
+    console.log(`⬇️ ダウンロード完了: ${destinationPath}`);
+    return true;
+  } catch (err) {
+    console.warn(`⚠️ GCSファイルが見つかりません: ${destinationPath}`);
+    return false;
   }
+}
+
+module.exports = {
+  uploadFile,
+  downloadFile
 };
