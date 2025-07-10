@@ -52,7 +52,15 @@ module.exports = {
       if (!data.star_config) data.star_config = {};
       data.star_config.adminRoleIds = selectedRoleIds;
 
-      writeJSON(filePath, data);
+      try {
+        writeJSON(filePath, data);
+      } catch (err) {
+        console.error('❌ JSON保存失敗:', err);
+        return await selectInteraction.reply({
+          content: '❌ ロールの保存に失敗しました。',
+          ephemeral: true,
+        });
+      }
 
       console.log(`🛠️ ${interaction.guild.name} (${guildId}) の管理者ロールを更新: ${selectedRoleIds.join(', ')}`);
 
@@ -63,7 +71,7 @@ module.exports = {
     });
 
     collector.on('end', collected => {
-      if (collected.size === 0 && !interaction.replied) {
+      if (collected.size === 0 && !(interaction.replied || interaction.deferred)) {
         interaction.editReply({
           content: '⏱️ 時間切れのためロール設定はキャンセルされました。',
           components: [],
