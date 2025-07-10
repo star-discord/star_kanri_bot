@@ -7,7 +7,6 @@ const {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
-  ChannelType,
 } = require('discord.js');
 
 module.exports = {
@@ -17,21 +16,36 @@ module.exports = {
 
   async execute(interaction) {
     const guildId = interaction.guildId;
-    const dataPath = path.join(__dirname, `../data/${guildId}/${guildId}.json`);
+    const dataDir = path.join(__dirname, `../data/${guildId}`);
+    const dataPath = path.join(dataDir, `${guildId}.json`);
 
+    // dataディレクトリが無ければ作成
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+    }
+
+    // JSONファイルが無ければ初期化
     if (!fs.existsSync(dataPath)) {
-      return interaction.reply({ content: '❌ 凸スナ設置情報が存在しません。', flags: InteractionResponseFlags.Ephemeral });
+      fs.writeFileSync(dataPath, JSON.stringify({ totusuna: {} }, null, 2), 'utf-8');
     }
 
     const json = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
-    const instances = Object.values(json.totsusuna || {});
+    const instances = Object.values(json.totusuna || {});
 
     if (instances.length === 0) {
-      return interaction.reply({ content: '📭 凸スナはまだ設置されていません。', flags: InteractionResponseFlags.Ephemeral });
+      return interaction.reply({
+        content: '📭 凸スナはまだ設置されていません。',
+        ephemeral: true,
+      });
     }
 
-    const rows = [];
+    // 初期返信
+    await interaction.reply({
+      content: `🛠 設置済み凸スナ一覧：${instances.length}件`,
+      ephemeral: true,
+    });
 
+    // 各設置済みインスタンスをEmbed＋ボタンで表示
     for (const instance of instances) {
       const embed = new EmbedBuilder()
         .setTitle('📌 凸スナ設置情報')
@@ -41,31 +55,29 @@ module.exports = {
           { name: '設置チャンネル', value: `<#${instance.installChannelId}>`, inline: true },
           {
             name: '複製チャンネル',
-            value: instance.replicateChannelIds?.map(id => `<#${id}>`).join('\n') || 'なし',
+            value: (instance.replicateChannelIds || []).map(id => `<#${id}>`).join('\n') || 'なし',
             inline: true,
-          },
+          }
         )
         .setFooter({ text: `UUID: ${instance.uuid}` });
 
       const editButton = new ButtonBuilder()
-        .setCustomId(`tousuna_edit_button_${instance.uuid}`)
+        .setCustomId(`totusuna_edit:${instance.uuid}`)
         .setLabel('⚙ 設定を編集')
         .setStyle(ButtonStyle.Secondary);
 
       const deleteButton = new ButtonBuilder()
-        .setCustomId(`tousuna_delete_button_${instance.uuid}`)
+        .setCustomId(`totusuna_delete:${instance.uuid}`)
         .setLabel('🗑 本文削除')
         .setStyle(ButtonStyle.Danger);
 
       const row = new ActionRowBuilder().addComponents(editButton, deleteButton);
 
-      rows.push({ embed, row });
-    }
-
-    await interaction.reply({ content: `🛠 設置済み凸スナ一覧：${rows.length}件`, flags: InteractionResponseFlags.Ephemeral });
-
-    for (const { embed, row } of rows) {
-      await interaction.followUp({ embeds: [embed], components: [row], flags: InteractionResponseFlags.Ephemeral });
+      await interaction.followUp({
+        embeds: [embed],
+        components: [row],
+        ephemeral: true,
+      });
     }
   },
 };
