@@ -3,9 +3,8 @@ const {
   SlashCommandBuilder,
   ActionRowBuilder,
   RoleSelectMenuBuilder,
-  ComponentType,
+  ComponentType
 } = require('discord.js');
-const { MessageFlags } = require('discord-api-types/v10');
 const { readJSON, writeJSON, ensureGuildJSON } = require('../utils/fileHelper');
 
 module.exports = {
@@ -18,39 +17,45 @@ module.exports = {
     const filePath = ensureGuildJSON(guildId);
     const data = readJSON(filePath);
 
-    // ロールセレクトメニュー（最大5個まで）
+    if (!data.star_config) data.star_config = {};
+    const currentAdminRoleIds = data.star_config.adminRoleIds || [];
+
+    // ロール選択メニュー生成（現在の設定をプレフィックス表示）
     const roleSelect = new RoleSelectMenuBuilder()
       .setCustomId('admin_role_select')
       .setPlaceholder('管理者として許可するロールを選択')
       .setMinValues(1)
-      .setMaxValues(10);
+      .setMaxValues(5);
 
     const row = new ActionRowBuilder().addComponents(roleSelect);
 
+    const currentMentions =
+      currentAdminRoleIds.length > 0
+        ? currentAdminRoleIds.map(id => `<@&${id}>`).join(', ')
+        : '*未設定*';
+
     await interaction.reply({
-      content: '👤 管理者ロールを選択してください（複数可）',
+      content: `👤 管理者ロールを選択してください（複数可）\n📌 現在の設定: ${currentMentions}`,
       components: [row],
-      flags: MessageFlags.Ephemeral,
+      ephemeral: true // ← v14ではこれが正式
     });
 
-    // コンポーネント応答を待機（30秒）
+    // コンポーネント応答を待機
     const collector = interaction.channel.createMessageComponentCollector({
       componentType: ComponentType.RoleSelect,
-      time: 30000,
-      max: 1,
+      time: 30_000,
+      max: 1
     });
 
     collector.on('collect', async selectInteraction => {
       if (selectInteraction.user.id !== interaction.user.id) {
         return await selectInteraction.reply({
           content: '❌ この操作はコマンドを実行したユーザーのみが行えます。',
-          flags: MessageFlags.Ephemeral,
+          ephemeral: true
         });
       }
 
       const selectedRoleIds = selectInteraction.values;
-
-      if (!data.star_config) data.star_config = {};
       data.star_config.adminRoleIds = selectedRoleIds;
 
       try {
@@ -59,26 +64,28 @@ module.exports = {
         console.error('❌ JSON保存失敗:', err);
         return await selectInteraction.reply({
           content: '❌ ロールの保存に失敗しました。',
-          flags: MessageFlags.Ephemeral,
+          ephemeral: true
         });
       }
 
-      console.log(`🛠️ ${interaction.guild.name} (${guildId}) の管理者ロールを更新: ${selectedRoleIds.join(', ')}`);
+      const mentionText = selectedRoleIds.map(id => `<@&${id}>`).join(', ');
+      console.log(`🛠️ ${interaction.guild.name} (${guildId}) の管理者ロールを更新: ${mentionText}`);
 
       await selectInteraction.update({
-        content: `✅ 管理者ロールを設定しました: ${selectedRoleIds.map(id => `<@&${id}>`).join(', ')}`,
-        components: [],
+        content: `✅ 管理者ロールを設定しました: ${mentionText}`,
+        components: []
       });
     });
 
-    collector.on('end', async collected => {
-      if (collected.size === 0 && interaction.replied) {
-        await interaction.editReply({
+    collector.on('end', collected => {
+      if (collected.size === 0 && !(interaction.replied || interaction.deferred)) {
+        interaction.editReply({
           content: '⏱️ 時間切れのためロール設定はキャンセルされました。',
-          components: [],
+          components: []
         });
       }
     });
   }
 };
+
 
