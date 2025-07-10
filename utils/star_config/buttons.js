@@ -1,25 +1,25 @@
-// utils/star_config/buttons.js
+// 例: utils/star_config/buttons.js に追加
+const fs = require('fs');
+const path = require('path');
+
 module.exports = {
-  set_admin_role: async (interaction) => {
-    await interaction.deferUpdate();
+  async handle(interaction) {
+    const customId = interaction.customId;
 
-    // ロール選択がされているか確認
-    const selectedRoleId = interaction.values?.[0] || interaction.customId?.split(':')[1];
-    if (!selectedRoleId) {
-      return interaction.followUp({ content: 'ロールが選択されていません。', ephemeral: true });
+    if (customId === 'set_admin_roles') {
+      const guildId = interaction.guild.id;
+      const selectedRoles = interaction.values;
+
+      const dir = path.join(__dirname, '../../../data', guildId);
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+
+      const filePath = path.join(dir, 'admin_roles.json');
+      fs.writeFileSync(filePath, JSON.stringify(selectedRoles, null, 2), 'utf8');
+
+      await interaction.reply({
+        content: '✅ 管理者ロールを保存しました。',
+        ephemeral: true
+      });
     }
-
-    // 設定保存処理（例: JSON ファイル書き換え）
-    const fs = require('fs');
-    const path = require('path');
-    const configPath = path.join(__dirname, '../../data', interaction.guildId, `${interaction.guildId}_config.json`);
-    const config = fs.existsSync(configPath) ? require(configPath) : {};
-
-    config.adminRole = selectedRoleId;
-    fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
-
-    await interaction.followUp({ content: '✅ 管理者ロールを設定しました。', ephemeral: true });
-  },
-
-  // 他のボタンも必要に応じて追加
+  }
 };
