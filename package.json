@@ -3,6 +3,7 @@
   "version": "0.1.1",
   "description": "STAR ChatGPT Discord Bot",
   "main": "index.js",
+  "type": "commonjs",
   "scripts": {
     "start": "node index.js",
     "deploy": "node deploy-commands.js"
