@@ -8,9 +8,9 @@ const {
 const fs = require('fs');
 const path = require('path');
 const { sendToMultipleChannels } = require('./sendToMultipleChannels');
-const { writeToSheet } = require('./totusuna_setti/spreadSheet.js'); // ✅ 正しいパスと関数名に変更
+const { writeToSheet } = require('./totusuna_setti/spreadSheet.js');
 const config = require('../config.json');
-const handleButton = require('./buttonsHandler');
+const { handleButton } = require('./buttonsHandler');
 
 const userTotusunaSetupMap = new Map();
 
@@ -27,11 +27,8 @@ module.exports = {
           await command.execute(interaction, client, userTotusunaSetupMap);
         } catch (error) {
           console.error(`コマンド実行エラー: ${interaction.commandName}`, error);
-          if (!interaction.replied && !interaction.deferred) {
-            await interaction.reply({ content: '❌ コマンド実行中にエラーが発生しました。', ephemeral: true });
-          } else {
-            await interaction.followUp({ content: '❌ コマンド実行中にエラーが発生しました。', ephemeral: true });
-          }
+          const msg = { content: '❌ コマンド実行中にエラーが発生しました。', ephemeral: true };
+          interaction.replied || interaction.deferred ? await interaction.followUp(msg) : await interaction.reply(msg);
         }
         return;
       }
