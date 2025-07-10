@@ -1,93 +1,69 @@
-// commands/totusuna_setti.js
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
-const { v4: uuidv4 } = require('uuid');
-const {
-  SlashCommandBuilder,
-  ChannelType,
-  PermissionFlagsBits,
-  EmbedBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  ActionRowBuilder
-} = require('discord.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('凸スナ設置')
-    .setDescription('凸スナ報告ボタンを設置します')
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
-    .addChannelOption(option =>
-      option.setName('設置チャンネル')
-        .setDescription('ボタンを設置するチャンネル')
-        .setRequired(true)
-        .addChannelTypes(ChannelType.GuildText))
-    .addChannelOption(option =>
-      option.setName('本文送信チャンネル')
-        .setDescription('本文を送信するチャンネル')
-        .setRequired(true)
-        .addChannelTypes(ChannelType.GuildText))
-    .addStringOption(option =>
-      option.setName('本文')
-        .setDescription('ボタン設置時に表示するメッセージ本文')
-        .setRequired(true)),
+    .setName('凸スナ設定')
+    .setDescription('現在設置中の凸スナ報告ボタンの設定を表示・編集します。'),
 
   async execute(interaction) {
-    const guildId = interaction.guild.id;
-    const setupChannel = interaction.options.getChannel('設置チャンネル');
-    const messageChannel = interaction.options.getChannel('本文送信チャンネル');
-    const messageContent = interaction.options.getString('本文');
+    const guildId = interaction.guildId;
+    const filePath = path.join(__dirname, `../../data/${guildId}/${guildId}.json`);
 
-    const instanceId = uuidv4();
-
-    const instance = {
-      id: instanceId,
-      setupChannelId: setupChannel.id,
-      messageChannelId: messageChannel.id,
-      cloneChannelIds: [], // 今後複製チャンネル追加予定
-      messageContent,
-      createdAt: new Date().toISOString()
-    };
-
-    // 保存先のパス
-    const dirPath = path.join(__dirname, `../../data/${guildId}`);
-    const filePath = path.join(dirPath, `${guildId}.json`);
-
-    if (!fs.existsSync(dirPath)) {
-      fs.mkdirSync(dirPath, { recursive: true });
+    if (!fs.existsSync(filePath)) {
+      return interaction.reply({ content: '⚠ データファイルが見つかりません。', ephemeral: true });
     }
 
-    let data = {};
-    if (fs.existsSync(filePath)) {
-      data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    const json = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+    const all = json.totsusuna || {};
+
+    if (Object.keys(all).length === 0) {
+      return interaction.reply({ content: '⚠ 現在設置されている凸スナはありません。', ephemeral: true });
     }
 
-    data.tousuna ??= {};
-    data.tousuna.instances ??= [];
-    data.tousuna.instances.push(instance);
+    const rows = [];
 
-    // Embedメッセージ + ボタンを送信
-    const embed = new EmbedBuilder()
-      .setTitle('📣 凸スナ報告受付中！')
-      .setDescription(messageContent)
-      .setColor(0x00BFFF);
+    for (const [uuid, info] of Object.entries(all)) {
+      const embed = new EmbedBuilder()
+        .setTitle(`📌 凸スナ設置：${uuid}`)
+        .addFields(
+          {
+            name: '📍 設置チャンネル',
+            value: `<#${info.installChannelId}>`,
+            inline: true
+          },
+          {
+            name: '📤 複製チャンネル',
+            value: info.replicateChannelIds.map(id => `<#${id}>`).join('\n') || '（なし）',
+            inline: true
+          },
+          {
+            name: '📝 本文',
+            value: info.body || '(未設定)',
+          },
+        )
+        .setColor(0x00bfff);
 
-    const button = new ButtonBuilder()
-      .setCustomId(`tousuna_report_button_${instanceId}`)
-      .setLabel('凸スナ報告')
-      .setStyle(ButtonStyle.Primary);
+      const buttons = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setCustomId(`tousuna_edit_${uuid}`)
+          .setLabel('⚙ 設定を編集')
+          .setStyle(ButtonStyle.Secondary),
 
-    const row = new ActionRowBuilder().addComponents(button);
+        new ButtonBuilder()
+          .setCustomId(`tousuna_delete_${uuid}`)
+          .setLabel('🗑 削除')
+          .setStyle(ButtonStyle.Danger)
+      );
 
-    const sent = await setupChannel.send({ embeds: [embed], components: [row] });
-    instance.messageId = sent.id; // 送信メッセージIDを保存
+      rows.push({ embeds: [embed], components: [buttons] });
+    }
 
-    // 再保存
-    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf8');
+    await interaction.reply({ content: '現在の設置一覧です。', ephemeral: true });
 
-    await interaction.reply({
-      content: `✅ 凸スナ設置を保存しました！\n設置チャンネル: ${setupChannel}\n本文送信チャンネル: ${messageChannel}`,
-      ephemeral: true,
-    });
-  },
+    for (const row of rows) {
+      await interaction.followUp({ ...row, ephemeral: true });
+    }
+  }
 };
