@@ -2,31 +2,35 @@ const { SlashCommandBuilder } = require('discord.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('siyousyo')
-    .setDescription('KPI Bot の仕様書を表示します'),
+    .setName('star管理bot_仕様書')
+    .setDescription('STAR管理Bot の仕様書を表示します'),
 
   async execute(interaction) {
     await interaction.reply({
       content: `
-📌 **KPI申請Bot 仕様書（要点）**
+📘 **STAR管理Bot 仕様書（要点）**
 
-🔧 /kpi_設定
-- 店舗名の追加（モーダル）
-- 店舗ごとの目標人数を設定
+🛠️ /star管理bot設定
+- 管理者ロールを選択・保存（複数対応）
+- 保存先: \`data/<guildId>/<guildId>.json\` の \`star_config.adminRoleIds\`
 
-📩 /kpi_設置
-- 店舗・人数を選んで報告スレッドに投稿
-- 達成率も自動で計算されます
+📌 /凸スナ設置
+- ボタン付き報告UIを指定チャンネルに設置
+- 本文・複製チャンネル・設置先を選択可能
 
-🗃️ データファイル（Render上の永続ディスク）
-- \`data/kpi_shops.json\`: 店舗リスト
-- \`data/kpi_ninzuu.json\`: KPI設定履歴
+⚡ /凸スナクイック設置
+- モーダルで本文を即入力 → 報告UIを設置（簡易版）
 
-✅ Render 対応済み。Persistent Disk によって再起動後もデータ保持
+📁 保存形式とファイル構造
+- \`data/<guildId>/<guildId>.json\` に全設定を集約
+- \`data/<guildId>/<年月>-凸スナ報告.csv\`：報告ログ（CSV）
+- 設定・報告の永続保存対応済み
 
-📎 詳細は GitHub または管理者まで。
+🔐 管理権限はロールによって制御されます
+
+📎 詳しくは GitHub または開発者まで。
       `,
-      flags: InteractionResponseFlags.Ephemeral // ✅ 非公開メッセージ
+      flags: 1 << 6 // 非公開メッセージ
     });
   },
 };
