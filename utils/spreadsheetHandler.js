@@ -2,10 +2,13 @@
 const fs = require('fs');
 const path = require('path');
 const ExcelJS = require('exceljs');
-const { uploadFile, downloadFile } = require('./storage'); // ← ✅ 修正ポイント
+const { uploadFile, downloadFile } = require('./storage'); // ✅ GCS連携用
 
 /**
- * GCSパスを取得（例: 1234567890123/2025-07-凸スナ報告.xlsx）
+ * GCS用ファイルパスを生成（例: 1234567890123/1234567890123-2025-07-凸スナ報告.xlsx）
+ * @param {string} guildId
+ * @param {string} suffix
+ * @returns {string}
  */
 function getGCSPath(guildId, suffix = '') {
   const now = new Date();
@@ -14,7 +17,10 @@ function getGCSPath(guildId, suffix = '') {
 }
 
 /**
- * ローカル保存パスを取得
+ * ローカル保存パスを取得（存在しない場合はディレクトリ作成）
+ * @param {string} guildId
+ * @param {string} suffix
+ * @returns {string}
  */
 function getLocalSpreadsheetPath(guildId, suffix = '') {
   const now = new Date();
@@ -28,13 +34,17 @@ function getLocalSpreadsheetPath(guildId, suffix = '') {
 }
 
 /**
- * Excelファイルをロード or 新規作成（GCS連携）
+ * ワークブックを読み込み or 新規作成（GCS同期込み）
+ * @param {string} guildId
+ * @param {string} suffix
+ * @param {string} sheetName
+ * @returns {Promise<{ workbook: ExcelJS.Workbook, sheet: ExcelJS.Worksheet, localPath: string, gcsPath: string }>}
  */
 async function loadOrCreateWorkbook(guildId, suffix = '', sheetName = '報告') {
   const localPath = getLocalSpreadsheetPath(guildId, suffix);
   const gcsPath = getGCSPath(guildId, suffix);
 
-  // GCSからダウンロード試行
+  // GCSから最新ファイルをダウンロード（存在しない場合はスキップ）
   await downloadFile(gcsPath, localPath);
 
   const workbook = new ExcelJS.Workbook();
@@ -52,7 +62,10 @@ async function loadOrCreateWorkbook(guildId, suffix = '', sheetName = '報告') 
 }
 
 /**
- * 保存して GCS にアップロード
+ * 保存後、GCSにアップロードして同期
+ * @param {ExcelJS.Workbook} workbook
+ * @param {string} localPath
+ * @param {string} gcsPath
  */
 async function saveAndSyncWorkbook(workbook, localPath, gcsPath) {
   await workbook.xlsx.writeFile(localPath);
