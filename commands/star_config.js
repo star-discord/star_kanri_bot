@@ -1,47 +1,30 @@
-const {
-  SlashCommandBuilder,
-  ActionRowBuilder,
-  RoleSelectMenuBuilder
-} = require('discord.js');
-const fs = require('fs');
-const path = require('path');
+// commands/star_config.js
+const { SlashCommandBuilder, PermissionsBitField } = require('discord.js');
+const { writeJSON, readJSON, ensureDataFile } = require('../utils/fileHelper');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('star管理bot設定')
-    .setDescription('管理者ロールの設定を行います'),
-
+    .setDescription('管理者用の設定を行います')
+    .addRoleOption(option =>
+      option.setName('管理者ロール')
+        .setDescription('管理者権限を与えるロールを指定します')
+        .setRequired(true)
+    ),
   async execute(interaction) {
+    const role = interaction.options.getRole('管理者ロール');
     const guildId = interaction.guild.id;
-    const dir = path.join(__dirname, `../data/${guildId}`);
-    const jsonPath = path.join(dir, `${guildId}.json`);
+    const filePath = `./data/${guildId}/${guildId}.json`;
 
-    // フォルダがなければ作成
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
+    await ensureDataFile(guildId);
 
-    // JSONファイルがなければ作成
-    if (!fs.existsSync(jsonPath)) {
-      const initialData = {
-        adminRoleIds: [], // 管理者ロールID格納用
-        tousuna: {}       // 凸スナ関連の設定もここに入れていく
-      };
-      fs.writeFileSync(jsonPath, JSON.stringify(initialData, null, 2), 'utf-8');
-    }
-
-    const roleSelect = new RoleSelectMenuBuilder()
-      .setCustomId('set_admin_roles')
-      .setPlaceholder('管理者ロールを選択')
-      .setMinValues(1)
-      .setMaxValues(5);
-
-    const row = new ActionRowBuilder().addComponents(roleSelect);
+    const data = await readJSON(filePath);
+    data.adminRoleId = role.id;
+    await writeJSON(filePath, data);
 
     await interaction.reply({
-      content: '✅ 管理者として許可するロールを選択してください：',
-      components: [row],
-      ephemeral: true
+      content: `✅ 管理者ロールを <@&${role.id}> に設定しました。`,
+      flags: 1 << 6, // InteractionResponseFlags.Ephemeral
     });
   }
 };
