@@ -7,6 +7,7 @@ const {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
+  ChannelType,
 } = require('discord.js');
 
 module.exports = {
@@ -38,7 +39,11 @@ module.exports = {
         .setColor(0x00bfff)
         .addFields(
           { name: '設置チャンネル', value: `<#${instance.installChannelId}>`, inline: true },
-          { name: '複製チャンネル', value: instance.replicateChannelIds.map(id => `<#${id}>`).join('\n') || 'なし', inline: true },
+          {
+            name: '複製チャンネル',
+            value: instance.replicateChannelIds?.map(id => `<#${id}>`).join('\n') || 'なし',
+            inline: true,
+          },
         )
         .setFooter({ text: `UUID: ${instance.uuid}` });
 
@@ -47,12 +52,12 @@ module.exports = {
         .setLabel('⚙ 設定を編集')
         .setStyle(ButtonStyle.Secondary);
 
-      const resendButton = new ButtonBuilder()
-        .setCustomId(`tousuna_resend_button_${instance.uuid}`)
-        .setLabel('🔁 再送信')
-        .setStyle(ButtonStyle.Primary);
+      const deleteButton = new ButtonBuilder()
+        .setCustomId(`tousuna_delete_button_${instance.uuid}`)
+        .setLabel('🗑 本文削除')
+        .setStyle(ButtonStyle.Danger);
 
-      const row = new ActionRowBuilder().addComponents(editButton, resendButton);
+      const row = new ActionRowBuilder().addComponents(editButton, deleteButton);
 
       rows.push({ embed, row });
     }
