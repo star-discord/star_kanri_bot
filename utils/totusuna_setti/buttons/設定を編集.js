@@ -9,29 +9,25 @@ module.exports = {
     const dataPath = path.join(__dirname, '../../../data', guildId, `${guildId}.json`);
 
     if (!fs.existsSync(dataPath)) {
-      return interaction.reply({ content: '⚠️ データファイルが見つかりません。', ephemeral: true });
+      return await interaction.reply({ content: '⚠ データファイルが見つかりません。', ephemeral: true });
     }
 
-    const json = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
-    const instance = json?.totsusuna?.[uuid];
+    const json = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
+    const instance = json.totsusuna?.[uuid];
 
     if (!instance) {
-      return interaction.reply({ content: '❌ 指定されたUUIDの凸スナ設定が存在しません。', ephemeral: true });
+      return await interaction.reply({ content: '⚠ 指定された設置情報が存在しません。', ephemeral: true });
     }
 
     const modal = new ModalBuilder()
       .setCustomId(`tousuna_edit_modal_${uuid}`)
-      .setTitle('📘 本文の編集');
+      .setTitle('📘 凸スナ本文を編集');
 
     const bodyInput = new TextInputBuilder()
       .setCustomId('body')
-      .setLabel('本文')
+      .setLabel('本文メッセージ')
       .setStyle(TextInputStyle.Paragraph)
-      .setRequired(true)
-      .setValue(instance.body || '');
+      .setValue(instance.body || '')
+      .setRequired(true);
 
-    modal.addComponents(new ActionRowBuilder().addComponents(bodyInput));
-
-    await interaction.showModal(modal);
-  }
-};
+    const row = new ActionRo
