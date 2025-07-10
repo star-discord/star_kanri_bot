@@ -6,14 +6,17 @@ module.exports = {
     if (!interaction.isChatInputCommand()) return;
 
     const command = client.commands.get(interaction.commandName);
-
     if (!command) return;
 
     try {
       await command.execute(interaction);
     } catch (error) {
       console.error(error);
-      await interaction.reply({ content: 'コマンド実行中にエラーが発生しました。', ephemeral: true });
+      if (interaction.replied || interaction.deferred) {
+        await interaction.followUp({ content: 'コマンド実行中にエラーが発生しました。', ephemeral: true });
+      } else {
+        await interaction.reply({ content: 'コマンド実行中にエラーが発生しました。', ephemeral: true });
+      }
     }
   }
 };
