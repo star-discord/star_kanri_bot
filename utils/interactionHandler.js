@@ -1,19 +1,16 @@
 // utils/interactionHandler.js
 const {
-  ModalBuilder,
-  TextInputBuilder,
-  TextInputStyle,
-  ActionRowBuilder,
   EmbedBuilder,
   ButtonBuilder,
   ButtonStyle,
+  ActionRowBuilder,
 } = require('discord.js');
-const { sendToMultipleChannels } = require('./sendToMultipleChannels');
-const handleButton = require('./buttonsHandler');
-const { writeTotusunaReport } = require('./totusuna_setti/spreadSheet');
-const config = require('../config.json');
 const fs = require('fs');
 const path = require('path');
+const { sendToMultipleChannels } = require('./sendToMultipleChannels');
+const { writeToSheet } = require('./totusuna_setti/spreadSheet.js'); // ✅ 正しいパスと関数名に変更
+const config = require('../config.json');
+const handleButton = require('./buttonsHandler');
 
 const userTotusunaSetupMap = new Map();
 
@@ -25,28 +22,34 @@ module.exports = {
       if (interaction.isChatInputCommand()) {
         const command = client.commands.get(interaction.commandName);
         if (!command) return;
+
         try {
           await command.execute(interaction, client, userTotusunaSetupMap);
         } catch (error) {
           console.error(`コマンド実行エラー: ${interaction.commandName}`, error);
-          const msg = { content: '❌ コマンド実行中にエラーが発生しました。', ephemeral: true };
-          interaction.replied || interaction.deferred ? await interaction.followUp(msg) : await interaction.reply(msg);
+          if (!interaction.replied && !interaction.deferred) {
+            await interaction.reply({ content: '❌ コマンド実行中にエラーが発生しました。', ephemeral: true });
+          } else {
+            await interaction.followUp({ content: '❌ コマンド実行中にエラーが発生しました。', ephemeral: true });
+          }
         }
         return;
       }
 
-      // 2. ボタン処理（共通ハンドラ）
+      // 2. ボタン処理
       if (interaction.isButton()) {
         return handleButton(interaction);
       }
 
-      // 3. セレクトメニュー処理（チャンネル選択）
+      // 3. セレクトメニュー処理
       if (interaction.isChannelSelectMenu()) {
         const userId = interaction.user.id;
         const guildId = interaction.guild.id;
         const customId = interaction.customId;
 
-        if (!userTotusunaSetupMap.has(userId)) userTotusunaSetupMap.set(userId, {});
+        if (!userTotusunaSetupMap.has(userId)) {
+          userTotusunaSetupMap.set(userId, {});
+        }
         const current = userTotusunaSetupMap.get(userId);
 
         if (customId === 'totusuna_setti:select_main_channel') {
@@ -63,68 +66,82 @@ module.exports = {
       if (interaction.isModalSubmit()) {
         const userId = interaction.user.id;
         const guildId = interaction.guild.id;
+        const customId = interaction.customId;
 
-        switch (interaction.customId) {
-          case 'totusuna_content_modal': {
-            const body = interaction.fields.getTextInputValue('main_body');
-            const setup = userTotusunaSetupMap.get(userId);
-            if (!setup || !setup.mainChannelId) {
-              await interaction.reply({ content: '⚠️ チャンネル情報が見つかりません。', ephemeral: true });
-              return;
-            }
+        if (customId === 'totusuna_content_modal') {
+          const body = interaction.fields.getTextInputValue('main_body');
+          const setup = userTotusunaSetupMap.get(userId);
 
-            const mainChannel = await client.channels.fetch(setup.mainChannelId);
-            const embed = new EmbedBuilder().setTitle('📢 凸スナ報告はこちら').setDescription(body).setColor(0x0099ff);
-            const row = new ActionRowBuilder().addComponents(
-              new ButtonBuilder().setCustomId('tousuna_report_button').setLabel('凸スナ報告').setStyle(ButtonStyle.Primary)
-            );
-
-            const sent = await mainChannel.send({ embeds: [embed], components: [row] });
-
-            // 保存
-            const saveDir = path.join(__dirname, `../data/${guildId}`);
-            if (!fs.existsSync(saveDir)) fs.mkdirSync(saveDir, { recursive: true });
-            fs.writeFileSync(path.join(saveDir, `${guildId}.json`), JSON.stringify({
-              buttonChannelId: setup.mainChannelId,
-              cloneChannelIds: setup.cloneChannelIds || [],
-              lastMessageId: sent.id
-            }, null, 2));
-
-            await interaction.reply({ content: '✅ 本文メッセージを投稿しました！', ephemeral: true });
-            userTotusunaSetupMap.delete(userId);
-            break;
+          if (!setup || !setup.mainChannelId) {
+            return await interaction.reply({ content: '⚠️ チャンネル情報が見つかりません。', ephemeral: true });
           }
 
-          case 'tousuna_modal': {
-            const group = interaction.fields.getTextInputValue('group');
-            const name = interaction.fields.getTextInputValue('name');
-            const detail = interaction.fields.getTextInputValue('detail') || '(なし)';
-            const tableInputs = ['table1', 'table2', 'table3', 'table4'].map(id =>
-              interaction.fields.getTextInputValue(id) || ''
-            );
+          const mainChannel = await client.channels.fetch(setup.mainChannelId);
+          const embed = new EmbedBuilder()
+            .setTitle('📢 凸スナ報告はこちら')
+            .setDescription(body)
+            .setColor(0x0099ff);
 
-            const report = `📝 **凸スナ報告**\n組: ${group}組\n名: ${name}名\n卓:\n${tableInputs.map((t, i) => `- 卓${i + 1}: ${t || '未記入'}`).join('\n')}\n詳細: ${detail}`;
+          const row = new ActionRowBuilder().addComponents(
+            new ButtonBuilder()
+              .setCustomId('tousuna_report_button')
+              .setLabel('凸スナ報告')
+              .setStyle(ButtonStyle.Primary)
+          );
 
-            await sendToMultipleChannels(client, config.tousunaReportChannels, report);
-            await writeTotusunaReport(guildId, {
-              group,
-              name,
-              detail,
-              tables: tableInputs,
-              username: interaction.user.username
-            });
+          const sent = await mainChannel.send({ embeds: [embed], components: [row] });
 
-            await interaction.reply({ content: '✅ 報告を送信しました！', ephemeral: true });
-            break;
-          }
+          const saveDir = path.join(__dirname, `../data/${guildId}`);
+          if (!fs.existsSync(saveDir)) fs.mkdirSync(saveDir, { recursive: true });
 
-          default:
-            console.warn(`未知のモーダル送信: ${interaction.customId}`);
+          const data = {
+            buttonChannelId: setup.mainChannelId,
+            cloneChannelIds: setup.cloneChannelIds || [],
+            lastMessageId: sent.id,
+          };
+
+          fs.writeFileSync(path.join(saveDir, `${guildId}.json`), JSON.stringify(data, null, 2));
+
+          await interaction.reply({ content: '✅ 本文メッセージを投稿しました！', ephemeral: true });
+          userTotusunaSetupMap.delete(userId);
+          return;
         }
-      }
 
+        if (customId === 'tousuna_modal') {
+          const group = interaction.fields.getTextInputValue('group');
+          const name = interaction.fields.getTextInputValue('name');
+          const detail = interaction.fields.getTextInputValue('detail') || '(なし)';
+          const tableInputs = ['table1', 'table2', 'table3', 'table4'].map(id =>
+            interaction.fields.getTextInputValue(id) || ''
+          );
+
+          const report = `📝 **凸スナ報告**\n組: ${group}組\n名: ${name}名\n卓:\n${tableInputs.map((t, i) => `- 卓${i + 1}: ${t || '未記入'}`).join('\n')}\n詳細: ${detail}`;
+
+          await sendToMultipleChannels(client, config.tousunaReportChannels, report);
+
+          const now = new Date();
+          const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+          await writeToSheet(guildId, ym, {
+            date: now.toISOString(),
+            group,
+            name,
+            detail,
+            table1: tableInputs[0],
+            table2: tableInputs[1],
+            table3: tableInputs[2],
+            table4: tableInputs[3],
+            username: interaction.user.username,
+          });
+
+          await interaction.reply({ content: '✅ 報告を送信しました！', ephemeral: true });
+          return;
+        }
+
+        console.warn(`⚠️ 未知のモーダルID: ${customId}`);
+      }
     } catch (err) {
-      console.error('interactionCreate 全体エラー:', err);
+      console.error('❌ interactionCreate 全体エラー:', err);
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({ content: '❌ 予期せぬエラーが発生しました。', ephemeral: true });
       }
