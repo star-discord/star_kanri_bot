@@ -1,5 +1,11 @@
-// utils/totusuna_setti/buttons/本文入力をする.js
-const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, InteractionResponseFlags } = require('discord.js');
+// utils/totusuna_setti/buttons/input_body.js
+const {
+  ModalBuilder,
+  TextInputBuilder,
+  TextInputStyle,
+  ActionRowBuilder,
+  InteractionResponseFlags,
+} = require('discord.js');
 
 module.exports = {
   customId: 'tousuna_input_body',
@@ -20,7 +26,9 @@ module.exports = {
         .setStyle(TextInputStyle.Paragraph)
         .setRequired(true);
 
-      modal.addComponents(new ActionRowBuilder().addComponents(bodyInput));
+      modal.addComponents(
+        new ActionRowBuilder().addComponents(bodyInput)
+      );
 
       await interaction.showModal(modal);
     } catch (err) {
