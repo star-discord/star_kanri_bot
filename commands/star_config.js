@@ -1,6 +1,6 @@
 // commands/star_config.js
-const { SlashCommandBuilder, PermissionsBitField } = require('discord.js');
-const { writeJSON, readJSON, ensureDataFile } = require('../utils/fileHelper');
+const { SlashCommandBuilder } = require('discord.js');
+const { readJSON, writeJSON, ensureGuildJSON } = require('../utils/fileHelper');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -11,21 +11,28 @@ module.exports = {
         .setDescription('管理者権限を与えるロールを指定します')
         .setRequired(true)
     ),
+
   async execute(interaction) {
-    const role = interaction.options.getRole('管理者ロール');
     const guildId = interaction.guild.id;
-    const filePath = `./data/${guildId}/${guildId}.json`;
+    const role = interaction.options.getRole('管理者ロール');
 
-    await ensureDataFile(guildId);
+    // ギルド設定ファイルの確保と読み込み
+    const filePath = ensureGuildJSON(guildId);
+    const data = readJSON(filePath);
 
-    const data = await readJSON(filePath);
-    data.adminRoleId = role.id;
-    await writeJSON(filePath, data);
+    // star_config セクションがなければ初期化
+    if (!data.star_config) data.star_config = {};
 
+    // 管理者ロールIDの設定
+    data.star_config.adminRoleId = role.id;
+
+    // 保存
+    writeJSON(filePath, data);
+
+    // 応答
     await interaction.reply({
       content: `✅ 管理者ロールを <@&${role.id}> に設定しました。`,
-      flags: 1 << 6, // InteractionResponseFlags.Ephemeral
+      ephemeral: true
     });
   }
 };
-
