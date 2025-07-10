@@ -1,4 +1,4 @@
-export async function handleKpiSettingModal(interaction) {
+async function handleKpiSettingModal(interaction) {
   if (interaction.customId !== 'kpi_setting_modal') return false;
 
   try {
@@ -55,3 +55,5 @@ export async function handleKpiSettingModal(interaction) {
     return true;
   }
 }
+
+module.exports = { handleKpiSettingModal };
