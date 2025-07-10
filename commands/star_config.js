@@ -1,10 +1,9 @@
 const {
   SlashCommandBuilder,
   ActionRowBuilder,
-  RoleSelectMenuBuilder
+  ComponentType,
+  RoleSelectMenuBuilder,
 } = require('discord.js');
-const fs = require('fs');
-const path = require('path');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -23,7 +22,7 @@ module.exports = {
     await interaction.reply({
       content: '管理者として許可するロールを選択してください：',
       components: [row],
-      ephemeral: true
+      ephemeral: true,
     });
-  }
+  },
 };
