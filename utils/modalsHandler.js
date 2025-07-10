@@ -1,54 +1,53 @@
 // utils/modalsHandler.js
-const fs = require('fs');
 const path = require('path');
+const fs = require('fs');
 
 /**
- * モーダル送信後の処理
- * @param {import('discord.js').ModalSubmitInteraction} interaction
+ * モーダルインタラクションを処理する
+ * 各モジュールは { customIdStart, handle } をエクスポート
+ * ファイル名は自由だが customIdStart に一致するかで判断
  */
 async function handleModal(interaction) {
+  if (!interaction.isModalSubmit()) return;
+
   const customId = interaction.customId;
 
-  const dirs = fs.readdirSync(__dirname, { withFileTypes: true }).filter(d => d.isDirectory());
+  // ハンドラ候補のあるディレクトリ一覧（必要に応じて追加）
+  const searchDirs = [
+    'star_config/modals',
+    'totusuna_config/modals',
+    'totusuna_setti/modals',
+    'totusuna_quick/modals'
+  ];
 
-  for (const dir of dirs) {
-    const modalsDir = path.join(__dirname, dir.name, 'modals');
-    if (!fs.existsSync(modalsDir)) continue;
+  for (const dir of searchDirs) {
+    const fullDir = path.join(__dirname, dir);
+    if (!fs.existsSync(fullDir)) continue;
 
-    const files = fs.readdirSync(modalsDir).filter(f => f.endsWith('.js'));
-
+    const files = fs.readdirSync(fullDir).filter(f => f.endsWith('.js'));
     for (const file of files) {
-      const handlerPath = path.join(modalsDir, file);
-      const handler = require(handlerPath);
-
-      if (handler?.customIdStart && customId.startsWith(handler.customIdStart)) {
-        try {
-          const args = customId.replace(handler.customIdStart, '').split(':');
-          await handler.handle(interaction, ...args);
-          return;
-        } catch (err) {
-          console.error(`❌ モーダルエラー: ${customId}`, err);
-          if (!interaction.replied && !interaction.deferred) {
-            await interaction.reply({
-              content: '❌ モーダル処理中にエラーが発生しました。',
-              ephemeral: true
-            });
+      const filePath = path.join(fullDir, file);
+      try {
+        const mod = require(filePath);
+        if (mod && typeof mod.handle === 'function' && typeof mod.customIdStart === 'string') {
+          if (customId.startsWith(mod.customIdStart)) {
+            return await mod.handle(interaction);
           }
-          return;
         }
+      } catch (err) {
+        console.warn(`⚠️ モーダル処理失敗: ${filePath}`, err);
       }
     }
   }
 
-  // 対応なし
-  console.warn(`⚠️ モーダル未対応: ${customId}`);
-  if (!interaction.replied && !interaction.deferred) {
-    await interaction.reply({
-      content: '⚠️ このモーダルは未対応です。',
-      ephemeral: true
-    });
-  }
+  // 該当なし
+  await interaction.reply({
+    content: '❌ モーダルに対応する処理が見つかりませんでした。',
+    ephemeral: true
+  });
 }
+
+module.exports = { handleModal };
 
 module.exports = { handleModal };
 
