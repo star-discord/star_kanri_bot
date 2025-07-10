@@ -17,14 +17,14 @@ module.exports = {
     const dataFile = path.join(dataDir, `${guildId}.json`);
 
     if (!fs.existsSync(dataFile)) {
-      return await interaction.reply({ content: '⚠ 設定ファイルが見つかりません。', ephemeral: true });
+      return await interaction.reply({ content: '⚠ 設定ファイルが見つかりません。', flags: InteractionResponseFlags.Ephemeral });
     }
 
     const json = JSON.parse(fs.readFileSync(dataFile, 'utf-8'));
     const target = json.totsusuna?.[uuid];
 
     if (!target) {
-      return await interaction.reply({ content: '⚠ 指定された設置情報が存在しません。', ephemeral: true });
+      return await interaction.reply({ content: '⚠ 指定された設置情報が存在しません。', flags: InteractionResponseFlags.Ephemeral });
     }
 
     // 本文の更新
@@ -51,9 +51,9 @@ module.exports = {
       await message.edit({ embeds: [embed], components: [row] });
     } catch (err) {
       console.error('⚠ メッセージの再取得・編集に失敗:', err);
-      return await interaction.reply({ content: '⚠ メッセージの更新に失敗しました。', ephemeral: true });
+      return await interaction.reply({ content: '⚠ メッセージの更新に失敗しました。', flags: InteractionResponseFlags.Ephemeral });
     }
 
-    await interaction.reply({ content: '✅ 本文を更新し、表示も変更しました。', ephemeral: true });
+    await interaction.reply({ content: '✅ 本文を更新し、表示も変更しました。', flags: InteractionResponseFlags.Ephemeral });
   },
 };

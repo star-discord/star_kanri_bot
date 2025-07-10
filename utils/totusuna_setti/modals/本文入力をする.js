@@ -14,7 +14,7 @@ module.exports = async function handleContentModal(interaction) {
   const dataFile = path.join(dataDir, `${guildId}.json`);
 
   if (!fs.existsSync(dataFile)) {
-    return await interaction.reply({ content: '⚠ 設定ファイルが見つかりません。', ephemeral: true });
+    return await interaction.reply({ content: '⚠ 設定ファイルが見つかりません。', flags: InteractionResponseFlags.Ephemeral });
   }
 
   const json = JSON.parse(fs.readFileSync(dataFile, 'utf-8'));
@@ -54,5 +54,5 @@ module.exports = async function handleContentModal(interaction) {
   fs.writeFileSync(dataFile, JSON.stringify(json, null, 2), 'utf8');
 
   // 確認返信
-  await interaction.reply({ content: '✅ 本文を保存し、凸スナボタンを設置しました。', ephemeral: true });
+  await interaction.reply({ content: '✅ 本文を保存し、凸スナボタンを設置しました。', flags: InteractionResponseFlags.Ephemeral });
 };

@@ -17,14 +17,14 @@ module.exports = {
 
     const filePath = path.join(__dirname, '../../../data', guildId, `${guildId}.json`);
     if (!fs.existsSync(filePath)) {
-      return await interaction.reply({ content: '⚠ データが存在しません。', ephemeral: true });
+      return await interaction.reply({ content: '⚠ データが存在しません。', flags: InteractionResponseFlags.Ephemeral });
     }
 
     const json = JSON.parse(fs.readFileSync(filePath, 'utf8'));
     const target = json.totsusuna?.[uuid];
 
     if (!target) {
-      return await interaction.reply({ content: '⚠ 該当する凸スナが見つかりません。', ephemeral: true });
+      return await interaction.reply({ content: '⚠ 該当する凸スナが見つかりません。', flags: InteractionResponseFlags.Ephemeral });
     }
 
     const modal = new ModalBuilder()

@@ -27,7 +27,7 @@ module.exports = {
           await command.execute(interaction, client, userTotusunaSetupMap);
         } catch (error) {
           console.error(`コマンド実行エラー: ${interaction.commandName}`, error);
-          const msg = { content: '❌ コマンド実行中にエラーが発生しました。', ephemeral: true };
+          const msg = { content: '❌ コマンド実行中にエラーが発生しました。', flags: InteractionResponseFlags.Ephemeral };
           interaction.replied || interaction.deferred ? await interaction.followUp(msg) : await interaction.reply(msg);
         }
         return;
@@ -51,10 +51,10 @@ module.exports = {
 
         if (customId === 'totusuna_setti:select_main_channel') {
           current.mainChannelId = interaction.values[0];
-          await interaction.reply({ content: '✅ ボタン設置チャンネルを記録しました。', ephemeral: true });
+          await interaction.reply({ content: '✅ ボタン設置チャンネルを記録しました。', flags: InteractionResponseFlags.Ephemeral });
         } else if (customId === 'totusuna_setti:select_clone_channels') {
           current.cloneChannelIds = interaction.values;
-          await interaction.reply({ content: '✅ 複製送信チャンネルを記録しました。', ephemeral: true });
+          await interaction.reply({ content: '✅ 複製送信チャンネルを記録しました。', flags: InteractionResponseFlags.Ephemeral });
         }
         return;
       }
@@ -70,7 +70,7 @@ module.exports = {
           const setup = userTotusunaSetupMap.get(userId);
 
           if (!setup || !setup.mainChannelId) {
-            return await interaction.reply({ content: '⚠️ チャンネル情報が見つかりません。', ephemeral: true });
+            return await interaction.reply({ content: '⚠️ チャンネル情報が見つかりません。', flags: InteractionResponseFlags.Ephemeral });
           }
 
           const mainChannel = await client.channels.fetch(setup.mainChannelId);
@@ -99,7 +99,7 @@ module.exports = {
 
           fs.writeFileSync(path.join(saveDir, `${guildId}.json`), JSON.stringify(data, null, 2));
 
-          await interaction.reply({ content: '✅ 本文メッセージを投稿しました！', ephemeral: true });
+          await interaction.reply({ content: '✅ 本文メッセージを投稿しました！', flags: InteractionResponseFlags.Ephemeral });
           userTotusunaSetupMap.delete(userId);
           return;
         }
@@ -131,7 +131,7 @@ module.exports = {
             username: interaction.user.username,
           });
 
-          await interaction.reply({ content: '✅ 報告を送信しました！', ephemeral: true });
+          await interaction.reply({ content: '✅ 報告を送信しました！', flags: InteractionResponseFlags.Ephemeral });
           return;
         }
 
@@ -140,7 +140,7 @@ module.exports = {
     } catch (err) {
       console.error('❌ interactionCreate 全体エラー:', err);
       if (!interaction.replied && !interaction.deferred) {
-        await interaction.reply({ content: '❌ 予期せぬエラーが発生しました。', ephemeral: true });
+        await interaction.reply({ content: '❌ 予期せぬエラーが発生しました。', flags: InteractionResponseFlags.Ephemeral });
       }
     }
   },

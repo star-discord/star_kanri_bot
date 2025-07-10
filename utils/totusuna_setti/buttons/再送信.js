@@ -8,14 +8,14 @@ module.exports = {
     const guildId = interaction.guildId;
     const dataPath = path.join(__dirname, '../../../data', guildId, `${guildId}.json`);
     if (!fs.existsSync(dataPath)) {
-      return await interaction.reply({ content: '⚠️ 設定ファイルが見つかりません。', ephemeral: true });
+      return await interaction.reply({ content: '⚠️ 設定ファイルが見つかりません。', flags: InteractionResponseFlags.Ephemeral });
     }
 
     const json = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
     const instance = json.totsusuna?.[uuid];
 
     if (!instance) {
-      return await interaction.reply({ content: '⚠️ 設定が存在しません。', ephemeral: true });
+      return await interaction.reply({ content: '⚠️ 設定が存在しません。', flags: InteractionResponseFlags.Ephemeral });
     }
 
     const embed = new EmbedBuilder()
@@ -39,10 +39,10 @@ module.exports = {
       json.totsusuna[uuid] = instance;
       fs.writeFileSync(dataPath, JSON.stringify(json, null, 2));
 
-      await interaction.reply({ content: '📤 再送信しました（設置チャンネルのみ）。', ephemeral: true });
+      await interaction.reply({ content: '📤 再送信しました（設置チャンネルのみ）。', flags: InteractionResponseFlags.Ephemeral });
     } catch (err) {
       console.error('[再送信エラー]', err);
-      await interaction.reply({ content: '❌ メッセージの再送信に失敗しました。', ephemeral: true });
+      await interaction.reply({ content: '❌ メッセージの再送信に失敗しました。', flags: InteractionResponseFlags.Ephemeral });
     }
   },
 };

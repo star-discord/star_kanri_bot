@@ -16,7 +16,7 @@ module.exports = {
     if (!interaction.member.permissions.has(PermissionsBitField.Flags.Administrator)) {
       return await interaction.reply({
         content: '⚠️ このコマンドは管理者のみ実行できます。',
-        ephemeral: true,
+        flags: InteractionResponseFlags.Ephemeral,
       });
     }
 
@@ -31,7 +31,7 @@ module.exports = {
     await interaction.reply({
       content: '🛠️ 管理者として許可するロールを選択してください：',
       components: [row],
-      ephemeral: true,
+      flags: InteractionResponseFlags.Ephemeral,
     });
   }
 };

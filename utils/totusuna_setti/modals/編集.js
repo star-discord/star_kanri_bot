@@ -14,14 +14,14 @@ module.exports = {
 
     const filePath = path.join(__dirname, '../../../data', guildId, `${guildId}.json`);
     if (!fs.existsSync(filePath)) {
-      return await interaction.reply({ content: '⚠ データファイルが見つかりません。', ephemeral: true });
+      return await interaction.reply({ content: '⚠ データファイルが見つかりません。', flags: InteractionResponseFlags.Ephemeral });
     }
 
     const json = JSON.parse(fs.readFileSync(filePath, 'utf8'));
     const target = json.totsusuna?.[uuid];
 
     if (!target) {
-      return await interaction.reply({ content: '⚠ 設定が見つかりません。', ephemeral: true });
+      return await interaction.reply({ content: '⚠ 設定が見つかりません。', flags: InteractionResponseFlags.Ephemeral });
     }
 
     target.body = newBody;
@@ -50,6 +50,6 @@ module.exports = {
 
     fs.writeFileSync(filePath, JSON.stringify(json, null, 2));
 
-    await interaction.reply({ content: '✅ 本文を更新しました！', ephemeral: true });
+    await interaction.reply({ content: '✅ 本文を更新しました！', flags: InteractionResponseFlags.Ephemeral });
   },
 };

@@ -11,7 +11,7 @@ module.exports = {
     if (shops.length === 0) {
       await interaction.reply({
         content: 'まだ店舗が設定されていません。先に `/kpi_設定` で追加してください。',
-        ephemeral: true,
+        flags: InteractionResponseFlags.Ephemeral,
       });
       return;
     }

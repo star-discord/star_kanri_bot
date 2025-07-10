@@ -26,7 +26,7 @@ module.exports = {
 
 📎 詳細は GitHub または管理者まで。
       `,
-      ephemeral: true // ✅ 非公開メッセージ
+      flags: InteractionResponseFlags.Ephemeral // ✅ 非公開メッセージ
     });
   },
 };

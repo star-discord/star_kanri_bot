@@ -17,7 +17,7 @@ module.exports = {
     if (!state || !state.body || !state.installChannelId) {
       return await interaction.reply({
         content: '⚠ 本文やチャンネル設定が不足しています。',
-        ephemeral: true,
+        flags: InteractionResponseFlags.Ephemeral,
       });
     }
 
@@ -63,7 +63,7 @@ module.exports = {
 
     await interaction.reply({
       content: '✅ 凸スナ設置が完了しました！',
-      ephemeral: true,
+      flags: InteractionResponseFlags.Ephemeral,
     });
   },
 };

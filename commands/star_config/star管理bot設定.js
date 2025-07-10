@@ -22,7 +22,7 @@ module.exports = {
     await interaction.reply({
       content: '管理者として許可するロールを選択してください：',
       components: [row],
-      ephemeral: true
+      flags: InteractionResponseFlags.Ephemeral
     });
   }
 };
@@ -47,7 +47,7 @@ module.exports = {
 
       await interaction.reply({
         content: '✅ 管理者ロールを保存しました。',
-        ephemeral: true
+        flags: InteractionResponseFlags.Ephemeral
       });
     }
   }

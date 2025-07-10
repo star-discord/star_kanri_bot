@@ -26,14 +26,14 @@ module.exports = {
     // チャンネル送信（設置チャンネルにのみ送信）
     const dataPath = path.join(__dirname, '../../../data', guildId, `${guildId}.json`);
     if (!fs.existsSync(dataPath)) {
-      return interaction.reply({ content: '⚠ 設定ファイルが見つかりません。', ephemeral: true });
+      return interaction.reply({ content: '⚠ 設定ファイルが見つかりません。', flags: InteractionResponseFlags.Ephemeral });
     }
 
     const json = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
     const install = Object.values(json.totsusuna || {}).find(v => v && v.installChannelId);
 
     if (!install) {
-      return interaction.reply({ content: '⚠ 凸スナ設置チャンネルが未設定です。', ephemeral: true });
+      return interaction.reply({ content: '⚠ 凸スナ設置チャンネルが未設定です。', flags: InteractionResponseFlags.Ephemeral });
     }
 
     const targetChannel = await interaction.client.channels.fetch(install.installChannelId);
@@ -45,6 +45,6 @@ module.exports = {
     const csvPath = path.join(__dirname, '../../../data', guildId, `${guildId}-${ym}-凸スナ報告.csv`);
     await writeCsvRow(csvPath, [timestamp, group, name, table1, table2, table3, table4, detail, username]);
 
-    await interaction.reply({ content: '✅ 報告を送信し、記録しました。', ephemeral: true });
+    await interaction.reply({ content: '✅ 報告を送信し、記録しました。', flags: InteractionResponseFlags.Ephemeral });
   }
 };

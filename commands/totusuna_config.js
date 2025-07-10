@@ -20,14 +20,14 @@ module.exports = {
     const dataPath = path.join(__dirname, `../data/${guildId}/${guildId}.json`);
 
     if (!fs.existsSync(dataPath)) {
-      return interaction.reply({ content: '❌ 凸スナ設置情報が存在しません。', ephemeral: true });
+      return interaction.reply({ content: '❌ 凸スナ設置情報が存在しません。', flags: InteractionResponseFlags.Ephemeral });
     }
 
     const json = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
     const instances = Object.values(json.totsusuna || {});
 
     if (instances.length === 0) {
-      return interaction.reply({ content: '📭 凸スナはまだ設置されていません。', ephemeral: true });
+      return interaction.reply({ content: '📭 凸スナはまだ設置されていません。', flags: InteractionResponseFlags.Ephemeral });
     }
 
     const rows = [];
@@ -62,10 +62,10 @@ module.exports = {
       rows.push({ embed, row });
     }
 
-    await interaction.reply({ content: `🛠 設置済み凸スナ一覧：${rows.length}件`, ephemeral: true });
+    await interaction.reply({ content: `🛠 設置済み凸スナ一覧：${rows.length}件`, flags: InteractionResponseFlags.Ephemeral });
 
     for (const { embed, row } of rows) {
-      await interaction.followUp({ embeds: [embed], components: [row], ephemeral: true });
+      await interaction.followUp({ embeds: [embed], components: [row], flags: InteractionResponseFlags.Ephemeral });
     }
   },
 };

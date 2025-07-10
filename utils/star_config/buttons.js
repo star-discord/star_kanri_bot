@@ -18,7 +18,7 @@ module.exports = {
 
       await interaction.reply({
         content: '✅ 管理者ロールを保存しました。',
-        ephemeral: true
+        flags: InteractionResponseFlags.Ephemeral
       });
     }
   }

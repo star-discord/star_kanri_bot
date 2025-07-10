@@ -25,7 +25,7 @@ module.exports = async function handleTousunaReportModal(interaction) {
   const dataPath = path.join(__dirname, `../../../data/${guildId}/${guildId}.json`);
 
   if (!fs.existsSync(dataPath)) {
-    await interaction.reply({ content: '❌ 報告処理に失敗しました。(設定ファイル未存在)', ephemeral: true });
+    await interaction.reply({ content: '❌ 報告処理に失敗しました。(設定ファイル未存在)', flags: InteractionResponseFlags.Ephemeral });
     return;
   }
 
@@ -33,7 +33,7 @@ module.exports = async function handleTousunaReportModal(interaction) {
   const instance = data?.tousuna?.instances?.find(i => i.id === instanceId);
 
   if (!instance) {
-    await interaction.reply({ content: '❌ この設置は存在しません。', ephemeral: true });
+    await interaction.reply({ content: '❌ この設置は存在しません。', flags: InteractionResponseFlags.Ephemeral });
     return;
   }
 
@@ -63,5 +63,5 @@ module.exports = async function handleTousunaReportModal(interaction) {
     await messageChannel.send({ content: report });
   }
 
-  await interaction.reply({ content: '✅ 凸スナ報告を送信・保存しました！', ephemeral: true });
+  await interaction.reply({ content: '✅ 凸スナ報告を送信・保存しました！', flags: InteractionResponseFlags.Ephemeral });
 };

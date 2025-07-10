@@ -9,14 +9,14 @@ module.exports = {
     const filePath = path.join(__dirname, `../../../data/${guildId}/${guildId}.json`);
 
     if (!fs.existsSync(filePath)) {
-      return interaction.reply({ content: '⚠ データファイルが存在しません。', ephemeral: true });
+      return interaction.reply({ content: '⚠ データファイルが存在しません。', flags: InteractionResponseFlags.Ephemeral });
     }
 
     const json = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
     const instance = json.totsusuna?.[uuid];
 
     if (!instance) {
-      return interaction.reply({ content: '⚠ 指定されたデータが見つかりません。', ephemeral: true });
+      return interaction.reply({ content: '⚠ 指定されたデータが見つかりません。', flags: InteractionResponseFlags.Ephemeral });
     }
 
     const modal = new ModalBuilder()

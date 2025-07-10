@@ -20,7 +20,7 @@ module.exports = {
     } catch (error) {
       console.error('star_chat_gpt_set コマンド実行エラー:', error);
       if (!interaction.replied && !interaction.deferred) {
-        await interaction.reply({ content: 'エラーが発生しました。', ephemeral: true });
+        await interaction.reply({ content: 'エラーが発生しました。', flags: InteractionResponseFlags.Ephemeral });
       }
     }
   },

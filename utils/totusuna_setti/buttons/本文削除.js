@@ -8,13 +8,13 @@ module.exports = {
     const dataPath = path.join(__dirname, '../../../data', guildId, `${guildId}.json`);
 
     if (!fs.existsSync(dataPath)) {
-      return await interaction.reply({ content: '⚠️ データファイルが見つかりません。', ephemeral: true });
+      return await interaction.reply({ content: '⚠️ データファイルが見つかりません。', flags: InteractionResponseFlags.Ephemeral });
     }
 
     const json = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
 
     if (!json.totsusuna || !json.totsusuna[uuid]) {
-      return await interaction.reply({ content: '⚠️ 指定された設置は存在しません。', ephemeral: true });
+      return await interaction.reply({ content: '⚠️ 指定された設置は存在しません。', flags: InteractionResponseFlags.Ephemeral });
     }
 
     const target = json.totsusuna[uuid];
@@ -34,6 +34,6 @@ module.exports = {
     delete json.totsusuna[uuid];
     fs.writeFileSync(dataPath, JSON.stringify(json, null, 2));
 
-    await interaction.reply({ content: '🗑 本文を削除しました。', ephemeral: true });
+    await interaction.reply({ content: '🗑 本文を削除しました。', flags: InteractionResponseFlags.Ephemeral });
   },
 };
