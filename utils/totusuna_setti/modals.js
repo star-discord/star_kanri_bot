@@ -1,29 +1,30 @@
-// utils/totusuna_setti/modals.js
+// utils/totusuna_setti/buttons.js
 
-const inputModal = require('./modals/本文入力をする');
-const editModal = require('./modals/編集');
-const reportModal = require('./modals/凸スナ報告');
+const fs = require('fs');
+const path = require('path');
 
+const buttonsDir = path.join(__dirname, 'buttons');
+
+// ボタンモジュール読み込み
+const buttonModules = fs.readdirSync(buttonsDir)
+  .filter(file => file.endsWith('.js'))
+  .map(file => require(path.join(buttonsDir, file)));
+
+// 中継ハンドラー
 module.exports = {
   async handle(interaction) {
-    const id = interaction.customId;
+    const customId = interaction.customId;
 
-    // 本文入力用モーダル
-    if (id === 'tousuna_content_modal') {
-      return inputModal.handle(interaction);
+    for (const mod of buttonModules) {
+      // 明示的な customId 定義を優先（customId or customIdStart）
+      if (mod.customId && mod.customId === customId) {
+        return mod.handle(interaction);
+      }
+      if (mod.customIdStart && customId.startsWith(mod.customIdStart)) {
+        return mod.handle(interaction);
+      }
     }
 
-    // 編集用モーダル
-    if (id.startsWith('tousuna_edit_modal_')) {
-      return editModal.handle(interaction);
-    }
-
-    // 凸スナ報告モーダル
-    if (id.startsWith('tousuna_modal_')) {
-      return reportModal.handle(interaction);
-    }
-
-    // 未対応の場合は無視
-    console.warn(`❗ 未対応のモーダルID: ${id}`);
-  },
+    console.warn(`❗ 未対応のボタン: ${customId}`);
+  }
 };
