@@ -1,5 +1,5 @@
 // utils/star_config/buttons.js
-const fconst fs = require('fs');
+const fs = require('fs');
 const path = require('path');
 const { MessageFlags } = require('discord-api-types/v10');
 
@@ -7,7 +7,7 @@ const { MessageFlags } = require('discord-api-types/v10');
  * ボタン: set_admin_roles
  * ロール選択後、data/<guildId>/<guildId>.json に保存（star_config.adminRoleIds）
  */
-module.exports = async function(interaction) {
+module.exports = async function (interaction) {
   const customId = interaction.customId;
   if (customId !== 'set_admin_roles') return;
 
@@ -57,3 +57,4 @@ module.exports = async function(interaction) {
     });
   }
 };
+
