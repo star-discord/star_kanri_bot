@@ -1,24 +1,22 @@
 // utils/totusuna_setti/buttons/本文入力をする.js
-const {
-  ModalBuilder,
-  TextInputBuilder,
-  TextInputStyle,
-  ActionRowBuilder,
-} = require('discord.js');
+const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
 
-module.exports = async function (interaction) {
-  const modal = new ModalBuilder()
-    .setCustomId('totusuna_content_modal')
-    .setTitle('凸スナ本文入力');
+module.exports = {
+  customId: 'tousuna_input_body',
 
-  const bodyInput = new TextInputBuilder()
-    .setCustomId('main_body')
-    .setLabel('凸スナ本文（記載ルールなど）')
-    .setStyle(TextInputStyle.Paragraph)
-    .setRequired(true);
+  async handle(interaction) {
+    const modal = new ModalBuilder()
+      .setCustomId('tousuna_content_modal')
+      .setTitle('凸スナ 本文入力');
 
-  const row = new ActionRowBuilder().addComponents(bodyInput);
+    const bodyInput = new TextInputBuilder()
+      .setCustomId('body')
+      .setLabel('📄 本文を入力してください（例: 報告はこちら！）')
+      .setStyle(TextInputStyle.Paragraph)
+      .setRequired(true);
 
-  modal.addComponents(row);
-  await interaction.showModal(modal);
+    modal.addComponents(new ActionRowBuilder().addComponents(bodyInput));
+
+    await interaction.showModal(modal);
+  },
 };
