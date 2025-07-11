@@ -19,24 +19,25 @@ async function handleModal(interaction) {
 
   let handler = null;
 
-  if (customId.startsWith('totusuna_')) {
-    handler = totusunaHandler(customId);
-  } else {
-    for (const find of fallbackDirs) {
-      handler = find(customId);
-      if (handler) break;
-    }
-  }
-
-  if (!handler) {
-    return await interaction.reply({
-      content: '❌ モーダルに対応する処理が見つかりませんでした。',
-      ephemeral: true
-    });
-  }
-
   try {
+    if (customId.startsWith('totusuna_')) {
+      handler = totusunaHandler(customId);
+    } else {
+      for (const find of fallbackDirs) {
+        handler = find(customId);
+        if (handler) break;
+      }
+    }
+
+    if (!handler) {
+      return await interaction.reply({
+        content: '❌ モーダルに対応する処理が見つかりませんでした。',
+        ephemeral: true
+      });
+    }
+
     await handler.handle(interaction);
+
   } catch (err) {
     console.error(`❌ モーダル処理エラー: ${customId}`, err);
     if (!interaction.replied && !interaction.deferred) {
