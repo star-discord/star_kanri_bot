@@ -1,46 +1,55 @@
-// utils/buttonsHandler.js
+// utils/modalsHandler.js
 const path = require('path');
-const { isSafeName } = require('./validator'); // 任意：バリデーションが必要な場合
-const findHandler = require('./totusuna_setti/buttons');
+const fs = require('fs');
 
 /**
- * ボタンインタラクションの処理
- * @param {import('discord.js').ButtonInteraction} interaction
+ * モーダルインタラクションを処理する
+ * 各モジュールは { customIdStart, handle } をエクスポート
+ * ファイル名ではなく customIdStart に基づいてルーティングされる
+ * @param {import('discord.js').ModalSubmitInteraction} interaction
  */
-async function handleButton(interaction) {
+async function handleModal(interaction) {
+  if (!interaction.isModalSubmit()) return;
+
   const customId = interaction.customId;
 
-  // オプション：IDの安全性チェック（必要な場合）
-  if (typeof customId !== 'string') {
-    console.warn(`⚠️ 不正なカスタムID: ${customId}`);
-    return await interaction.reply({
-      content: '⚠️ 無効なボタン操作です。',
-      ephemeral: true
-    });
-  }
+  const searchModules = [
+    './star_config/modals',
+    './totusuna_config/modals',
+    './totusuna_setti/modals',
+    './totusuna_quick/modals'
+  ];
 
-  const handler = findHandler(customId);
+  for (const relativeDir of searchModules) {
+    const fullDir = path.join(__dirname, relativeDir);
 
-  if (!handler) {
-    console.warn(`⚠️ 未対応のボタン: ${customId}`);
-    return await interaction.reply({
-      content: '⚠️ このボタンは現在利用できません。',
-      ephemeral: true
-    });
-  }
+    if (!fs.existsSync(fullDir)) continue;
 
-  try {
-    await handler.handle(interaction);
-  } catch (err) {
-    console.error(`❌ ボタン処理エラー: ${customId}`, err);
-    if (!interaction.replied && !interaction.deferred) {
-      await interaction.reply({
-        content: '❌ ボタン処理中にエラーが発生しました。',
-        ephemeral: true
-      });
+    const files = fs.readdirSync(fullDir).filter(f => f.endsWith('.js'));
+
+    for (const file of files) {
+      const filePath = path.join(fullDir, file);
+      try {
+        delete require.cache[require.resolve(filePath)]; // 開発用：再読み込み
+        const mod = require(filePath);
+
+        const matchStart = mod.customIdStart && customId.startsWith(mod.customIdStart);
+        const matchExact = mod.customId && customId === mod.customId;
+
+        if ((matchStart || matchExact) && typeof mod.handle === 'function') {
+          return await mod.handle(interaction);
+        }
+      } catch (err) {
+        console.warn(`⚠️ モーダル処理失敗: ${filePath}`, err);
+      }
     }
   }
+
+  // 対応なし
+  await interaction.reply({
+    content: '❌ モーダルに対応する処理が見つかりませんでした。',
+    ephemeral: true
+  });
 }
 
-module.exports = { handleButton };
-
+module.exports = { handleModal };
