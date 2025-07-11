@@ -15,7 +15,7 @@ module.exports = {
 
   async execute(interaction) {
     const guildId = interaction.guild.id;
-    const filePath = await ensureGuildJSON(guildId);
+    const filePath = await ensureGuildJSON(guildId); // 非同期でファイル確認・作成
     const data = await readJSON(filePath);
 
     if (!data.star_config) data.star_config = {};
@@ -41,8 +41,7 @@ module.exports = {
 
     const row = new ActionRowBuilder().addComponents(roleSelect);
 
-    // 初期送信
-    const sentMessage = await interaction.reply({
+    await interaction.reply({
       embeds: [getSettingsEmbed(currentAdminRoleIds)],
       components: [row],
       flags: 1 << 6
@@ -50,7 +49,7 @@ module.exports = {
 
     const collector = interaction.channel?.createMessageComponentCollector({
       componentType: ComponentType.RoleSelect,
-      time: 5 * 60_000 // 5分有効
+      time: 30_000
     });
 
     if (!collector) return;
@@ -79,10 +78,10 @@ module.exports = {
         });
       }
 
-      const updates = [];
+      const embeds = [getSettingsEmbed(selectedRoleIds)];
 
       if (added.length > 0) {
-        updates.push(
+        embeds.push(
           new EmbedBuilder()
             .setTitle('✅ 管理者ロールを登録しました')
             .setDescription(`登録されたロール：\n${added.map(id => `<@&${id}>`).join('\n')}`)
@@ -91,7 +90,7 @@ module.exports = {
       }
 
       if (removed.length > 0) {
-        updates.push(
+        embeds.push(
           new EmbedBuilder()
             .setTitle('⚠️ 管理者ロールが解除されました')
             .setDescription(`解除されたロール：\n${removed.map(id => `<@&${id}>`).join('\n')}`)
@@ -99,23 +98,21 @@ module.exports = {
         );
       }
 
-      // メインEmbed更新
       await selectInteraction.update({
-        embeds: [getSettingsEmbed(selectedRoleIds), ...updates],
+        embeds,
         components: [new ActionRowBuilder().addComponents(roleSelect)],
         flags: 1 << 6
       });
     });
 
-    collector.on('end', async () => {
-      try {
-        await sentMessage.edit({
-          components: [],
-          embeds: [getSettingsEmbed(data.star_config.adminRoleIds || [])]
+    collector.on('end', collected => {
+      if (collected.size === 0 && !(interaction.replied || interaction.deferred)) {
+        interaction.editReply({
+          content: '⏱️ 時間切れのためロール設定はキャンセルされました。',
+          components: []
         });
-      } catch (e) {
-        console.warn('⚠️ 終了時のメッセージ編集に失敗:', e.message);
       }
     });
   }
 };
+
