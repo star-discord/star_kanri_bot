@@ -1,11 +1,16 @@
-const { tempStore } = require('../../modals/本文入力をする');
+// utils/totusuna_setti/selects/複製チャンネル.js
+
+const tempStore = require('../state/totsusunaTemp'); // 正しい一時ストアのパスを参照
 
 module.exports = async (interaction) => {
-  const selected = interaction.values; // 配列
+  const selected = interaction.values; // 複製チャンネルのID配列
+  const guildId = interaction.guildId;
   const userId = interaction.user.id;
 
-  tempStore.set(userId, {
-    ...(tempStore.get(userId) || {}),
+  // 既存データに追記（なければ空オブジェクトから）
+  const current = tempStore.get(guildId, userId) || {};
+  tempStore.set(guildId, userId, {
+    ...current,
     replicateChannelIds: selected
   });
 
