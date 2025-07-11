@@ -18,11 +18,10 @@ function isSafeName(str) {
 async function handleButton(interaction) {
   const customId = interaction.customId;
 
-  // フォーマット: 'コマンド名:アクション:引数1:引数2...'
-  const [commandName, action, ...args] = customId.split(':');
+  const [commandName] = customId.split(':');
 
   // 安全性チェック
-  if (!isSafeName(commandName) || !isSafeName(action)) {
+  if (!isSafeName(commandName)) {
     console.warn(`⚠️ 不正なカスタムID: ${customId}`);
     return await interaction.reply({
       content: '⚠️ 無効なボタン操作です。',
@@ -30,48 +29,63 @@ async function handleButton(interaction) {
     });
   }
 
-  const basePath = path.join(__dirname, commandName);
-  const actionPath = path.join(basePath, 'buttons', `${action}.js`);
-  const fallbackPath = path.join(basePath, 'buttons.js');
+  // まず utils/<command>/buttons.js があれば読み込む（静的ルーティング）
+  const buttonsIndexPath = path.join(__dirname, commandName, 'buttons.js');
+  if (fs.existsSync(buttonsIndexPath)) {
+    try {
+      const buttonsMap = require(buttonsIndexPath);
 
-  try {
-    if (fs.existsSync(actionPath)) {
-      const handler = require(actionPath);
-      if (typeof handler !== 'function') {
-        throw new Error('ボタンモジュールは関数をエクスポートする必要があります');
+      // 静的 customId での一致
+      if (buttonsMap[customId]) {
+        return await buttonsMap[customId].handle(interaction);
       }
-      await Promise.resolve(handler(interaction, ...args));
-      return;
-    }
 
-    if (fs.existsSync(fallbackPath)) {
-      const handlers = require(fallbackPath);
-      const target = handlers[action];
-      if (typeof target !== 'function') {
-        throw new Error(`buttons.js にアクション ${action} の関数が見つかりません`);
+      // 動的 customIdStart に対応するものを探す
+      for (const key in buttonsMap) {
+        const handler = buttonsMap[key];
+        if (handler.customIdStart && customId.startsWith(handler.customIdStart)) {
+          return await handler.handle(interaction);
+        }
       }
-      await Promise.resolve(target(interaction, ...args));
-      return;
+    } catch (err) {
+      console.error(`❌ ${buttonsIndexPath} の読み込み中にエラー:`, err);
     }
+  }
 
-    // どちらのファイルも見つからなかった
-    console.warn(`⚠️ ボタン処理ファイルが見つかりません: ${actionPath} または ${fallbackPath}`);
+  // 次に utils/<command>/buttons/<action>.js を探す（ファイル直接参照）
+  const [_, action] = customId.split(':'); // commandName は上ですでに取得
+  if (!isSafeName(action)) {
+    return await interaction.reply({
+      content: '⚠️ 無効なボタンアクションです。',
+      ephemeral: true
+    });
+  }
+
+  const handlerPath = path.join(__dirname, commandName, 'buttons', `${action}.js`);
+  if (fs.existsSync(handlerPath)) {
+    try {
+      const handler = require(handlerPath);
+
+      // static ID または customIdStart に対応
+      if (
+        (handler.customId && handler.customId === customId) ||
+        (handler.customIdStart && customId.startsWith(handler.customIdStart))
+      ) {
+        return await handler.handle(interaction);
+      }
+    } catch (err) {
+      console.error(`❌ ボタン処理中にエラー: ${customId}`, err);
+    }
+  }
+
+  // 最後のフォールバック
+  console.warn(`⚠️ ボタンハンドラーが見つかりません: ${customId}`);
+  if (!interaction.replied && !interaction.deferred) {
     await interaction.reply({
       content: '⚠️ このボタンは現在利用できません。',
       ephemeral: true
     });
-
-  } catch (error) {
-    console.error(`❌ ボタン処理中に例外発生: ${customId}`, error);
-
-    if (!interaction.replied && !interaction.deferred) {
-      await interaction.reply({
-        content: '❌ ボタン処理中にエラーが発生しました。',
-        ephemeral: true
-      });
-    }
   }
 }
 
 module.exports = { handleButton };
-
