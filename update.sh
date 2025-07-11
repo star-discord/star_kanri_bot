@@ -37,7 +37,17 @@ node deploy-commands.js || {
   exit 1
 }
 
-# pm2再起動
+# ファイルの最新反映を確認 (パス違い確認用)
+echo "🔍 反映ファイルの一部内容を表示して確認"
+HEAD_FILE="utils/totusuna_setti/buttons/install.js"
+if [ -f "$HEAD_FILE" ]; then
+  echo ">>> $HEAD_FILE の先頭10行"
+  head -n 10 "$HEAD_FILE"
+else
+  echo "⚠️ $HEAD_FILE が存在しません。パスやクローン状態を確認してください。"
+fi
+
+# pm2再起動 (プロセス再起動＋キャッシュクリア)
 echo "🔁 PM2 再起動"
 pm2 restart star-kanri-bot
 pm2 save
@@ -47,3 +57,4 @@ echo "📄 最新ログ（50行）"
 pm2 logs star-kanri-bot --lines 50 --nostream
 
 echo "✅ star_kanri_bot 更新完了"
+
