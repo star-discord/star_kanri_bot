@@ -2,7 +2,7 @@ const path = require('path');
 const { loadHandlers } = require('./handlerLoader');
 
 const totusunaHandler = loadHandlers(path.join(__dirname, 'totusuna_setti/modals'));
-const fallbackDirs = [
+const fallbackHandlers = [
   'star_config/modals',
   'totusuna_config/modals',
   'totusuna_quick/modals'
@@ -20,10 +20,12 @@ async function handleModal(interaction) {
   let handler = null;
 
   try {
+    // customIdがtotusuna_で始まる場合、専用ハンドラから検索
     if (customId.startsWith('totusuna_')) {
       handler = totusunaHandler(customId);
     } else {
-      for (const find of fallbackDirs) {
+      // それ以外はフォールバック用ハンドラから順番に検索
+      for (const find of fallbackHandlers) {
         handler = find(customId);
         if (handler) break;
       }
@@ -32,10 +34,11 @@ async function handleModal(interaction) {
     if (!handler) {
       return await interaction.reply({
         content: '❌ モーダルに対応する処理が見つかりませんでした。',
-        ephemeral: true
+        ephemeral: true,
       });
     }
 
+    // ハンドラを実行
     await handler.handle(interaction);
 
   } catch (err) {
@@ -43,7 +46,7 @@ async function handleModal(interaction) {
     if (!interaction.replied && !interaction.deferred) {
       await interaction.reply({
         content: '❌ モーダル処理中にエラーが発生しました。',
-        ephemeral: true
+        ephemeral: true,
       });
     }
   }
