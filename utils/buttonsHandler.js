@@ -30,28 +30,36 @@ async function handleButton(interaction) {
     });
   }
 
-  const handlerPath = path.join(__dirname, commandName, 'buttons', `${action}.js`);
+  const basePath = path.join(__dirname, commandName);
+  const actionPath = path.join(basePath, 'buttons', `${action}.js`);
+  const fallbackPath = path.join(basePath, 'buttons.js');
 
   try {
-    if (!fs.existsSync(handlerPath)) {
-      console.warn(`⚠️ ボタン処理ファイルが存在しません: ${handlerPath}`);
-      return await interaction.reply({
-        content: '⚠️ このボタンは現在利用できません。',
-        ephemeral: true
-      });
+    if (fs.existsSync(actionPath)) {
+      const handler = require(actionPath);
+      if (typeof handler !== 'function') {
+        throw new Error('ボタンモジュールは関数をエクスポートする必要があります');
+      }
+      await Promise.resolve(handler(interaction, ...args));
+      return;
     }
 
-    const handler = require(handlerPath);
-    if (typeof handler !== 'function') {
-      console.warn(`⚠️ 無効なエクスポート: ${handlerPath}`);
-      return await interaction.reply({
-        content: '⚠️ このボタンの処理が正しく構成されていません。',
-        ephemeral: true
-      });
+    if (fs.existsSync(fallbackPath)) {
+      const handlers = require(fallbackPath);
+      const target = handlers[action];
+      if (typeof target !== 'function') {
+        throw new Error(`buttons.js にアクション ${action} の関数が見つかりません`);
+      }
+      await Promise.resolve(target(interaction, ...args));
+      return;
     }
 
-    // 処理実行（同期/非同期 両対応）
-    await Promise.resolve(handler(interaction, ...args));
+    // どちらのファイルも見つからなかった
+    console.warn(`⚠️ ボタン処理ファイルが見つかりません: ${actionPath} または ${fallbackPath}`);
+    await interaction.reply({
+      content: '⚠️ このボタンは現在利用できません。',
+      ephemeral: true
+    });
 
   } catch (error) {
     console.error(`❌ ボタン処理中に例外発生: ${customId}`, error);
