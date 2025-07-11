@@ -1,3 +1,4 @@
+// utils/totusuna_setti/modals/editBody.js
 const fs = require('fs');
 const path = require('path');
 const {
@@ -9,7 +10,7 @@ const {
 } = require('discord.js');
 
 module.exports = {
-  customIdStart: 'totusuna_edit_modal:',
+  customIdStart: 'totusuna_edit_modal:', // UUID対応のためコロン形式に統一
 
   /**
    * 本文編集モーダルの送信後処理
@@ -31,7 +32,7 @@ module.exports = {
     }
 
     const json = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
-    const target = (json.totusuna?.instances || []).find(i => i.id === uuid);
+    const target = json.totusuna?.instances?.[uuid];
 
     if (!target) {
       return await interaction.reply({
@@ -40,7 +41,7 @@ module.exports = {
       });
     }
 
-    // 本文を更新
+    // 本文更新と保存
     target.body = inputText;
     fs.writeFileSync(dataPath, JSON.stringify(json, null, 2));
 
@@ -54,7 +55,7 @@ module.exports = {
         .setColor(0x00bfff);
 
       const button = new ButtonBuilder()
-        .setCustomId(`totusuna:report:${uuid}`)
+        .setCustomId(`totusuna:report:${uuid}`) // ボタンIDも統一
         .setLabel('凸スナ報告')
         .setStyle(ButtonStyle.Primary);
 
@@ -75,4 +76,3 @@ module.exports = {
     });
   }
 };
-
