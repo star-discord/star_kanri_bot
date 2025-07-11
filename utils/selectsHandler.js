@@ -1,25 +1,25 @@
-// utils/selectsHandler.js
-const path = require('path');
-const { loadHandlers } = require('./handlerLoader');
+// commands/common/selectHandler.js
+const starSelectHandler = require('../utils/star_config/selects');
+const totsusunaSelectHandler = require('../utils/totsusuna_setti/selects');
 const { InteractionResponseFlags } = require('discord.js');
 
-// 「totusuna_setti/selects」配下のセレクトメニュー用ハンドラー群を読み込み
-const findHandler = loadHandlers(path.join(__dirname, 'totusuna_setti/selects'));
-
 /**
- * セレクトメニューインタラクションの処理
  * @param {import('discord.js').StringSelectMenuInteraction} interaction
  */
 async function handleSelect(interaction) {
   if (!interaction.isStringSelectMenu()) return;
 
-  const customId = interaction.customId;
-  const handler = findHandler(customId);
+  const { customId } = interaction;
+
+  const handler = customId.startsWith('star_config:')
+    ? starSelectHandler(customId)
+    : customId.startsWith('totsusuna_setti:')
+      ? totsusunaSelectHandler(customId)
+      : null;
 
   if (!handler) {
-    console.warn(`⚠️ 未対応のセレクトメニュー: ${customId}`);
     return await interaction.reply({
-      content: '⚠️ このセレクトメニューは現在利用できません。',
+      content: '❌ セレクトメニューに対応する処理が見つかりませんでした。',
       flags: InteractionResponseFlags.Ephemeral,
     });
   }
@@ -27,10 +27,10 @@ async function handleSelect(interaction) {
   try {
     await handler.handle(interaction);
   } catch (err) {
-    console.error(`❌ セレクトメニュー処理エラー: ${customId}`, err);
+    console.error(`❌ セレクトエラー (${customId})`, err);
     if (!interaction.replied && !interaction.deferred) {
       await interaction.reply({
-        content: '❌ セレクトメニュー処理中にエラーが発生しました。',
+        content: '❌ エラーが発生しました。',
         flags: InteractionResponseFlags.Ephemeral,
       });
     }
