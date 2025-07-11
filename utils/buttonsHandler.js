@@ -1,15 +1,7 @@
 // utils/buttonsHandler.js
 const path = require('path');
-const fs = require('fs');
-
-/**
- * ファイル名やIDに使える安全な文字列かを検証する
- * @param {string} str
- * @returns {boolean}
- */
-function isSafeName(str) {
-  return typeof str === 'string' && /^[a-zA-Z0-9_\-]+$/.test(str);
-}
+const { isSafeName } = require('./validator'); // 任意：バリデーションが必要な場合
+const findHandler = require('./totusuna_setti/buttons');
 
 /**
  * ボタンインタラクションの処理
@@ -18,10 +10,8 @@ function isSafeName(str) {
 async function handleButton(interaction) {
   const customId = interaction.customId;
 
-  const [commandName] = customId.split(':');
-
-  // 安全性チェック
-  if (!isSafeName(commandName)) {
+  // オプション：IDの安全性チェック（必要な場合）
+  if (typeof customId !== 'string') {
     console.warn(`⚠️ 不正なカスタムID: ${customId}`);
     return await interaction.reply({
       content: '⚠️ 無効なボタン操作です。',
@@ -29,63 +19,28 @@ async function handleButton(interaction) {
     });
   }
 
-  // まず utils/<command>/buttons.js があれば読み込む（静的ルーティング）
-  const buttonsIndexPath = path.join(__dirname, commandName, 'buttons.js');
-  if (fs.existsSync(buttonsIndexPath)) {
-    try {
-      const buttonsMap = require(buttonsIndexPath);
+  const handler = findHandler(customId);
 
-      // 静的 customId での一致
-      if (buttonsMap[customId]) {
-        return await buttonsMap[customId].handle(interaction);
-      }
-
-      // 動的 customIdStart に対応するものを探す
-      for (const key in buttonsMap) {
-        const handler = buttonsMap[key];
-        if (handler.customIdStart && customId.startsWith(handler.customIdStart)) {
-          return await handler.handle(interaction);
-        }
-      }
-    } catch (err) {
-      console.error(`❌ ${buttonsIndexPath} の読み込み中にエラー:`, err);
-    }
-  }
-
-  // 次に utils/<command>/buttons/<action>.js を探す（ファイル直接参照）
-  const [_, action] = customId.split(':'); // commandName は上ですでに取得
-  if (!isSafeName(action)) {
+  if (!handler) {
+    console.warn(`⚠️ 未対応のボタン: ${customId}`);
     return await interaction.reply({
-      content: '⚠️ 無効なボタンアクションです。',
-      ephemeral: true
-    });
-  }
-
-  const handlerPath = path.join(__dirname, commandName, 'buttons', `${action}.js`);
-  if (fs.existsSync(handlerPath)) {
-    try {
-      const handler = require(handlerPath);
-
-      // static ID または customIdStart に対応
-      if (
-        (handler.customId && handler.customId === customId) ||
-        (handler.customIdStart && customId.startsWith(handler.customIdStart))
-      ) {
-        return await handler.handle(interaction);
-      }
-    } catch (err) {
-      console.error(`❌ ボタン処理中にエラー: ${customId}`, err);
-    }
-  }
-
-  // 最後のフォールバック
-  console.warn(`⚠️ ボタンハンドラーが見つかりません: ${customId}`);
-  if (!interaction.replied && !interaction.deferred) {
-    await interaction.reply({
       content: '⚠️ このボタンは現在利用できません。',
       ephemeral: true
     });
   }
+
+  try {
+    await handler.handle(interaction);
+  } catch (err) {
+    console.error(`❌ ボタン処理エラー: ${customId}`, err);
+    if (!interaction.replied && !interaction.deferred) {
+      await interaction.reply({
+        content: '❌ ボタン処理中にエラーが発生しました。',
+        ephemeral: true
+      });
+    }
+  }
 }
 
 module.exports = { handleButton };
+
