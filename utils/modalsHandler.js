@@ -1,52 +1,51 @@
 const path = require('path');
 const { loadHandlers } = require('./handlerLoader');
 
-// 優先ルート（例：totusuna_setti）
-const findTotusunaHandler = loadHandlers(path.join(__dirname, 'totusuna_setti/modals'));
-
-// その他の汎用ルート
+const totusunaHandler = loadHandlers(path.join(__dirname, 'totusuna_setti/modals'));
 const fallbackDirs = [
   'star_config/modals',
   'totusuna_config/modals',
   'totusuna_quick/modals'
-].map(subdir => loadHandlers(path.join(__dirname, subdir)));
+].map(sub => loadHandlers(path.join(__dirname, sub)));
 
 /**
  * モーダルインタラクションを処理する
- * 各モジュールは { customIdStart/customId, handle } をエクスポート
+ * @param {import('discord.js').ModalSubmitInteraction} interaction
  */
 async function handleModal(interaction) {
   if (!interaction.isModalSubmit()) return;
 
   const customId = interaction.customId;
 
-  // ① 優先：totusuna_setti/
-  const handler = findTotusunaHandler(customId);
-  if (handler) {
-    try {
-      return await handler.handle(interaction);
-    } catch (err) {
-      console.error(`❌ totusuna_setti モーダル処理エラー: ${customId}`, err);
+  let handler = null;
+
+  if (customId.startsWith('totusuna_')) {
+    handler = totusunaHandler(customId);
+  } else {
+    for (const find of fallbackDirs) {
+      handler = find(customId);
+      if (handler) break;
     }
   }
 
-  // ② 汎用サブディレクトリ（fallbackDirs）
-  for (const findHandler of fallbackDirs) {
-    const fallbackHandler = findHandler(customId);
-    if (fallbackHandler) {
-      try {
-        return await fallbackHandler.handle(interaction);
-      } catch (err) {
-        console.error(`❌ 汎用モーダル処理エラー: ${customId}`, err);
-      }
-    }
+  if (!handler) {
+    return await interaction.reply({
+      content: '❌ モーダルに対応する処理が見つかりませんでした。',
+      ephemeral: true
+    });
   }
 
-  // ③ 該当なし
-  await interaction.reply({
-    content: '❌ モーダルに対応する処理が見つかりませんでした。',
-    ephemeral: true,
-  });
+  try {
+    await handler.handle(interaction);
+  } catch (err) {
+    console.error(`❌ モーダル処理エラー: ${customId}`, err);
+    if (!interaction.replied && !interaction.deferred) {
+      await interaction.reply({
+        content: '❌ モーダル処理中にエラーが発生しました。',
+        ephemeral: true
+      });
+    }
+  }
 }
 
 module.exports = { handleModal };
