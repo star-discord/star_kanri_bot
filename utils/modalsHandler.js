@@ -2,20 +2,22 @@
 const path = require('path');
 const fs = require('fs');
 
-/**
- * モーダルインタラクションを処理する
- * 各モジュールは { customIdStart, handle } をエクスポート
- * ファイル名は自由だが customIdStart に一致するかで判断
- */
+// 個別モジュールが { customIdStart, handle } を持つ設計前提
 async function handleModal(interaction) {
   if (!interaction.isModalSubmit()) return;
 
   const customId = interaction.customId;
 
+  // 優先的に特定ルートにハンドオフ（例: totusuna_setti）
+  if (customId.startsWith('totusuna_')) {
+    const handleTotusunaSettiModal = require('./totusuna_setti/modals');
+    return await handleTotusunaSettiModal(interaction);
+  }
+
+  // 汎用ルーティング：その他のサブディレクトリ探索（必要なら残す）
   const searchDirs = [
     'star_config/modals',
     'totusuna_config/modals',
-    'totusuna_setti/modals',
     'totusuna_quick/modals'
   ];
 
@@ -24,44 +26,20 @@ async function handleModal(interaction) {
     if (!fs.existsSync(fullDir)) continue;
 
     const files = fs.readdirSync(fullDir).filter(f => f.endsWith('.js'));
-
-    // ファイルごとにモジュール読み込み + customIdStart を抽出
-    const handlers = files
-      .map(file => {
-        const filePath = path.join(fullDir, file);
-        try {
-          delete require.cache[require.resolve(filePath)];
-          const mod = require(filePath);
-          if (
-            typeof mod?.handle === 'function' &&
-            typeof mod?.customIdStart === 'string'
-          ) {
-            return { mod, filePath };
-          }
-        } catch (err) {
-          console.warn(`⚠️ モジュール読み込み失敗: ${filePath}`, err);
-        }
-        return null;
-      })
-      .filter(Boolean);
-
-    // 「:」を含むIDほど優先的に評価
-    handlers.sort((a, b) =>
-      b.mod.customIdStart.includes(':') - a.mod.customIdStart.includes(':')
-    );
-
-    for (const { mod, filePath } of handlers) {
-      if (customId.startsWith(mod.customIdStart)) {
-        console.log(`✅ モーダル処理: ${customId} → ${filePath}`);
-        try {
+    for (const file of files) {
+      const filePath = path.join(fullDir, file);
+      try {
+        delete require.cache[require.resolve(filePath)];
+        const mod = require(filePath);
+        if (
+          typeof mod?.handle === 'function' &&
+          typeof mod?.customIdStart === 'string' &&
+          customId.startsWith(mod.customIdStart)
+        ) {
           return await mod.handle(interaction);
-        } catch (err) {
-          console.error(`❌ モーダル処理エラー: ${filePath}`, err);
-          return await interaction.reply({
-            content: '❌ モーダル処理中にエラーが発生しました。',
-            ephemeral: true
-          });
         }
+      } catch (err) {
+        console.warn(`⚠️ モーダル処理失敗: ${filePath}`, err);
       }
     }
   }
