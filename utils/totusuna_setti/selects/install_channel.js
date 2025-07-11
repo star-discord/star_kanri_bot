@@ -1,3 +1,5 @@
+// totusuna_setti/selects/install_channel.js
+
 const { InteractionResponseFlags } = require('discord.js');
 const findHandler = require('./selects');
 
