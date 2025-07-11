@@ -11,7 +11,7 @@ const files = fs.readdirSync(buttonsDir).filter(file => file.endsWith('.js'));
 for (const file of files) {
   const modulePath = path.join(buttonsDir, file);
   try {
-    delete require.cache[require.resolve(modulePath)]; // ← 開発中のキャッシュ無効化
+    delete require.cache[require.resolve(modulePath)];
     const handler = require(modulePath);
 
     if (typeof handler.handle !== 'function') {
@@ -26,7 +26,6 @@ for (const file of files) {
     } else {
       console.warn(`⚠️ ボタンモジュールに customId/customIdStart が未定義: ${file}`);
     }
-
   } catch (err) {
     console.warn(`❌ ボタンファイルの読み込みに失敗 (${file}):`, err);
   }
