@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { handleButton } = require('./buttonsHandler');
 const { handleModal } = require('./modalsHandler');
-const { handleSelect } = require('./selectsHandler'); // ← 修正：handleSelectMenu → handleSelect
+const { handleSelect } = require('./selectsHandler'); // 修正済み
 
 const commands = new Map();
 const commandsPath = path.join(__dirname, '../commands');
@@ -66,7 +66,7 @@ module.exports = {
         await handleModal(interaction);
       }
       else if (interaction.isAnySelectMenu()) {
-        await handleSelect(interaction);  // ← 修正：handleSelectMenu → handleSelect
+        await handleSelect(interaction);  // 修正済み
       }
     } catch (err) {
       console.error('❌ インタラクション処理中にエラー:', err);
@@ -82,5 +82,8 @@ module.exports = {
         await interaction.reply(errorReply);
       }
     }
+  }
+};
+
   }
 };
