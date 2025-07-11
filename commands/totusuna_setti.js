@@ -6,7 +6,7 @@ const {
   ButtonStyle,
   ChannelType,
   EmbedBuilder,
-  InteractionResponseFlags, // 追加
+  InteractionResponseFlags,
 } = require('discord.js');
 
 const isAdmin = require('../utils/star_config/admin');
@@ -18,7 +18,8 @@ module.exports = {
 
   async execute(interaction) {
     try {
-      if (!isAdmin(interaction)) {
+      const admin = await isAdmin(interaction);
+      if (!admin) {
         return await interaction.reply({
           content: '❌ このコマンドを使用する権限がありません。',
           flags: InteractionResponseFlags.Ephemeral,
@@ -66,7 +67,7 @@ module.exports = {
         flags: InteractionResponseFlags.Ephemeral,
       });
     } catch (error) {
-      console.error('❌ /凸スナ設置 コマンド実行中にエラーが発生しました:', error);
+      console.error(`❌ /凸スナ設置 コマンド実行中にエラーが発生しました: user=${interaction.user.tag}`, error);
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({
           content: '❌ コマンド実行中にエラーが発生しました。管理者にお問い合わせください。',
