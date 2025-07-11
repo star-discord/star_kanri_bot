@@ -1,24 +1,29 @@
 // utils/totusuna_setti/selects/install_channel.js
 
-const tempStore = require('../state/totsusunaTemp'); // 一時保存用の状態ストア
+const tempStore = require('../state/totsusunaTemp');
 
-module.exports = async (interaction) => {
-  const selected = interaction.values[0]; // 選択されたチャンネルID
-  const guildId = interaction.guildId;
-  const userId = interaction.user.id;
+module.exports = {
+  customIdStart: 'totusuna_select_main:',
 
-  // 現在の一時状態を取得（なければ空）
-  const current = tempStore.get(guildId, userId) || {};
+  /**
+   * 設置チャンネル選択時の処理
+   * @param {import('discord.js').SelectMenuInteraction} interaction
+   */
+  async handle(interaction) {
+    const selected = interaction.values[0]; // 単一選択
+    const guildId = interaction.guildId;
+    const userId = interaction.user.id;
 
-  // 設置チャンネルIDを一時保存にセット
-  tempStore.set(guildId, userId, {
-    ...current,
-    installChannelId: selected
-  });
+    const current = tempStore.get(guildId, userId) || {};
 
-  // フィードバックを送信
-  await interaction.reply({
-    content: `📌 設置チャンネルを <#${selected}> に設定しました。`,
-    ephemeral: true
-  });
+    tempStore.set(guildId, userId, {
+      ...current,
+      installChannelId: selected
+    });
+
+    await interaction.reply({
+      content: `📌 設置チャンネルを <#${selected}> に設定しました。`,
+      ephemeral: true
+    });
+  }
 };
