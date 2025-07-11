@@ -1,4 +1,4 @@
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, InteractionResponseFlags } = require('discord.js');
 const { v4: uuidv4 } = require('uuid');
 const { ensureGuildJSON, readJSON, writeJSON } = require('../../../utils/fileHelper');
 const tempStore = require('../state/totsusunaTemp');
@@ -25,7 +25,7 @@ module.exports = {
     if (!userData?.installChannelId) {
       return await interaction.reply({
         content: '⚠ 設置チャンネルが未設定です。先にチャンネルを選択してください。',
-        ephemeral: true
+        flags: InteractionResponseFlags.Ephemeral,
       });
     }
 
@@ -39,7 +39,6 @@ module.exports = {
       replicateChannelIds: userData.replicateChannelIds || [],
     };
 
-    // Embed + Button 作成
     const embed = new EmbedBuilder()
       .setTitle('📣 凸スナ報告受付中')
       .setDescription(inputText)
@@ -56,7 +55,7 @@ module.exports = {
     if (!targetChannel?.isTextBased()) {
       return await interaction.reply({
         content: '⚠ 指定された設置チャンネルが見つかりません。',
-        ephemeral: true
+        flags: InteractionResponseFlags.Ephemeral,
       });
     }
 
@@ -65,7 +64,6 @@ module.exports = {
       components: [row]
     });
 
-    // メッセージID 保存
     newInstance.messageId = sentMessage.id;
     json.totusuna.instances.push(newInstance);
 
@@ -73,7 +71,7 @@ module.exports = {
 
     await interaction.reply({
       content: '✅ 本文を保存し、凸スナボタンを設置しました。',
-      ephemeral: true
+      flags: InteractionResponseFlags.Ephemeral,
     });
   }
 };
