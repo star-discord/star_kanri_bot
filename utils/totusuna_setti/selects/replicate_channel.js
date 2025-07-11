@@ -1,40 +1,33 @@
 // utils/totusuna_setti/selects/replicate_channel.js
-const fs = require('fs');
-const path = require('path');
+const { InteractionResponseFlags } = require('discord.js');
+const tempState = require('../state/totsusunaTemp');
 
-const handlers = {};
-const startsWithHandlers = [];
+/**
+ * 複製投稿チャンネル選択ハンドラ
+ */
+module.exports = {
+  customId: 'totsusuna_setti:select_replicate', // 実際のselectメニューのcustomIdに合わせる
 
-const selectsDir = __dirname;
+  /**
+   * @param {import('discord.js').StringSelectMenuInteraction} interaction
+   */
+  async handle(interaction) {
+    if (!interaction.isStringSelectMenu()) return;
 
-const files = fs.readdirSync(selectsDir).filter(file => file.endsWith('.js') && file !== 'index.js');
+    const guildId = interaction.guildId;
+    const userId = interaction.user.id;
 
-for (const file of files) {
-  const modulePath = path.join(selectsDir, file);
-  const handler = require(modulePath);
+    // 選択されたチャンネルID一覧を取得
+    const selectedChannelIds = interaction.values;
 
-  if (typeof handler.handle !== 'function') {
-    console.warn(`⚠️ セレクトモジュールに handle 関数がありません: ${file}`);
-    continue;
+    // 一時データを取得し、更新
+    const state = tempState.get(guildId, userId) || {};
+    state.replicateChannelIds = selectedChannelIds;
+    tempState.set(guildId, userId, state);
+
+    await interaction.reply({
+      content: `🌀 複製投稿チャンネルを設定しました: ${selectedChannelIds.join(', ')}`,
+      flags: InteractionResponseFlags.Ephemeral,
+    });
   }
-
-  if (typeof handler.customId === 'string') {
-    handlers[handler.customId] = handler;
-  } else if (typeof handler.customIdStart === 'string') {
-    startsWithHandlers.push({ key: handler.customIdStart, handler });
-  } else {
-    console.warn(`⚠️ セレクトモジュールに customId/customIdStart が未定義: ${file}`);
-  }
-}
-
-/** customId でルーティングする関数 */
-function findHandler(customId) {
-  if (handlers[customId]) return handlers[customId];
-  for (const { key, handler } of startsWithHandlers) {
-    if (customId.startsWith(key)) return handler;
-  }
-  console.warn(`⚠️ 対応するセレクトハンドラが見つかりません: ${customId}`);
-  return null;
-}
-
-module.exports = findHandler;
+};
