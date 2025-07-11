@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const { InteractionResponseFlags } = require('discord.js'); // 追加
 
 module.exports = {
   customIdStart: 'totsusuna_setti:delete_body:', // 英語化
@@ -17,7 +18,7 @@ module.exports = {
     if (!fs.existsSync(dataPath)) {
       return await interaction.reply({
         content: '⚠️ データファイルが見つかりません。',
-        ephemeral: true,
+        flags: InteractionResponseFlags.Ephemeral,
       });
     }
 
@@ -29,7 +30,7 @@ module.exports = {
       console.error('[delete_body] JSON読み込みエラー:', err);
       return await interaction.reply({
         content: '❌ データの読み込みに失敗しました。',
-        ephemeral: true,
+        flags: InteractionResponseFlags.Ephemeral,
       });
     }
 
@@ -37,7 +38,7 @@ module.exports = {
     if (!Array.isArray(instances)) {
       return await interaction.reply({
         content: '⚠️ 凸スナ情報が不正です。',
-        ephemeral: true,
+        flags: InteractionResponseFlags.Ephemeral,
       });
     }
 
@@ -45,7 +46,7 @@ module.exports = {
     if (targetIndex === -1) {
       return await interaction.reply({
         content: '⚠️ 指定された設置は存在しません。',
-        ephemeral: true,
+        flags: InteractionResponseFlags.Ephemeral,
       });
     }
 
@@ -68,7 +69,7 @@ module.exports = {
 
     await interaction.reply({
       content: '🗑 本文を削除しました。',
-      ephemeral: true,
+      flags: InteractionResponseFlags.Ephemeral,
     });
   },
 };
