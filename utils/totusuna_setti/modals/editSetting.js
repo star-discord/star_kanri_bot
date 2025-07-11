@@ -1,4 +1,4 @@
-// utils/totusuna_setti/modals/設定を編集.js
+// utils/totusuna_setti/modals/editSetting.js
 const fs = require('fs');
 const path = require('path');
 const { InteractionResponseFlags } = require('discord.js'); // ← 追加
