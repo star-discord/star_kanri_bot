@@ -8,7 +8,7 @@ const {
 } = require('discord.js');
 
 module.exports = {
-  customId: 'tousuna_input_body',
+  customId: 'totsusuna_setti:本文入力をする',
 
   /**
    * 凸スナ本文入力モーダル表示
@@ -17,8 +17,8 @@ module.exports = {
   async handle(interaction) {
     try {
       const modal = new ModalBuilder()
-        .setCustomId('tousuna_content_modal')
-        .setTitle('凸スナ 本文入力');
+        .setCustomId('totsusuna_content_modal')
+        .setTitle('📘 凸スナ 本文入力');
 
       const bodyInput = new TextInputBuilder()
         .setCustomId('body')
@@ -32,7 +32,7 @@ module.exports = {
 
       await interaction.showModal(modal);
     } catch (err) {
-      console.error('[本文入力モーダルエラー]', err);
+      console.error('[totsusuna 本文入力モーダルエラー]', err);
       await interaction.reply({
         content: '❌ モーダルの表示に失敗しました。',
         flags: InteractionResponseFlags.Ephemeral,
@@ -40,3 +40,4 @@ module.exports = {
     }
   },
 };
+
