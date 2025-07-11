@@ -1,6 +1,6 @@
 // utils/star_config/admin.js
 const fs = require('fs');
-const path = require('path');
+const { ensureGuildJSON } = require('../fileHelper');
 
 /**
  * 指定メンバーが star_config.adminRoleIds のいずれかのロールを持つかを判定
@@ -11,7 +11,7 @@ function isAdmin(input) {
   const member = input.member ?? input; // CommandInteraction or GuildMember
   const guildId = member.guild.id;
 
-  const jsonPath = path.resolve(__dirname, `../../data/${guildId}/${guildId}.json`);
+  const jsonPath = ensureGuildJSON(guildId);
   if (!fs.existsSync(jsonPath)) return false;
 
   try {
