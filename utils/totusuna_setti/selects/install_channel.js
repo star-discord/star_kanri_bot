@@ -1,3 +1,4 @@
+const { InteractionResponseFlags } = require('discord.js');
 const findHandler = require('./selects');
 
 /**
