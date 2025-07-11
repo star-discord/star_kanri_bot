@@ -1,37 +1,42 @@
 // utils/totusuna_setti/modals/本文入力をする.js
-const fs = require('fs');
-const path = require('path');
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, InteractionResponseFlags } = require('discord.js');
+
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { v4: uuidv4 } = require('uuid');
+const { ensureGuildJSON, readJSON, writeJSON } = require('../../../utils/fileHelper');
+const tempStore = require('../tempStore'); // 一時メモリストア
 
 module.exports = async function handleContentModal(interaction) {
   const guildId = interaction.guildId;
   const userId = interaction.user.id;
   const inputText = interaction.fields.getTextInputValue('body');
 
-  // 保存先パス
-  const dataDir = path.join(__dirname, '../../../data', guildId);
-  const dataFile = path.join(dataDir, `${guildId}.json`);
+  // JSON読み込み
+  const jsonPath = ensureGuildJSON(guildId);
+  const json = readJSON(jsonPath);
 
-  if (!fs.existsSync(dataFile)) {
-    return await interaction.reply({ content: '⚠ 設定ファイルが見つかりません。', flags: InteractionResponseFlags.Ephemeral });
+  if (!json.tousuna) json.tousuna = {};
+  if (!json.tousuna.instances) json.tousuna.instances = {};
+
+  const userData = tempStore.get(guildId, userId);
+  if (!userData?.installChannelId) {
+    return await interaction.reply({
+      content: '⚠ 設置チャンネルが未設定です。先にチャンネルを選択してください。',
+      ephemeral: true
+    });
   }
 
-  const json = JSON.parse(fs.readFileSync(dataFile, 'utf-8'));
-
-  if (!json.totusuna) json.totusuna = {};
-
-  // UUIDを生成し、本文と設置チャンネルIDなどを記録
   const uuid = uuidv4();
-  json.totusuna[uuid] = {
+
+  // インスタンス保存
+  json.tousuna.instances[uuid] = {
     uuid,
     userId,
     body: inputText,
-    installChannelId: interaction.channelId,
-    replicateChannelIds: [],
+    installChannelId: userData.installChannelId,
+    replicateChannelIds: userData.replicateChannelIds || []
   };
 
-  // ボタン付きメッセージの送信（Embed）
+  // Embed + ボタン作成
   const embed = new EmbedBuilder()
     .setTitle('📣 凸スナ報告受付中')
     .setDescription(inputText)
@@ -44,14 +49,27 @@ module.exports = async function handleContentModal(interaction) {
 
   const row = new ActionRowBuilder().addComponents(button);
 
-  const channel = interaction.channel;
-  const sent = await channel.send({ embeds: [embed], components: [row] });
+  const targetChannel = interaction.guild.channels.cache.get(userData.installChannelId);
+  if (!targetChannel) {
+    return await interaction.reply({
+      content: '⚠ 指定された設置チャンネルが見つかりません。',
+      ephemeral: true
+    });
+  }
 
-  // メッセージIDを保存
-  json.totusuna[uuid].messageId = sent.id;
+  const sentMessage = await targetChannel.send({
+    embeds: [embed],
+    components: [row]
+  });
 
-  // 書き込み保存
-  fs.writeFileSync(dataFile, JSON.stringify(json, null, 2), 'utf8');
+  // メッセージID保存
+  json.tousuna.instances[uuid].messageId = sentMessage.id;
 
-  await interaction.reply({ content: '✅ 本文を保存し、凸スナボタンを設置しました。', flags: InteractionResponseFlags.Ephemeral });
+  // JSON保存
+  writeJSON(jsonPath, json);
+
+  await interaction.reply({
+    content: '✅ 本文を保存し、凸スナボタンを設置しました。',
+    ephemeral: true
+  });
 };
