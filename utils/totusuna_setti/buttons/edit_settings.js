@@ -1,4 +1,4 @@
-const fs = require('fs');
+const fs = require('fs').promises;
 const path = require('path');
 const {
   ModalBuilder,
@@ -9,7 +9,7 @@ const {
 } = require('discord.js');
 
 module.exports = {
-  customIdStart: 'totsusuna_setti:edit_settings:', // 英語customIdにリネーム
+  customIdStart: 'totsusuna_setti:edit_settings:',
 
   /**
    * 凸スナ設置の編集モーダル表示
@@ -20,18 +20,19 @@ module.exports = {
     const uuid = interaction.customId.replace(this.customIdStart, '');
     const dataPath = path.join(__dirname, '../../../data', guildId, `${guildId}.json`);
 
-    // ファイル存在確認
-    if (!fs.existsSync(dataPath)) {
+    try {
+      await fs.access(dataPath);
+    } catch {
       return await interaction.reply({
         content: '⚠️ データファイルが見つかりません。',
         flags: InteractionResponseFlags.Ephemeral,
       });
     }
 
-    // JSON 読み込み
     let json;
     try {
-      json = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
+      const fileContent = await fs.readFile(dataPath, 'utf-8');
+      json = JSON.parse(fileContent);
     } catch (err) {
       console.error('[edit_settings] JSON読み込み失敗:', err);
       return await interaction.reply({
@@ -56,9 +57,8 @@ module.exports = {
       });
     }
 
-    // 編集モーダルを構築
     const modal = new ModalBuilder()
-      .setCustomId(`totsusuna_edit_modal_${uuid}`)
+      .setCustomId(this.customIdStart + uuid)
       .setTitle('📘 凸スナ本文を編集');
 
     const bodyInput = new TextInputBuilder()
