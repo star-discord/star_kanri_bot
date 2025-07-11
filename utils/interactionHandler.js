@@ -5,6 +5,7 @@ const {
   ButtonBuilder,
   ButtonStyle,
   ChannelType,
+  MessageFlags,      // ←ここを追加
 } = require('discord.js');
 const { InteractionResponseFlags } = require('discord.js');
 const isAdmin = require('../utils/star_config/admin');
@@ -68,7 +69,7 @@ module.exports = {
     await interaction.reply({
       content: '🎯 以下の項目を設定してください。',
       components: [row1, row2, row3],
-      flags: InteractionResponseFlags.Ephemeral,
+      flags: MessageFlags.Ephemeral,
     });
   },
 };
