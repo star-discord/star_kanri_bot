@@ -9,7 +9,6 @@ const {
 const { InteractionResponseFlags } = require('discord.js');
 const isAdmin = require('../utils/star_config/admin');
 
-
 // customId を定数で定義（再利用しやすく、typo防止）
 const CUSTOM_IDS = {
   MAIN_CHANNEL: 'totusuna_select_main',
@@ -28,7 +27,7 @@ module.exports = {
     if (!isAdmin(interaction)) {
       return await interaction.reply({
         content: '❌ このコマンドを使用する権限がありません。',
-        ephemeral: true,
+        flags: InteractionResponseFlags.Ephemeral,
       });
     }
 
