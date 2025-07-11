@@ -12,8 +12,8 @@ const isAdmin = require('../utils/star_config/admin');
 const CUSTOM_IDS = {
   MAIN_CHANNEL: 'totusuna_select_main',
   REPLICATE_CHANNEL: 'totusuna_select_replicate',
-  INPUT_BODY: 'totsusuna_setti:本文入力をする',
-  CONFIRM: 'totsusuna_setti:設置する',
+  INPUT_BODY: 'totsusuna_setti:input_body',
+  CONFIRM: 'totsusuna_setti:install',
 };
 
 module.exports = {
