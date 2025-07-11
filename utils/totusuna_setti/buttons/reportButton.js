@@ -7,16 +7,16 @@ const {
 } = require('discord.js');
 
 module.exports = {
-  customIdStart: 'totsusuna_report_button_', // ✅ 仕様に合わせて命名統一
+  customIdStart: 'totsusuna_report_button_', // ✅ 命名規則に従って統一
 
   /**
-   * 凸スナ報告ボタン押下 → モーダル表示
+   * 凸スナ報告ボタン押下時の処理 → モーダルを表示
    * @param {import('discord.js').ButtonInteraction} interaction
    */
   async handle(interaction) {
     const customId = interaction.customId;
 
-    // UUIDをボタンIDから抽出（例: totsusuna_report_button_<UUID>）
+    // ボタンIDからUUIDを抽出（例: totsusuna_report_button_<UUID>）
     const uuid = customId.split('_').slice(-1)[0];
 
     const modal = new ModalBuilder()
