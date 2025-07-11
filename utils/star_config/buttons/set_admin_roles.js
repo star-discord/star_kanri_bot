@@ -1,6 +1,6 @@
-// star_config/buttons/set_admin_roles.js
 const path = require('path');
 const { ensureGuildJSON, readJSON, writeJSON } = require('../../fileHelper');
+const { InteractionResponseFlags } = require('discord.js'); // 追加
 
 module.exports = {
   customId: 'star_config:set_admin_roles',
@@ -14,7 +14,7 @@ module.exports = {
     if (!interaction.isRoleSelectMenu()) {
       return interaction.reply({
         content: '❌ この操作はロール選択からのみ可能です。',
-        ephemeral: true
+        flags: InteractionResponseFlags.Ephemeral
       });
     }
 
@@ -24,7 +24,7 @@ module.exports = {
     if (!selectedRoles || selectedRoles.length === 0) {
       return interaction.reply({
         content: '⚠️ ロールが選択されていません。',
-        ephemeral: true
+        flags: InteractionResponseFlags.Ephemeral
       });
     }
 
@@ -41,17 +41,15 @@ module.exports = {
 
       await interaction.reply({
         content: `✅ 管理者ロールを以下の通り設定しました:\n${mentionText}`,
-        ephemeral: true
+        flags: InteractionResponseFlags.Ephemeral
       });
 
     } catch (err) {
       console.error(`❌ 管理者ロール保存中にエラー (${guildId}):`, err);
       await interaction.reply({
         content: '❌ 管理者ロールの保存に失敗しました。',
-        ephemeral: true
+        flags: InteractionResponseFlags.Ephemeral
       });
     }
   }
 };
-
-
