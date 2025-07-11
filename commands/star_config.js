@@ -1,4 +1,3 @@
-// commands/star_config.js
 const {
   SlashCommandBuilder,
   ActionRowBuilder,
@@ -19,13 +18,12 @@ module.exports = {
 
   async execute(interaction) {
     const guildId = interaction.guild.id;
-    const filePath = await ensureGuildJSON(guildId); // ← await 忘れずに
+    const filePath = await ensureGuildJSON(guildId);
     const data = await readJSON(filePath);
 
     if (!data.star_config) data.star_config = {};
     const currentAdminRoleIds = data.star_config.adminRoleIds || [];
 
-    // 埋め込み生成関数
     const getSettingsEmbed = (roleIds) => {
       const currentMentions =
         roleIds.length > 0
@@ -52,4 +50,88 @@ module.exports = {
     const sentMessage = await interaction.reply({
       embeds: [getSettingsEmbed(currentAdminRoleIds)],
       components: [row],
-      f
+      flags: 1 << 6,
+    });
+
+    const collector = interaction.channel?.createMessageComponentCollector({
+      componentType: ComponentType.RoleSelect,
+      time: 30_000,
+      max: 1,
+    });
+
+    if (!collector) return;
+
+    collector.on('collect', async (selectInteraction) => {
+      if (selectInteraction.user.id !== interaction.user.id) {
+        return await selectInteraction.reply({
+          content: '❌ この操作はコマンドを実行したユーザーのみが行えます。',
+          flags: 1 << 6,
+        });
+      }
+
+      const selectedRoleIds = selectInteraction.values;
+      const added = selectedRoleIds.filter(
+        (id) => !currentAdminRoleIds.includes(id)
+      );
+      const removed = currentAdminRoleIds.filter(
+        (id) => !selectedRoleIds.includes(id)
+      );
+
+      data.star_config.adminRoleIds = selectedRoleIds;
+
+      try {
+        await writeJSON(filePath, data);
+      } catch (err) {
+        console.error('❌ JSON保存失敗:', err);
+        return await selectInteraction.reply({
+          content: '❌ ロールの保存に失敗しました。',
+          flags: 1 << 6,
+        });
+      }
+
+      try {
+        await sentMessage.delete();
+      } catch (e) {
+        console.warn('⚠️ 元の設定Embedを削除できませんでした。');
+      }
+
+      if (added.length > 0) {
+        const embed = new EmbedBuilder()
+          .setTitle('✅ 管理者ロールを登録しました')
+          .setDescription(
+            `登録されたロール：\n${added.map((id) => `<@&${id}>`).join('\n')}`
+          )
+          .setColor(0x00cc99);
+        await interaction.followUp({ embeds: [embed], flags: 1 << 6 });
+      }
+
+      if (removed.length > 0) {
+        const embed = new EmbedBuilder()
+          .setTitle('⚠️ 管理者ロールが解除されました')
+          .setDescription(
+            `解除されたロール：\n${removed.map((id) => `<@&${id}>`).join('\n')}`
+          )
+          .setColor(0xff6600);
+        await interaction.followUp({ embeds: [embed], flags: 1 << 6 });
+      }
+
+      await interaction.followUp({
+        embeds: [getSettingsEmbed(selectedRoleIds)],
+        components: [new ActionRowBuilder().addComponents(roleSelect)],
+        flags: 1 << 6,
+      });
+    });
+
+    collector.on('end', async (collected) => {
+      if (
+        collected.size === 0 &&
+        !(interaction.replied || interaction.deferred)
+      ) {
+        await interaction.editReply({
+          content: '⏱️ 時間切れのためロール設定はキャンセルされました。',
+          components: [],
+        });
+      }
+    });
+  },
+};
