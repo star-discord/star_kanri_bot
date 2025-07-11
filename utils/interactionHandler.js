@@ -2,8 +2,8 @@
 const fs = require('fs');
 const path = require('path');
 const { handleButton } = require('./buttonsHandler');
-const { handleModal } = require('./modalsHandler'); // 後で実装する場合
-// const { handleSelectMenu } = require('./selectHandler'); ←必要になったら追加
+const { handleModal } = require('./modalsHandler');
+const { handleSelectMenu } = require('./selectsHandler'); // ✅ 追加された selectMenu ハンドラー
 
 const commands = new Map();
 const commandsPath = path.join(__dirname, '../commands');
@@ -70,10 +70,9 @@ module.exports = {
         await handleModal(interaction);
       }
 
-      // 追加する場合（例: RoleSelectMenu）
-      // else if (interaction.isAnySelectMenu()) {
-      //   await handleSelectMenu(interaction);
-      // }
+      else if (interaction.isAnySelectMenu()) {
+        await handleSelectMenu(interaction);
+      }
 
     } catch (err) {
       console.error('❌ インタラクション処理中にエラー:', err);
