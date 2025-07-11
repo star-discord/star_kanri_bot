@@ -1,73 +1,51 @@
 // utils/totusuna_setti/selects.js
-const fs = require('fs');
-const path = require('path');
+const { InteractionResponseFlags } = require('discord.js');
+
+// カテゴリごとの findHandler を読み込み
+const findTotsusunaHandler = require('../totusuna_setti/selects');
+const findStarHandler = require('../star_config/selects');
 
 /**
- * @type {Record<string, {handle: Function, customId?: string, customIdStart?: string}>}
+ * セレクトメニューインタラクションを処理するメイン関数
+ * @param {import('discord.js').StringSelectMenuInteraction} interaction
  */
-const handlers = {};
-/**
- * @type {Array<{key: string, handler: {handle: Function}}>}
- */
-const startsWithHandlers = [];
+async function handleSelect(interaction) {
+  if (!interaction.isStringSelectMenu()) return;
 
-const selectsDir = path.join(__dirname, 'selects');
+  const customId = interaction.customId;
+  let handler;
 
-// セレクトフォルダ存在チェック
-if (!fs.existsSync(selectsDir)) {
-  console.warn(`⚠️ [totsusuna/selects] ディレクトリが存在しません: ${selectsDir}`);
-} else {
-  const files = fs.readdirSync(selectsDir).filter(file => file.endsWith('.js'));
+  // customId に応じて適切なハンドラを探す
+  if (customId.startsWith('totsusuna_setti:')) {
+    handler = findTotsusunaHandler(customId);
+  } else {
+    handler = findStarHandler(customId);
+  }
 
-  for (const file of files) {
-    const modulePath = path.join(selectsDir, file);
-    try {
-      delete require.cache[require.resolve(modulePath)]; // キャッシュ削除（開発用）
+  if (!handler) {
+    await interaction.reply({
+      content: '❌ セレクトメニューに対応する処理が見つかりませんでした。',
+      flags: InteractionResponseFlags.Ephemeral,
+    });
+    return;
+  }
 
-      const handler = require(modulePath);
+  try {
+    await handler.handle(interaction);
+  } catch (error) {
+    console.error(`❌ セレクトメニュー処理エラー (${customId}):`, error);
 
-      if (!handler || typeof handler.handle !== 'function') {
-        console.warn(`⚠️ [totsusuna/selects] ${file} に handle 関数がありません`);
-        continue;
-      }
+    const errorMessage = {
+      content: '⚠️ セレクトメニュー処理中にエラーが発生しました。管理者に報告してください。',
+      flags: InteractionResponseFlags.Ephemeral,
+    };
 
-      if (typeof handler.customId === 'string') {
-        if (handlers[handler.customId]) {
-          console.warn(`⚠️ [totsusuna/selects] ${file} の customId が重複しています: ${handler.customId}`);
-        }
-        handlers[handler.customId] = handler;
-      } else if (typeof handler.customIdStart === 'string') {
-        if (startsWithHandlers.find(h => h.key === handler.customIdStart)) {
-          console.warn(`⚠️ [totsusuna/selects] ${file} の customIdStart が重複しています: ${handler.customIdStart}`);
-        }
-        startsWithHandlers.push({ key: handler.customIdStart, handler });
-      } else {
-        console.warn(`⚠️ [totsusuna/selects] ${file} に customId または customIdStart が未定義です`);
-      }
-    } catch (err) {
-      console.error(`❌ [totsusuna/selects] ${file} 読み込み失敗:`, err);
+    if (interaction.replied || interaction.deferred) {
+      await interaction.followUp(errorMessage);
+    } else {
+      await interaction.reply(errorMessage);
     }
   }
 }
 
-/**
- * totsusuna_setti 専用セレクトハンドラを customId で取得
- * 完全一致 → 前方一致
- * @param {string} customId
- * @returns {{handle: Function}|null}
- */
-function findHandler(customId) {
-  if (!customId.startsWith('totsusuna_setti:')) return null; // ← ★ ここで限定
-
-  if (handlers[customId]) return handlers[customId];
-
-  for (const { key, handler } of startsWithHandlers) {
-    if (customId.startsWith(key)) return handler;
-  }
-
-  console.warn(`⚠️ [totsusuna/selects] 対応するハンドラが見つかりません: ${customId}`);
-  return null;
-}
-
-module.exports = findHandler;
-
+module.exports = { handleSelect };
