@@ -22,7 +22,7 @@ module.exports = {
     if (!fs.existsSync(dataPath)) {
       return await interaction.reply({
         content: '⚠️ データファイルが見つかりません。',
-        ephemeral: true
+        flags: 1 << 6 // ephemeralに対応
       });
     }
 
@@ -32,7 +32,7 @@ module.exports = {
     if (!instance) {
       return await interaction.reply({
         content: '⚠️ 指定された設置が見つかりません。',
-        ephemeral: true
+        flags: 1 << 6
       });
     }
 
