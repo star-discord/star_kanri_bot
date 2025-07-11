@@ -1,4 +1,3 @@
-// utils/totusuna_setti/modals/編集.js
 const fs = require('fs');
 const path = require('path');
 const {
@@ -10,12 +9,15 @@ const {
 } = require('discord.js');
 
 module.exports = {
-  customIdStart: 'totusuna_edit_modal_', // ← 修正済み
+  customIdStart: 'totusuna_edit_modal:',
 
+  /**
+   * 本文編集モーダル処理（UUID形式）
+   * @param {import('discord.js').ModalSubmitInteraction} interaction
+   */
   async handle(interaction) {
     const guildId = interaction.guildId;
-    const customId = interaction.customId;
-    const uuid = customId.replace('totusuna_edit_modal_', ''); // ← 修正済み
+    const uuid = interaction.customId.replace(this.customIdStart, '');
     const newBody = interaction.fields.getTextInputValue('body');
 
     const filePath = path.join(__dirname, '../../../data', guildId, `${guildId}.json`);
@@ -27,21 +29,20 @@ module.exports = {
     }
 
     const json = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-    const target = json.totusuna?.[uuid]; // ← 修正済み
+    const instance = (json.totusuna?.instances || []).find(i => i.id === uuid);
 
-    if (!target) {
+    if (!instance) {
       return await interaction.reply({
-        content: '⚠ 設定が見つかりません。',
+        content: '⚠ 対象の設置データが見つかりません。',
         flags: InteractionResponseFlags.Ephemeral,
       });
     }
 
-    target.body = newBody;
+    instance.body = newBody;
 
-    // メッセージ更新（Embed 差し替え）
     try {
-      const channel = await interaction.guild.channels.fetch(target.installChannelId);
-      const message = await channel.messages.fetch(target.messageId);
+      const channel = await interaction.guild.channels.fetch(instance.installChannelId);
+      const message = await channel.messages.fetch(instance.messageId);
 
       const embed = new EmbedBuilder()
         .setTitle('📣 凸スナ報告受付中')
@@ -49,7 +50,7 @@ module.exports = {
         .setColor(0x00bfff);
 
       const button = new ButtonBuilder()
-        .setCustomId(`tousuna_report_button_${uuid}`) // ここは保持でOK（buttonHandlerで識別してる場合）
+        .setCustomId(`totusuna:report:${uuid}`)
         .setLabel('凸スナ報告')
         .setStyle(ButtonStyle.Primary);
 
@@ -57,7 +58,7 @@ module.exports = {
 
       await message.edit({ embeds: [embed], components: [row] });
     } catch (err) {
-      console.warn('⚠ メッセージ更新に失敗：', err.message);
+      console.warn('[editBody] メッセージ更新に失敗:', err.message);
     }
 
     fs.writeFileSync(filePath, JSON.stringify(json, null, 2));
