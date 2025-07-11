@@ -1,76 +1,41 @@
+// utils/selectsHandler.js
 const path = require('path');
 const { loadHandlers } = require('./handlerLoader');
+const { InteractionResponseFlags } = require('discord.js'); // 追加
 
-// 「totusuna_setti」配下のセレクトメニュー用ハンドラー群を読み込み
-const totusunaHandler = loadHandlers(path.join(__dirname, 'totusuna_setti/selects'));
-
-// その他のセレクトメニュー用ハンドラー群（後方互換など）
-const fallbackDirs = [
-  'star_config/selects',
-  'totusuna_config/selects',
-  'totusuna_quick/selects'
-].map(sub => loadHandlers(path.join(__dirname, sub)));
+// 「totusuna_setti/selects」配下のセレクトメニュー用ハンドラー群を読み込み
+const findHandler = loadHandlers(path.join(__dirname, 'totusuna_setti/selects'));
 
 /**
- * セレクトメニューインタラクションを処理するメイン関数
+ * セレクトメニューインタラクションの処理
  * @param {import('discord.js').StringSelectMenuInteraction} interaction
  */
 async function handleSelect(interaction) {
-  // セレクトメニュー以外のインタラクションは無視
   if (!interaction.isStringSelectMenu()) return;
 
   const customId = interaction.customId;
-  let handler = null;
+  const handler = findHandler(customId);
+
+  if (!handler) {
+    console.warn(`⚠️ 未対応のセレクトメニュー: ${customId}`);
+    return await interaction.reply({
+      content: '⚠️ このセレクトメニューは現在利用できません。',
+      flags: InteractionResponseFlags.Ephemeral,
+    });
+  }
 
   try {
-    // 「totusuna_」で始まる customId を優先的に処理
-    if (customId.startsWith('totusuna_')) {
-      handler = totusunaHandler(customId);
-    } else {
-      // フォールバック用ディレクトリ群から対応するハンドラを順に探索
-      for (const find of fallbackDirs) {
-        handler = find(customId);
-        if (handler) break;
-      }
-    }
-
-    if (!handler) {
-      // 対応ハンドラなし。ユーザーへ通知
-      await interaction.reply({
-        content: '❌ セレクトメニューに対応する処理が見つかりませんでした。',
-        ephemeral: true,
-      });
-      return;
-    }
-
-    // ハンドラの処理を実行
     await handler.handle(interaction);
-
-  } catch (error) {
-    // 例外発生時のログ出力
-    console.error(`❌ セレクトメニュー処理中にエラー発生 (customId: ${customId}):`, error);
-
-    // すでに返信済み or defer済みなら followUp、それ以外は reply でエラーメッセージ送信
-    if (interaction.replied || interaction.deferred) {
-      try {
-        await interaction.followUp({
-          content: '⚠️ セレクトメニュー処理中にエラーが発生しました。管理者に報告してください。',
-          ephemeral: true,
-        });
-      } catch (followUpError) {
-        console.error('❌ フォローアップ送信中にエラー:', followUpError);
-      }
-    } else {
-      try {
-        await interaction.reply({
-          content: '⚠️ セレクトメニュー処理中にエラーが発生しました。管理者に報告してください。',
-          ephemeral: true,
-        });
-      } catch (replyError) {
-        console.error('❌ リプライ送信中にエラー:', replyError);
-      }
+  } catch (err) {
+    console.error(`❌ セレクトメニュー処理エラー: ${customId}`, err);
+    if (!interaction.replied && !interaction.deferred) {
+      await interaction.reply({
+        content: '❌ セレクトメニュー処理中にエラーが発生しました。',
+        flags: InteractionResponseFlags.Ephemeral,
+      });
     }
   }
 }
 
 module.exports = { handleSelect };
+
