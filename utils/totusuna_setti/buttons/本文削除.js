@@ -1,7 +1,6 @@
 // utils/totusuna_setti/buttons/本文削除.js
 const fs = require('fs');
 const path = require('path');
-const { InteractionResponseFlags } = require('discord.js');
 
 module.exports = {
   async handle(interaction, uuid) {
@@ -11,29 +10,27 @@ module.exports = {
     if (!fs.existsSync(dataPath)) {
       return await interaction.reply({
         content: '⚠️ データファイルが見つかりません。',
-        flags: InteractionResponseFlags.Ephemeral,
+        ephemeral: true,
       });
     }
 
     const json = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
-    const instances = json.tousuna?.instances;
+    const instances = json.totusuna?.instances;
 
-    if (!Array.isArray(instances)) {
+    if (!instances || typeof instances !== 'object') {
       return await interaction.reply({
         content: '⚠️ 凸スナ情報が不正です。',
-        flags: InteractionResponseFlags.Ephemeral,
+        ephemeral: true,
       });
     }
 
-    const index = instances.findIndex(i => i.id === uuid);
-    if (index === -1) {
+    const target = instances[uuid];
+    if (!target) {
       return await interaction.reply({
         content: '⚠️ 指定された設置は存在しません。',
-        flags: InteractionResponseFlags.Ephemeral,
+        ephemeral: true,
       });
     }
-
-    const target = instances[index];
 
     // メッセージ削除（可能であれば）
     try {
@@ -47,12 +44,12 @@ module.exports = {
     }
 
     // JSONから削除
-    instances.splice(index, 1);
+    delete instances[uuid];
     fs.writeFileSync(dataPath, JSON.stringify(json, null, 2));
 
     await interaction.reply({
       content: '🗑 本文を削除しました。',
-      flags: InteractionResponseFlags.Ephemeral,
+      ephemeral: true,
     });
   },
 };
