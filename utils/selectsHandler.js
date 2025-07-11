@@ -1,10 +1,8 @@
 const path = require('path');
-const fs = require('fs');
+const { loadHandlers } = require('./handlerLoader');
 
 /**
  * セレクトメニューインタラクションを処理する
- * 各モジュールは { customIdStart, handle } をエクスポート
- * ファイル名ではなく customIdStart に基づいてルーティングされる
  * @param {import('discord.js').StringSelectMenuInteraction} interaction
  */
 async function handleSelect(interaction) {
@@ -12,33 +10,31 @@ async function handleSelect(interaction) {
 
   const customId = interaction.customId;
 
-  const searchModules = [
-    './star_config/selects',
-    './totusuna_config/selects',
-    './totusuna_setti/selects',
-    './totusuna_quick/selects'
+  // 対象ディレクトリ群
+  const searchDirs = [
+    'star_config/selects',
+    'totusuna_config/selects',
+    'totusuna_setti/selects',
+    'totusuna_quick/selects'
   ];
 
-  for (const relativeDir of searchModules) {
-    const fullDir = path.join(__dirname, relativeDir);
-    if (!fs.existsSync(fullDir)) continue;
+  for (const dir of searchDirs) {
+    const fullDir = path.join(__dirname, dir);
+    const findHandler = loadHandlers(fullDir);
 
-    const files = fs.readdirSync(fullDir).filter(f => f.endsWith('.js'));
-
-    for (const file of files) {
-      const filePath = path.join(fullDir, file);
+    const handler = findHandler(customId);
+    if (handler) {
       try {
-        delete require.cache[require.resolve(filePath)];
-        const mod = require(filePath);
-
-        const matchStart = mod.customIdStart && customId.startsWith(mod.customIdStart);
-        const matchExact = mod.customId && customId === mod.customId;
-
-        if ((matchStart || matchExact) && typeof mod.handle === 'function') {
-          return await mod.handle(interaction);
-        }
+        return await handler.handle(interaction);
       } catch (err) {
-        console.warn(`⚠️ セレクト処理失敗: ${filePath}`, err);
+        console.error(`❌ セレクトメニュー処理エラー (${customId})`, err);
+        if (!interaction.replied && !interaction.deferred) {
+          return await interaction.reply({
+            content: '❌ 処理中にエラーが発生しました。',
+            ephemeral: true
+          });
+        }
+        return;
       }
     }
   }
