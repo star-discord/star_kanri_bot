@@ -16,6 +16,7 @@ module.exports = {
 
   async execute(interaction) {
     try {
+      // 管理者権限チェック
       if (!isAdmin(interaction)) {
         return await interaction.reply({
           content: '❌ このコマンドを使用する権限がありません。',
@@ -23,6 +24,7 @@ module.exports = {
         });
       }
 
+      // メインチャンネル選択用セレクトメニュー作成
       const channelSelect = new ChannelSelectMenuBuilder()
         .setCustomId('totsusuna_setti:select_main')
         .setPlaceholder('📌 ボタンを投稿するメインチャンネルを選択してください')
@@ -30,6 +32,7 @@ module.exports = {
         .setMaxValues(1)
         .addChannelTypes(ChannelType.GuildText);
 
+      // 複製投稿用の複数チャンネル選択セレクトメニュー作成
       const replicateSelect = new ChannelSelectMenuBuilder()
         .setCustomId('totsusuna_setti:select_replicate')
         .setPlaceholder('🌀 複製投稿するチャンネルを選択してください（任意、複数選択可）')
@@ -37,20 +40,24 @@ module.exports = {
         .setMaxValues(5)
         .addChannelTypes(ChannelType.GuildText);
 
+      // 本文入力ボタン作成
       const inputButton = new ButtonBuilder()
         .setCustomId('totsusuna_setti:本文入力をする')
         .setLabel('📄 本文を入力する')
         .setStyle(ButtonStyle.Secondary);
 
+      // 設置ボタン作成
       const createButton = new ButtonBuilder()
         .setCustomId('totsusuna_setti:設置する')
         .setLabel('☑ 設置する')
         .setStyle(ButtonStyle.Primary);
 
+      // アクション行にコンポーネントをセット
       const row1 = new ActionRowBuilder().addComponents(channelSelect);
       const row2 = new ActionRowBuilder().addComponents(replicateSelect);
       const row3 = new ActionRowBuilder().addComponents(inputButton, createButton);
 
+      // 応答送信（エフェメラル）
       await interaction.reply({
         content: '🎯 以下の設定を行ってください。',
         components: [row1, row2, row3],
