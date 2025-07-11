@@ -1,50 +1,42 @@
-// utils/totusuna_setti/selects/install_channel.js
+// utils/totusuna_setti/selects.js の findHandler を使う想定
 
-const tempStore = require('../../state/totsusunaTemp');
-const { InteractionResponseFlags } = require('discord.js'); // ← 追加
+const findHandler = require('./selects'); // 上記の selects.js ファイルのエクスポート
 
-module.exports = {
-  customIdStart: 'totusuna_select_main:',
+/**
+ * セレクトメニューインタラクションを処理するメイン関数
+ * @param {import('discord.js').StringSelectMenuInteraction} interaction
+ */
+async function handleSelect(interaction) {
+  if (!interaction.isStringSelectMenu()) return;
 
-  /**
-   * 設置チャンネル選択時の処理
-   * @param {import('discord.js').StringSelectMenuInteraction} interaction
-   */
-  async handle(interaction) {
-    try {
-      if (!interaction.values?.[0]) {
-        return await interaction.reply({
-          content: '⚠️ 選択されたチャンネルが見つかりませんでした。',
-          flags: InteractionResponseFlags.Ephemeral,
-        });
-      }
+  const customId = interaction.customId;
+  const handler = findHandler(customId);
 
-      const selected = interaction.values[0];
-      const guildId = interaction.guildId;
-      const userId = interaction.user.id;
+  if (!handler) {
+    await interaction.reply({
+      content: '❌ セレクトメニューに対応する処理が見つかりませんでした。',
+      ephemeral: true,
+    });
+    return;
+  }
 
-      const current = tempStore.get(guildId, userId) || {};
-      tempStore.set(guildId, userId, {
-        ...current,
-        installChannelId: selected
+  try {
+    await handler.handle(interaction);
+  } catch (error) {
+    console.error(`❌ セレクトメニュー処理エラー (${customId}):`, error);
+
+    if (interaction.replied || interaction.deferred) {
+      await interaction.followUp({
+        content: '⚠️ セレクトメニュー処理中にエラーが発生しました。管理者に報告してください。',
+        ephemeral: true,
       });
-
-      const channel = interaction.guild.channels.cache.get(selected);
-      const channelName = channel ? channel.name : '指定チャンネル';
-
+    } else {
       await interaction.reply({
-        content: `📌 設置チャンネルを <#${selected}>（${channelName}）に設定しました。`,
-        flags: InteractionResponseFlags.Ephemeral,
+        content: '⚠️ セレクトメニュー処理中にエラーが発生しました。管理者に報告してください。',
+        ephemeral: true,
       });
-
-    } catch (error) {
-      console.error('❌ 設置チャンネル選択処理でエラー発生:', error);
-      if (!interaction.replied && !interaction.deferred) {
-        await interaction.reply({
-          content: '❌ 設置チャンネルの処理中にエラーが発生しました。管理者に連絡してください。',
-          flags: InteractionResponseFlags.Ephemeral,
-        });
-      }
     }
   }
-};
+}
+
+module.exports = { handleSelect };
