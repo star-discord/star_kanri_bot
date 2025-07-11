@@ -7,7 +7,7 @@ const {
 } = require('discord.js');
 
 module.exports = {
-  customIdStart: 'tousuna_report_button_', // ← 追加！
+  customIdStart: 'totsusuna_report_button_', // ✅ 仕様に合わせて命名統一
 
   /**
    * 凸スナ報告ボタン押下 → モーダル表示
@@ -16,12 +16,12 @@ module.exports = {
   async handle(interaction) {
     const customId = interaction.customId;
 
-    // UUIDをボタンIDから抽出（例: tousuna_report_button_<UUID>）
+    // UUIDをボタンIDから抽出（例: totsusuna_report_button_<UUID>）
     const uuid = customId.split('_').slice(-1)[0];
 
     const modal = new ModalBuilder()
-      .setCustomId(`tousuna_modal_${uuid}`) // uuidを付与して特定
-      .setTitle('凸スナ報告');
+      .setCustomId(`totsusuna_modal_${uuid}`) // uuidを付与して特定
+      .setTitle('📝 凸スナ報告');
 
     const groupInput = new TextInputBuilder()
       .setCustomId('group')
@@ -38,4 +38,29 @@ module.exports = {
     const table1 = new TextInputBuilder()
       .setCustomId('table1')
       .setLabel('卓1（任意）')
-      .setStyle(TextInputStyle.Sh
+      .setStyle(TextInputStyle.Short)
+      .setRequired(false);
+
+    const table2 = new TextInputBuilder()
+      .setCustomId('table2')
+      .setLabel('卓2（任意）')
+      .setStyle(TextInputStyle.Short)
+      .setRequired(false);
+
+    const detail = new TextInputBuilder()
+      .setCustomId('detail')
+      .setLabel('補足・詳細（任意）')
+      .setStyle(TextInputStyle.Paragraph)
+      .setRequired(false);
+
+    modal.addComponents(
+      new ActionRowBuilder().addComponents(groupInput),
+      new ActionRowBuilder().addComponents(nameInput),
+      new ActionRowBuilder().addComponents(table1),
+      new ActionRowBuilder().addComponents(table2),
+      new ActionRowBuilder().addComponents(detail),
+    );
+
+    await interaction.showModal(modal);
+  },
+};
