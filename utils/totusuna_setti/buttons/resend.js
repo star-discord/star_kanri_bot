@@ -1,4 +1,4 @@
-const fs = require('fs');
+const fs = require('fs').promises;
 const path = require('path');
 const {
   EmbedBuilder,
@@ -9,7 +9,7 @@ const {
 } = require('discord.js');
 
 module.exports = {
-  customIdStart: 'totsusuna_setti:resend:', // 英語化
+  customIdStart: 'totsusuna_setti:resend:',
 
   /**
    * 凸スナの再送信処理（再設置）
@@ -20,7 +20,9 @@ module.exports = {
     const uuid = interaction.customId.replace(this.customIdStart, '');
 
     const dataPath = path.join(__dirname, '../../../data', guildId, `${guildId}.json`);
-    if (!fs.existsSync(dataPath)) {
+    try {
+      await fs.access(dataPath);
+    } catch {
       return await interaction.reply({
         content: '⚠️ データファイルが見つかりません。',
         flags: InteractionResponseFlags.Ephemeral,
@@ -29,7 +31,8 @@ module.exports = {
 
     let json;
     try {
-      json = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
+      const fileContent = await fs.readFile(dataPath, 'utf-8');
+      json = JSON.parse(fileContent);
     } catch (err) {
       console.error('[再送信] JSON 読み込みエラー:', err);
       return await interaction.reply({
@@ -48,26 +51,23 @@ module.exports = {
       });
     }
 
-    // チャンネル取得
     let channel;
     try {
       channel = await interaction.guild.channels.fetch(instance.installChannelId);
+      if (!channel?.isTextBased()) {
+        return await interaction.reply({
+          content: '⚠️ 対象チャンネルがテキストチャンネルではありません。',
+          flags: InteractionResponseFlags.Ephemeral,
+        });
+      }
     } catch (err) {
-      console.warn(`[再送信] チャンネル取得失敗: ${instance.installChannelId}`, err.message);
+      console.warn(`[再送信] チャンネル取得失敗: ${instance.installChannelId}`, err);
       return await interaction.reply({
         content: '⚠️ 対象チャンネルが存在しないか取得に失敗しました。',
         flags: InteractionResponseFlags.Ephemeral,
       });
     }
 
-    if (!channel?.isTextBased()) {
-      return await interaction.reply({
-        content: '⚠️ 対象チャンネルがテキストチャンネルではありません。',
-        flags: InteractionResponseFlags.Ephemeral,
-      });
-    }
-
-    // Embed と ボタン再生成
     try {
       const embed = new EmbedBuilder()
         .setTitle('📣 凸スナ報告受付中')
@@ -75,17 +75,17 @@ module.exports = {
         .setColor(0x00bfff);
 
       const button = new ButtonBuilder()
-        .setCustomId(`totsusuna_report_button_${uuid}`) // customId に合わせて命名
+        .setCustomId(`totsusuna:report:${uuid}`) // 元の命名規則に合わせる
         .setLabel('凸スナ報告')
         .setStyle(ButtonStyle.Primary);
 
       const row = new ActionRowBuilder().addComponents(button);
 
-      const sent = await channel.send({ embeds: [embed], components: [row] });
+      const sentMessage = await channel.send({ embeds: [embed], components: [row] });
 
-      // messageId を更新
-      instance.messageId = sent.id;
-      fs.writeFileSync(dataPath, JSON.stringify(json, null, 2));
+      instance.messageId = sentMessage.id;
+
+      await fs.writeFile(dataPath, JSON.stringify(json, null, 2));
 
       await interaction.reply({
         content: '📤 再送信しました（設置チャンネルに投稿されました）。',
@@ -94,10 +94,12 @@ module.exports = {
 
     } catch (err) {
       console.error('[再送信エラー]', err);
-      await interaction.reply({
-        content: '❌ メッセージの再送信に失敗しました。',
-        flags: InteractionResponseFlags.Ephemeral,
-      });
+      if (!interaction.replied && !interaction.deferred) {
+        await interaction.reply({
+          content: '❌ メッセージの再送信に失敗しました。',
+          flags: InteractionResponseFlags.Ephemeral,
+        });
+      }
     }
   },
 };
