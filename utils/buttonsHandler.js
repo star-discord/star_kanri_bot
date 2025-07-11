@@ -1,6 +1,6 @@
 const path = require('path');
 const { loadHandlers } = require('./handlerLoader');
-const { InteractionResponseFlags } = require('discord.js'); // 追加
+const { InteractionResponseFlags } = require('discord.js');
 
 const findHandler = loadHandlers(path.join(__dirname, 'totusuna_setti/buttons'));
 
