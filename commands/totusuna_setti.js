@@ -11,39 +11,39 @@ const isAdmin = require('../utils/star_config/admin');
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('凸スナ設置')
-    .setDescription('凸スナ報告ボタン付きメッセージを作成（本文＋設置先設定）'),
+    .setName('setup-totsusuna') // コマンド名英語化
+    .setDescription('Create a message with a Totsusuna report button (set body and target channels).'),
 
   async execute(interaction) {
     if (!isAdmin(interaction)) {
       return await interaction.reply({
-        content: '❌ あなたにはこのコマンドを使用する権限がありません。',
-        flags: 1 << 6 // ephemeral 相当
+        content: '❌ You do not have permission to use this command.',
+        ephemeral: true
       });
     }
 
     const channelSelect = new ChannelSelectMenuBuilder()
       .setCustomId('totusuna_select_main')
-      .setPlaceholder('📌 ボタン設置チャンネルを選択')
+      .setPlaceholder('📌 Select the main channel to post the button')
       .setMinValues(1)
       .setMaxValues(1)
       .addChannelTypes(ChannelType.GuildText);
 
     const replicateSelect = new ChannelSelectMenuBuilder()
       .setCustomId('totusuna_select_replicate')
-      .setPlaceholder('🌀 複製送信チャンネルを選択（任意・複数）')
+      .setPlaceholder('🌀 Select channels to replicate post (optional, multiple)')
       .setMinValues(0)
       .setMaxValues(5)
       .addChannelTypes(ChannelType.GuildText);
 
     const inputButton = new ButtonBuilder()
-      .setCustomId('totusuna_input_body')
-      .setLabel('📄 本文入力をする')
+      .setCustomId('totsusuna_setti:本文入力をする') // ルーティングと合わせる
+      .setLabel('📄 Input message body')
       .setStyle(ButtonStyle.Secondary);
 
     const createButton = new ButtonBuilder()
-      .setCustomId('totusuna_create_instance')
-      .setLabel('☑ 設置する')
+      .setCustomId('totsusuna_setti:設置する')
+      .setLabel('☑ Submit')
       .setStyle(ButtonStyle.Primary);
 
     const row1 = new ActionRowBuilder().addComponents(channelSelect);
@@ -51,9 +51,9 @@ module.exports = {
     const row3 = new ActionRowBuilder().addComponents(inputButton, createButton);
 
     await interaction.reply({
-      content: '🎯 以下の設定を行ってください。',
+      content: '🎯 Please configure the following settings.',
       components: [row1, row2, row3],
-      flags: 1 << 6 // ephemeral
+      ephemeral: true
     });
   },
 };
