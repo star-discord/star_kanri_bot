@@ -1,5 +1,6 @@
 const path = require('path');
 const { loadHandlers } = require('./handlerLoader');
+const { InteractionResponseFlags } = require('discord.js'); // 追加
 
 const findHandler = loadHandlers(path.join(__dirname, 'totusuna_setti/buttons'));
 
@@ -17,7 +18,7 @@ async function handleButton(interaction) {
     console.warn(`⚠️ 未対応のボタン: ${customId}`);
     return await interaction.reply({
       content: '⚠️ このボタンは現在利用できません。',
-      ephemeral: true
+      flags: InteractionResponseFlags.Ephemeral,
     });
   }
 
@@ -28,7 +29,7 @@ async function handleButton(interaction) {
     if (!interaction.replied && !interaction.deferred) {
       await interaction.reply({
         content: '❌ ボタン処理中にエラーが発生しました。',
-        ephemeral: true
+        flags: InteractionResponseFlags.Ephemeral,
       });
     }
   }
