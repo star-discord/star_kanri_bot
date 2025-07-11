@@ -2,7 +2,8 @@ const path = require('path');
 const { loadHandlers } = require('./handlerLoader');
 
 /**
- * セレクトメニューインタラクションを処理する
+ * セレクトメニューの処理
+ * 各 select モジュールは { customIdStart, handle } または { customId, handle } をエクスポートする
  * @param {import('discord.js').StringSelectMenuInteraction} interaction
  */
 async function handleSelect(interaction) {
@@ -10,7 +11,7 @@ async function handleSelect(interaction) {
 
   const customId = interaction.customId;
 
-  // 対象ディレクトリ群
+  // 検索対象の select モジュールディレクトリ（必要に応じて追加）
   const searchDirs = [
     'star_config/selects',
     'totusuna_config/selects',
@@ -19,26 +20,25 @@ async function handleSelect(interaction) {
   ];
 
   for (const dir of searchDirs) {
-    const fullDir = path.join(__dirname, dir);
-    const findHandler = loadHandlers(fullDir);
-
+    const fullPath = path.join(__dirname, dir);
+    const findHandler = loadHandlers(fullPath); // 共通ローダーで handler 探索関数を生成
     const handler = findHandler(customId);
-    if (handler) {
+    if (handler && typeof handler.handle === 'function') {
       try {
         return await handler.handle(interaction);
       } catch (err) {
-        console.error(`❌ セレクトメニュー処理エラー (${customId})`, err);
-        if (!interaction.replied && !interaction.deferred) {
+        console.error(`❌ セレクト処理中にエラー発生: ${customId}`, err);
+        if (!interaction.replied) {
           return await interaction.reply({
-            content: '❌ 処理中にエラーが発生しました。',
+            content: '⚠️ セレクトメニューの処理中にエラーが発生しました。',
             ephemeral: true
           });
         }
-        return;
       }
     }
   }
 
+  // 対応なし
   await interaction.reply({
     content: '❌ セレクトメニューに対応する処理が見つかりませんでした。',
     ephemeral: true
