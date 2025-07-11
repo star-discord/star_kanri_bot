@@ -1,28 +1,20 @@
-const fs = require('fs');
-const path = require('path');
+// utils/star_config/checkAdmin.js
+const isAdmin = require('./admin');
+const { createAdminRejectEmbed } = require('../embedHelper');
 
 /**
- * 管理者かどうかを判定（同期版）
- * @param {import('discord.js').CommandInteraction | import('discord.js').AnySelectMenuInteraction | import('discord.js').ButtonInteraction} interaction
- * @returns {boolean}
+ * 管理者チェックを行い、NGならEmbedでリプライ（true: OK, false: 拒否済）
+ * @param {import('discord.js').CommandInteraction} interaction
+ * @returns {Promise<boolean>}
  */
-function isAdmin(interaction) {
-  const guildId = interaction.guildId;
-  const member = interaction.member;
-  if (!guildId || !member) return false;
+async function checkAdmin(interaction) {
+  if (isAdmin(interaction)) return true;
 
-  const filePath = path.join(__dirname, '../../data', guildId, `${guildId}.json`);
-  if (!fs.existsSync(filePath)) return false;
-
-  try {
-    const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-    const adminRoleIds = data.star_config?.adminRoleIds || [];
-    return member.roles.cache.some(role => adminRoleIds.includes(role.id));
-  } catch (err) {
-    console.warn('[isAdmin] JSON読み込みエラー:', err);
-    return false;
-  }
+  await interaction.reply({
+    embeds: [createAdminRejectEmbed()],
+    ephemeral: true
+  });
+  return false;
 }
 
-module.exports = isAdmin;
-
+module.exports = checkAdmin;
