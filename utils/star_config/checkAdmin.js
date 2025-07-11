@@ -1,6 +1,6 @@
-// utils/star_config/checkAdmin.js
 const isAdmin = require('./admin');
 const { createAdminRejectEmbed } = require('../embedHelper');
+const { InteractionResponseFlags } = require('discord.js');
 
 /**
  * 管理者チェックを行い、NGならEmbedでリプライ（true: OK, false: 拒否済）
@@ -12,7 +12,7 @@ async function checkAdmin(interaction) {
 
   await interaction.reply({
     embeds: [createAdminRejectEmbed()],
-    ephemeral: true
+    flags: InteractionResponseFlags.Ephemeral
   });
   return false;
 }
