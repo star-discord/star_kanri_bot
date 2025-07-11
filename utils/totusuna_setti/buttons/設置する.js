@@ -4,82 +4,65 @@ const {
   EmbedBuilder,
   ActionRowBuilder,
   ButtonBuilder,
-  ButtonStyle,
-  InteractionResponseFlags,
+  ButtonStyle
 } = require('discord.js');
 const { v4: uuidv4 } = require('uuid');
-
-// ユーザー単位の一時状態
 const tempState = require('../../state/totsusunaTemp');
+const { ensureGuildJSON, readJSON, writeJSON } = require('../../../fileHelper');
 
-module.exports = {
-  customId: 'totsusuna_setti:設置する',
+module.exports = async (interaction) => {
+  const userId = interaction.user.id;
+  const guildId = interaction.guildId;
+  const state = tempState.get(guildId, userId);
 
-  /**
-   * 凸スナ設置処理
-   * @param {import('discord.js').ButtonInteraction} interaction
-   */
-  async handle(interaction) {
-    const userId = interaction.user.id;
-    const guildId = interaction.guildId;
-    const state = tempState.get(userId);
-
-    if (!state || !state.body || !state.installChannelId) {
-      return await interaction.reply({
-        content: '⚠ 本文やチャンネル設定が不足しています。',
-        flags: InteractionResponseFlags.Ephemeral,
-      });
-    }
-
-    const uuid = uuidv4();
-
-    const embed = new EmbedBuilder()
-      .setTitle('📣 凸スナ報告受付中')
-      .setDescription(state.body)
-      .setColor(0x00bfff);
-
-    const button = new ButtonBuilder()
-      .setCustomId(`tousuna_report_button_${uuid}`)
-      .setLabel('凸スナ報告')
-      .setStyle(ButtonStyle.Primary);
-
-    const row = new ActionRowBuilder().addComponents(button);
-
-    const installChannel = await interaction.guild.channels.fetch(state.installChannelId);
-    const sentMessage = await installChannel.send({
-      embeds: [embed],
-      components: [row],
+  if (!state || !state.body || !state.installChannelId) {
+    return await interaction.reply({
+      content: '⚠ 本文やチャンネル設定が不足しています。',
+      ephemeral: true
     });
+  }
 
-    // JSON保存処理
-    const dataDir = path.join(__dirname, '../../../data', guildId);
-    const dataFile = path.join(dataDir, `${guildId}.json`);
-    if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
+  const uuid = uuidv4();
 
-    let json = {};
-    if (fs.existsSync(dataFile)) {
-      json = JSON.parse(fs.readFileSync(dataFile, 'utf8'));
-    }
+  const embed = new EmbedBuilder()
+    .setTitle('📣 凸スナ報告受付中')
+    .setDescription(state.body)
+    .setColor(0x00bfff);
 
-    if (!json.tousuna) json.tousuna = {};
-    if (!Array.isArray(json.tousuna.instances)) json.tousuna.instances = [];
+  const button = new ButtonBuilder()
+    .setCustomId(`totusuna:report:${uuid}`)
+    .setLabel('凸スナ報告')
+    .setStyle(ButtonStyle.Primary);
 
-    json.tousuna.instances.push({
-      id: uuid,
-      body: state.body,
-      installChannelId: state.installChannelId,
-      replicateChannelIds: state.replicateChannelIds || [],
-      messageChannelId: state.installChannelId,
-      messageId: sentMessage.id,
-    });
+  const row = new ActionRowBuilder().addComponents(button);
 
-    fs.writeFileSync(dataFile, JSON.stringify(json, null, 2));
+  const installChannel = await interaction.guild.channels.fetch(state.installChannelId);
+  const sentMessage = await installChannel.send({
+    embeds: [embed],
+    components: [row],
+  });
 
-    tempState.delete(userId);
+  // 保存処理
+  const jsonPath = ensureGuildJSON(guildId);
+  const json = readJSON(jsonPath);
 
-    await interaction.reply({
-      content: '✅ 凸スナ設置が完了しました！',
-      flags: InteractionResponseFlags.Ephemeral,
-    });
-  },
+  if (!json.totusuna) json.totusuna = {};
+  if (!json.totusuna.instances) json.totusuna.instances = {};
+
+  json.totusuna.instances[uuid] = {
+    uuid,
+    userId,
+    body: state.body,
+    installChannelId: state.installChannelId,
+    replicateChannelIds: state.replicateChannelIds || [],
+    messageId: sentMessage.id
+  };
+
+  writeJSON(jsonPath, json);
+  tempState.delete(guildId, userId);
+
+  await interaction.reply({
+    content: '✅ 凸スナ設置が完了しました！',
+    ephemeral: true
+  });
 };
