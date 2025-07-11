@@ -5,6 +5,7 @@ const {
   TextInputBuilder,
   TextInputStyle,
   ActionRowBuilder,
+  InteractionResponseFlags, // 追加
 } = require('discord.js');
 
 module.exports = {
@@ -23,7 +24,7 @@ module.exports = {
     if (!fs.existsSync(filePath)) {
       return await interaction.reply({
         content: '⚠ Data file not found.',
-        ephemeral: true
+        flags: InteractionResponseFlags.Ephemeral,
       });
     }
 
@@ -34,7 +35,7 @@ module.exports = {
       console.error('Failed to parse JSON:', err);
       return await interaction.reply({
         content: '❌ Failed to read the data file.',
-        ephemeral: true
+        flags: InteractionResponseFlags.Ephemeral,
       });
     }
 
@@ -42,7 +43,7 @@ module.exports = {
     if (!target) {
       return await interaction.reply({
         content: '⚠ The specified Totsusuna instance could not be found.',
-        ephemeral: true
+        flags: InteractionResponseFlags.Ephemeral,
       });
     }
 
