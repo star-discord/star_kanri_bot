@@ -1,12 +1,13 @@
+// utils/totusuna_setti/buttons/delete.js
 const fs = require('fs');
 const path = require('path');
 const { InteractionResponseFlags } = require('discord.js');
 
 module.exports = {
-  customIdStart: 'totsusuna_setti:削除:',
+  customIdStart: 'totsusuna_setti:delete:',
 
   /**
-   * 凸スナ設置削除ボタンの処理
+   * Handles the deletion of a Totsusuna instance.
    * @param {import('discord.js').ButtonInteraction} interaction
    */
   async handle(interaction) {
@@ -16,7 +17,7 @@ module.exports = {
 
     if (!fs.existsSync(filePath)) {
       return await interaction.reply({
-        content: '⚠️ データファイルが見つかりません。',
+        content: '⚠️ Data file not found.',
         flags: InteractionResponseFlags.Ephemeral,
       });
     }
@@ -26,7 +27,7 @@ module.exports = {
 
     if (!Array.isArray(list)) {
       return await interaction.reply({
-        content: '⚠️ インスタンスデータが存在しません。',
+        content: '⚠️ No instance data available.',
         flags: InteractionResponseFlags.Ephemeral,
       });
     }
@@ -34,30 +35,30 @@ module.exports = {
     const targetIndex = list.findIndex(i => i.id === uuid);
     if (targetIndex === -1) {
       return await interaction.reply({
-        content: '⚠️ 対象の設置が見つかりません。',
+        content: '⚠️ Target instance not found.',
         flags: InteractionResponseFlags.Ephemeral,
       });
     }
 
     const instance = list[targetIndex];
 
-    // メッセージ削除（installChannelId / messageId）
+    // Try to delete the original message if available
     if (instance.messageId && instance.installChannelId) {
       try {
         const channel = await interaction.guild.channels.fetch(instance.installChannelId);
         const message = await channel.messages.fetch(instance.messageId);
         if (message) await message.delete();
       } catch (err) {
-        console.warn(`[totsusuna_setti:削除] メッセージ削除失敗: ${err.message}`);
+        console.warn(`[totsusuna_setti:delete] Failed to delete message: ${err.message}`);
       }
     }
 
-    // 配列から削除して保存
+    // Remove instance from the array and save
     list.splice(targetIndex, 1);
     fs.writeFileSync(filePath, JSON.stringify(json, null, 2));
 
     await interaction.reply({
-      content: '🗑 凸スナ設置を削除しました。',
+      content: '🗑️ Totsusuna instance deleted successfully.',
       flags: InteractionResponseFlags.Ephemeral,
     });
   },
