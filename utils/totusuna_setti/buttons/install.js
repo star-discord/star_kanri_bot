@@ -11,7 +11,7 @@ const tempState = require('../state/totsusunaTemp');
 const { ensureGuildJSON, readJSON, writeJSON } = require('../../fileHelper');
 
 module.exports = {
-  customId: 'totsusuna_setti:install',
+  customId: 'totsuna_setti:install',
 
   /**
    * 凸スナ設置の処理
@@ -28,7 +28,7 @@ module.exports = {
       if (!state || !state.body || !state.installChannelId) {
         return await interaction.reply({
           content: '⚠ 本文やチャンネル設定が不足しています。',
-          ephemeral: true
+          flags: 1 << 6, // InteractionResponseFlags.Ephemeral
         });
       }
 
@@ -43,66 +43,56 @@ module.exports = {
 
       // ボタンを構築（UUID付与）
       const button = new ButtonBuilder()
-        .setCustomId(`totusuna:report:${uuid}`)
+        .setCustomId(`totsuna:report:${uuid}`)
         .setLabel('凸スナ報告')
         .setStyle(ButtonStyle.Primary);
 
       const row = new ActionRowBuilder().addComponents(button);
 
-      let sentMessage;
-      try {
-        // 設置チャンネルへ送信
-        const installChannel = await interaction.guild.channels.fetch(state.installChannelId);
-        if (!installChannel?.isTextBased?.()) throw new Error('対象チャンネルが無効です');
+      // 設置チャンネルを取得し送信
+      const installChannel = await interaction.guild.channels.fetch(state.installChannelId);
+      if (!installChannel?.isTextBased?.()) throw new Error('対象チャンネルが無効です');
 
-        sentMessage = await installChannel.send({
-          embeds: [embed],
-          components: [row],
-        });
-      } catch (err) {
-        console.error(`[設置エラー] メッセージ送信失敗: ${err.message}`);
-        return await interaction.reply({
-          content: '❌ メッセージの送信に失敗しました。チャンネルの権限または存在を確認してください。',
-          ephemeral: true
-        });
-      }
+      const sentMessage = await installChannel.send({
+        embeds: [embed],
+        components: [row],
+      });
 
-      // データファイルを準備・読み込み
+      // JSONファイルの準備と読み込み
       const jsonPath = await ensureGuildJSON(guildId);
       const json = await readJSON(jsonPath);
 
-      // インスタンス構造がなければ初期化
-      if (!json.totusuna) json.totusuna = {};
-      if (!Array.isArray(json.totusuna.instances)) json.totusuna.instances = [];
+      // 初期化処理
+      if (!json.totsuna) json.totsuna = {};
+      if (!Array.isArray(json.totsuna.instances)) json.totsuna.instances = [];
 
       // 新しい設置情報を追加
-      json.totusuna.instances.push({
+      json.totsuna.instances.push({
         id: uuid,
         userId,
         body: state.body,
         installChannelId: state.installChannelId,
         replicateChannelIds: state.replicateChannelIds || [],
-        messageId: sentMessage.id
+        messageId: sentMessage.id,
       });
 
       // JSON保存
       await writeJSON(jsonPath, json);
 
-      // 一時状態を削除
+      // 一時データ削除
       tempState.delete(guildId, userId);
 
-      // 成功応答
+      // 成功レスポンス
       await interaction.reply({
         content: '✅ 凸スナ設置が完了しました！',
-        ephemeral: true
+        flags: 1 << 6, // InteractionResponseFlags.Ephemeral
       });
-
     } catch (error) {
       console.error('[設置ボタン処理中エラー]', error);
 
       const errorReply = {
         content: '❌ 設置処理中に予期せぬエラーが発生しました。',
-        ephemeral: true
+        flags: 1 << 6,
       };
 
       if (interaction.replied || interaction.deferred) {
@@ -111,5 +101,5 @@ module.exports = {
         await interaction.reply(errorReply);
       }
     }
-  }
+  },
 };
