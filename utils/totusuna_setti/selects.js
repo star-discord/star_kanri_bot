@@ -21,7 +21,7 @@ if (!fs.existsSync(selectsDir)) {
   for (const file of files) {
     const modulePath = path.join(selectsDir, file);
     try {
-      delete require.cache[require.resolve(modulePath)]; // キャッシュクリア（開発時用）
+      delete require.cache[require.resolve(modulePath)]; // 開発中のキャッシュ無効化
 
       const handler = require(modulePath);
 
