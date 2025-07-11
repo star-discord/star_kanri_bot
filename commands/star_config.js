@@ -16,12 +16,11 @@ module.exports = {
   async execute(interaction) {
     const guildId = interaction.guild.id;
     const filePath = ensureGuildJSON(guildId);
-    const data = await readJSON(filePath); // ← 修正：awaitを追加
+    const data = await readJSON(filePath);
 
     if (!data.star_config) data.star_config = {};
     const currentAdminRoleIds = data.star_config.adminRoleIds || [];
 
-    // Embed生成関数
     const getSettingsEmbed = (roleIds) => {
       const currentMentions =
         roleIds.length > 0
@@ -45,27 +44,22 @@ module.exports = {
     const sentMessage = await interaction.reply({
       embeds: [getSettingsEmbed(currentAdminRoleIds)],
       components: [row],
-      ephemeral: true
+      flags: 1 << 6
     });
 
-    if (!interaction.channel) {
-      return await interaction.followUp({
-        content: '⚠️ チャンネルが見つかりませんでした。',
-        ephemeral: true
-      });
-    }
-
-    const collector = interaction.channel.createMessageComponentCollector({
+    const collector = interaction.channel?.createMessageComponentCollector({
       componentType: ComponentType.RoleSelect,
       time: 30_000,
       max: 1
     });
 
+    if (!collector) return;
+
     collector.on('collect', async selectInteraction => {
       if (selectInteraction.user.id !== interaction.user.id) {
         return await selectInteraction.reply({
           content: '❌ この操作はコマンドを実行したユーザーのみが行えます。',
-          ephemeral: true
+          flags: 1 << 6
         });
       }
 
@@ -76,45 +70,41 @@ module.exports = {
       data.star_config.adminRoleIds = selectedRoleIds;
 
       try {
-        await writeJSON(filePath, data); // ← 修正：awaitを追加
+        await writeJSON(filePath, data);
       } catch (err) {
         console.error('❌ JSON保存失敗:', err);
         return await selectInteraction.reply({
           content: '❌ ロールの保存に失敗しました。',
-          ephemeral: true
+          flags: 1 << 6
         });
       }
 
-      // 古いメッセージ削除
       try {
         await sentMessage.delete();
       } catch (e) {
         console.warn('⚠️ 元の設定Embedを削除できませんでした。');
       }
 
-      // 差分通知（登録）
       if (added.length > 0) {
         const embed = new EmbedBuilder()
           .setTitle('✅ 管理者ロールを登録しました')
           .setDescription(`登録されたロール：\n${added.map(id => `<@&${id}>`).join('\n')}`)
           .setColor(0x00cc99);
-        await interaction.followUp({ embeds: [embed], ephemeral: true });
+        await interaction.followUp({ embeds: [embed], flags: 1 << 6 });
       }
 
-      // 差分通知（解除）
       if (removed.length > 0) {
         const embed = new EmbedBuilder()
           .setTitle('⚠️ 管理者ロールが解除されました')
           .setDescription(`解除されたロール：\n${removed.map(id => `<@&${id}>`).join('\n')}`)
           .setColor(0xff6600);
-        await interaction.followUp({ embeds: [embed], ephemeral: true });
+        await interaction.followUp({ embeds: [embed], flags: 1 << 6 });
       }
 
-      // 再度設定Embedを送信（更新後の状態）
       await interaction.followUp({
         embeds: [getSettingsEmbed(selectedRoleIds)],
         components: [new ActionRowBuilder().addComponents(roleSelect)],
-        ephemeral: true
+        flags: 1 << 6
       });
     });
 
@@ -128,4 +118,3 @@ module.exports = {
     });
   }
 };
-
