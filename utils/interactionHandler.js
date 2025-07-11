@@ -1,9 +1,8 @@
-// utils/interactionHandler.js
 const fs = require('fs');
 const path = require('path');
 const { handleButton } = require('./buttonsHandler');
 const { handleModal } = require('./modalsHandler');
-const { handleSelectMenu } = require('./selectsHandler'); // ✅ 追加された selectMenu ハンドラー
+const { handleSelect } = require('./selectsHandler'); // ← 修正：handleSelectMenu → handleSelect
 
 const commands = new Map();
 const commandsPath = path.join(__dirname, '../commands');
@@ -39,10 +38,9 @@ function loadCommandsFromDir(dir, prefix = '') {
   }
 }
 
-// 🔁 コマンド読み込み
+// コマンドを再帰的に読み込み
 loadCommandsFromDir(commandsPath);
 
-// 🌐 インタラクション実行ハンドラー
 module.exports = {
   /**
    * Discord.js の interaction イベント用メインエントリ
@@ -61,19 +59,15 @@ module.exports = {
 
         await command.execute(interaction);
       }
-
       else if (interaction.isButton()) {
         await handleButton(interaction);
       }
-
       else if (interaction.isModalSubmit()) {
         await handleModal(interaction);
       }
-
       else if (interaction.isAnySelectMenu()) {
-        await handleSelectMenu(interaction);
+        await handleSelect(interaction);  // ← 修正：handleSelectMenu → handleSelect
       }
-
     } catch (err) {
       console.error('❌ インタラクション処理中にエラー:', err);
 
