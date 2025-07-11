@@ -1,10 +1,10 @@
-// utils/star_config/checkAdmin.js
+// utils/star_config/Admin.js
 const fs = require('fs');
 const path = require('path');
 
 /**
- * 管理者かどうかを判定（同期版）
- * @param {import('discord.js').CommandInteraction | import('discord.js').AnySelectMenuInteraction | import('discord.js').ButtonInteraction} interaction
+ * 管理者かどうかを判定
+ * @param {import('discord.js').Interaction} interaction
  * @returns {boolean}
  */
 function isAdmin(interaction) {
@@ -16,13 +16,14 @@ function isAdmin(interaction) {
   if (!fs.existsSync(filePath)) return false;
 
   try {
-    const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-    const adminRoleIds = data.star_config?.adminRoleIds || [];
+    const json = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    const adminRoleIds = json.star_config?.adminRoleIds || [];
     return member.roles.cache.some(role => adminRoleIds.includes(role.id));
   } catch (err) {
-    console.warn('[isAdmin] JSON読み込みエラー:', err);
+    console.warn('[isAdmin] JSON読み込み失敗:', err);
     return false;
   }
 }
 
 module.exports = isAdmin;
+
