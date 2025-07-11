@@ -5,7 +5,8 @@ const {
   ButtonBuilder,
   ButtonStyle,
   ChannelType,
-  EmbedBuilder,   // 追加
+  EmbedBuilder,
+  InteractionResponseFlags, // 追加
 } = require('discord.js');
 
 const isAdmin = require('../utils/star_config/admin');
@@ -20,7 +21,7 @@ module.exports = {
       if (!isAdmin(interaction)) {
         return await interaction.reply({
           content: '❌ このコマンドを使用する権限がありません。',
-          ephemeral: true,
+          flags: InteractionResponseFlags.Ephemeral,
         });
       }
 
@@ -61,18 +62,19 @@ module.exports = {
         .setTimestamp();
 
       await interaction.reply({
-        embeds: [embed],   // contentの代わりにembedsに
+        embeds: [embed],
         components: [row1, row2, row3],
-        ephemeral: true,
+        flags: InteractionResponseFlags.Ephemeral,
       });
     } catch (error) {
       console.error('❌ /凸スナ設置 コマンド実行中にエラーが発生しました:', error);
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({
           content: '❌ コマンド実行中にエラーが発生しました。管理者にお問い合わせください。',
-          ephemeral: true,
+          flags: InteractionResponseFlags.Ephemeral,
         });
       }
     }
   },
 };
+
