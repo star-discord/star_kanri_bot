@@ -1,44 +1,40 @@
-// utils/totusuna_setti/selects/replicate_channel.js
+// utils/totusuna_setti/selects/index.js または selects.js
+const fs = require('fs');
+const path = require('path');
 
-const tempStore = require('../../state/totsusunaTemp');
-const { InteractionResponseFlags } = require('discord.js'); // ← 追加
+const handlers = {};
+const startsWithHandlers = [];
 
-module.exports = {
-  customIdStart: 'totusuna_select_replicate:',
+const selectsDir = __dirname;
 
-  /**
-   * 複製チャンネル選択時の処理
-   * @param {import('discord.js').StringSelectMenuInteraction} interaction
-   */
-  async handle(interaction) {
-    const selected = interaction.values;
-    const guildId = interaction.guildId;
-    const userId = interaction.user.id;
+const files = fs.readdirSync(selectsDir).filter(file => file.endsWith('.js') && file !== 'index.js');
 
-    if (!selected || selected.length === 0) {
-      return await interaction.reply({
-        content: '⚠️ チャンネルが選択されていません。',
-        flags: InteractionResponseFlags.Ephemeral,
-      });
-    }
+for (const file of files) {
+  const modulePath = path.join(selectsDir, file);
+  const handler = require(modulePath);
 
-    const current = tempStore.get(guildId, userId) || {};
-
-    tempStore.set(guildId, userId, {
-      ...current,
-      replicateChannelIds: selected
-    });
-
-    const display = selected
-      .map(id => {
-        const ch = interaction.guild.channels.cache.get(id);
-        return ch ? `<#${id}>（${ch.name}）` : `<#${id}>`;
-      })
-      .join(', ');
-
-    await interaction.reply({
-      content: `🌀 複製チャンネルを ${display} に設定しました。`,
-      flags: InteractionResponseFlags.Ephemeral,
-    });
+  if (typeof handler.handle !== 'function') {
+    console.warn(`⚠️ セレクトモジュールに handle 関数がありません: ${file}`);
+    continue;
   }
-};
+
+  if (typeof handler.customId === 'string') {
+    handlers[handler.customId] = handler;
+  } else if (typeof handler.customIdStart === 'string') {
+    startsWithHandlers.push({ key: handler.customIdStart, handler });
+  } else {
+    console.warn(`⚠️ セレクトモジュールに customId/customIdStart が未定義: ${file}`);
+  }
+}
+
+/** customId でルーティングする関数 */
+function findHandler(customId) {
+  if (handlers[customId]) return handlers[customId];
+  for (const { key, handler } of startsWithHandlers) {
+    if (customId.startsWith(key)) return handler;
+  }
+  console.warn(`⚠️ 対応するセレクトハンドラが見つかりません: ${customId}`);
+  return null;
+}
+
+module.exports = findHandler;
