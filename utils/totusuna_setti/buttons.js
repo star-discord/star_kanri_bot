@@ -2,7 +2,6 @@
 const fs = require('fs');
 const path = require('path');
 
-// buttons ディレクトリ内の全ボタンモジュールを動的に読み込む
 const handlers = {};
 const startsWithHandlers = [];
 
@@ -11,20 +10,30 @@ const files = fs.readdirSync(buttonsDir).filter(file => file.endsWith('.js'));
 
 for (const file of files) {
   const modulePath = path.join(buttonsDir, file);
-  const handler = require(modulePath);
+  try {
+    delete require.cache[require.resolve(modulePath)]; // ← 開発中のキャッシュ無効化
+    const handler = require(modulePath);
 
-  if (handler.customId) {
-    handlers[handler.customId] = handler;
-  } else if (handler.customIdStart) {
-    startsWithHandlers.push({ key: handler.customIdStart, handler });
-  } else {
-    console.warn(`⚠️ ボタンファイルに customId/customIdStart がありません: ${file}`);
+    if (typeof handler.handle !== 'function') {
+      console.warn(`⚠️ ボタンモジュールに handle 関数がありません: ${file}`);
+      continue;
+    }
+
+    if (typeof handler.customId === 'string') {
+      handlers[handler.customId] = handler;
+    } else if (typeof handler.customIdStart === 'string') {
+      startsWithHandlers.push({ key: handler.customIdStart, handler });
+    } else {
+      console.warn(`⚠️ ボタンモジュールに customId/customIdStart が未定義: ${file}`);
+    }
+
+  } catch (err) {
+    console.warn(`❌ ボタンファイルの読み込みに失敗 (${file}):`, err);
   }
 }
 
 /**
- * 受け取った customId に対応するハンドラを探す
- * 完全一致 → 前方一致 の順で判定
+ * customId に対応するボタンハンドラを探す（完全一致 → 前方一致）
  * @param {string} customId
  * @returns {object|null}
  */
@@ -35,7 +44,7 @@ function findHandler(customId) {
     if (customId.startsWith(key)) return handler;
   }
 
-  console.warn(`⚠️ ハンドラが見つかりません: ${customId}`);
+  console.warn(`⚠️ 対応するボタンハンドラが見つかりません: ${customId}`);
   return null;
 }
 
