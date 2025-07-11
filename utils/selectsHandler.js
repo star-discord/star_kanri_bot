@@ -1,20 +1,52 @@
-// utils/selectsHandler.js
+const path = require('path');
+const fs = require('fs');
 
-module.exports = async (interaction) => {
-  switch (interaction.customId) {
-    case 'totusuna_select_main':
-      // 設置チャンネルの選択処理
-      return require('./totusuna_setti/selects/install_channel')(interaction);
+/**
+ * セレクトメニューインタラクションを処理する
+ * 各モジュールは { customIdStart, handle } をエクスポート
+ * ファイル名ではなく customIdStart に基づいてルーティングされる
+ * @param {import('discord.js').StringSelectMenuInteraction} interaction
+ */
+async function handleSelect(interaction) {
+  if (!interaction.isStringSelectMenu()) return;
 
-    case 'totusuna_select_replicate':
-      // 複製チャンネルの選択処理
-      return require('./totusuna_setti/selects/replicate_channel')(interaction);
+  const customId = interaction.customId;
 
-    default:
-      console.warn(`⚠️ 未対応の selectMenu customId: ${interaction.customId}`);
-      return interaction.reply({
-        content: '⚠️ この選択はまだ処理に対応していません。',
-        ephemeral: true
-      });
+  const searchModules = [
+    './star_config/selects',
+    './totusuna_config/selects',
+    './totusuna_setti/selects',
+    './totusuna_quick/selects'
+  ];
+
+  for (const relativeDir of searchModules) {
+    const fullDir = path.join(__dirname, relativeDir);
+    if (!fs.existsSync(fullDir)) continue;
+
+    const files = fs.readdirSync(fullDir).filter(f => f.endsWith('.js'));
+
+    for (const file of files) {
+      const filePath = path.join(fullDir, file);
+      try {
+        delete require.cache[require.resolve(filePath)];
+        const mod = require(filePath);
+
+        const matchStart = mod.customIdStart && customId.startsWith(mod.customIdStart);
+        const matchExact = mod.customId && customId === mod.customId;
+
+        if ((matchStart || matchExact) && typeof mod.handle === 'function') {
+          return await mod.handle(interaction);
+        }
+      } catch (err) {
+        console.warn(`⚠️ セレクト処理失敗: ${filePath}`, err);
+      }
+    }
   }
-};
+
+  await interaction.reply({
+    content: '❌ セレクトメニューに対応する処理が見つかりませんでした。',
+    ephemeral: true
+  });
+}
+
+module.exports = { handleSelect };
