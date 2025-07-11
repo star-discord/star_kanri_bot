@@ -1,4 +1,3 @@
-// utils/handlerLoader.js
 const fs = require('fs');
 const path = require('path');
 
@@ -10,8 +9,8 @@ const path = require('path');
  * @returns {(customId: string) => object|null} - 対応するハンドラを返す関数
  */
 function loadHandlers(dirPath) {
-  const handlers = {};              // 完全一致用
-  const startsWithHandlers = [];    // 前方一致用
+  const handlers = {};              // 完全一致用ハンドラ格納
+  const startsWithHandlers = [];    // 前方一致用ハンドラ格納
 
   if (!fs.existsSync(dirPath)) {
     console.warn(`⚠️ [handlerLoader] ディレクトリが存在しません: ${dirPath}`);
@@ -30,8 +29,14 @@ function loadHandlers(dirPath) {
 
       if (mod && typeof mod.handle === 'function') {
         if (typeof mod.customId === 'string') {
+          if (handlers[mod.customId]) {
+            console.warn(`⚠️ [handlerLoader] ${file} の customId "${mod.customId}" は既に登録されています。上書きされます。`);
+          }
           handlers[mod.customId] = mod;
         } else if (typeof mod.customIdStart === 'string') {
+          if (startsWithHandlers.some(h => h.key === mod.customIdStart)) {
+            console.warn(`⚠️ [handlerLoader] ${file} の customIdStart "${mod.customIdStart}" は既に登録されています。上書きされます。`);
+          }
           startsWithHandlers.push({ key: mod.customIdStart, handler: mod });
         } else {
           console.warn(`⚠️ [handlerLoader] ${file} に customId または customIdStart が定義されていません`);
@@ -41,9 +46,12 @@ function loadHandlers(dirPath) {
       }
 
     } catch (err) {
-      console.error(`❌ [handlerLoader] ハンドラの読み込み失敗: ${file}`, err);
+      console.error(`❌ [handlerLoader] ハンドラの読み込み失敗 (${file}):`, err);
     }
   }
+
+  // 前方一致ハンドラはキー長の降順でソートし、より長いプレフィックスを優先
+  startsWithHandlers.sort((a, b) => b.key.length - a.key.length);
 
   /**
    * customId に対応するハンドラを返す（完全一致優先 → 前方一致）
