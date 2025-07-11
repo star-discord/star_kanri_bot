@@ -5,11 +5,10 @@ const {
   TextInputBuilder,
   TextInputStyle,
   ActionRowBuilder,
-  InteractionResponseFlags,
 } = require('discord.js');
 
 module.exports = {
-  customIdStart: 'totsusuna_setti:編集:',
+  customIdStart: 'totusuna_setti:編集:',
 
   /**
    * 凸スナ本文編集モーダル表示
@@ -18,29 +17,28 @@ module.exports = {
   async handle(interaction) {
     const guildId = interaction.guildId;
     const customId = interaction.customId;
-
     const uuid = customId.replace(this.customIdStart, '');
 
     const filePath = path.join(__dirname, '../../../data', guildId, `${guildId}.json`);
     if (!fs.existsSync(filePath)) {
       return await interaction.reply({
         content: '⚠ データが存在しません。',
-        flags: InteractionResponseFlags.Ephemeral,
+        ephemeral: true
       });
     }
 
     const json = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-    const target = json.tousuna?.instances?.find(i => i.id === uuid);
+    const target = json.totusuna?.instances?.[uuid];
 
     if (!target) {
       return await interaction.reply({
         content: '⚠ 該当する凸スナが見つかりません。',
-        flags: InteractionResponseFlags.Ephemeral,
+        ephemeral: true
       });
     }
 
     const modal = new ModalBuilder()
-      .setCustomId(`tousuna_edit_modal:${uuid}`)
+      .setCustomId(`totusuna_edit_modal:${uuid}`)
       .setTitle('📘 凸スナ本文の編集');
 
     const input = new TextInputBuilder()
@@ -53,6 +51,6 @@ module.exports = {
     modal.addComponents(new ActionRowBuilder().addComponents(input));
 
     await interaction.showModal(modal);
-  },
+  }
 };
 
