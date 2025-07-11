@@ -1,10 +1,16 @@
-// utils/totusuna_setti/buttons/本文削除.js
 const fs = require('fs');
 const path = require('path');
 
 module.exports = {
-  async handle(interaction, uuid) {
+  customIdStart: 'totsusuna_setti:本文削除:',
+
+  /**
+   * 凸スナ本文削除ボタンの処理
+   * @param {import('discord.js').ButtonInteraction} interaction
+   */
+  async handle(interaction) {
     const guildId = interaction.guildId;
+    const uuid = interaction.customId.replace(this.customIdStart, '');
     const dataPath = path.join(__dirname, '../../../data', guildId, `${guildId}.json`);
 
     if (!fs.existsSync(dataPath)) {
@@ -32,7 +38,6 @@ module.exports = {
       });
     }
 
-    // メッセージ削除（可能であれば）
     try {
       const channel = await interaction.guild.channels.fetch(target.messageChannelId);
       if (channel && target.messageId) {
@@ -43,7 +48,6 @@ module.exports = {
       console.warn(`⚠️ メッセージ削除に失敗: ${err.message}`);
     }
 
-    // JSONから削除
     delete instances[uuid];
     fs.writeFileSync(dataPath, JSON.stringify(json, null, 2));
 
@@ -53,4 +57,3 @@ module.exports = {
     });
   },
 };
-
