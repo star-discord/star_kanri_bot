@@ -6,7 +6,9 @@ const {
   ButtonStyle,
   ChannelType,
 } = require('discord.js');
+const { InteractionResponseFlags } = require('discord.js');
 const isAdmin = require('../utils/star_config/admin');
+
 
 // customId を定数で定義（再利用しやすく、typo防止）
 const CUSTOM_IDS = {
@@ -67,7 +69,7 @@ module.exports = {
     await interaction.reply({
       content: '🎯 以下の項目を設定してください。',
       components: [row1, row2, row3],
-      ephemeral: true,
+      flags: InteractionResponseFlags.Ephemeral,
     });
   },
 };
