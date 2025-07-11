@@ -1,4 +1,3 @@
-// utils/totusuna_setti/modals/reportModal.js
 const fs = require('fs');
 const path = require('path');
 const dayjs = require('dayjs');
@@ -6,7 +5,7 @@ const { writeCsvRow } = require('../../spreadsheetHandler');
 const { InteractionResponseFlags } = require('discord.js');
 
 module.exports = {
-  customIdStart: 'totusuna_modal:', // ← UUID対応のためコロン形式に変更
+  customIdStart: 'totusuna_modal:',
 
   /**
    * 凸スナ報告モーダル送信後処理
