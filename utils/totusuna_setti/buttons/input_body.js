@@ -32,11 +32,13 @@ module.exports = {
 
       await interaction.showModal(modal);
     } catch (err) {
-      console.error('[totsusuna 本文入力モーダルエラー]', err);
-      await interaction.reply({
-        content: '❌ モーダルの表示に失敗しました。',
-        flags: InteractionResponseFlags.Ephemeral,
-      });
+      console.error('[totsusuna_setti:本文入力をする] モーダル表示エラー:', err);
+      if (!interaction.replied && !interaction.deferred) {
+        await interaction.reply({
+          content: '❌ モーダルの表示に失敗しました。',
+          flags: InteractionResponseFlags.Ephemeral,
+        });
+      }
     }
   },
 };
