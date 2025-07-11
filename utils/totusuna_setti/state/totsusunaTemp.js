@@ -1,24 +1,21 @@
-const map = new Map();
+// utils/totusuna_setti/state/totsusunaTemp.js
+
+const store = new Map();
+
+function get(guildId, userId) {
+  return store.get(`${guildId}:${userId}`) || null;
+}
+
+function set(guildId, userId, data) {
+  store.set(`${guildId}:${userId}`, data);
+}
+
+function clear(guildId, userId) {
+  store.delete(`${guildId}:${userId}`);
+}
 
 module.exports = {
-  set(userId, state) {
-    map.set(userId, state);
-  },
-
-  get(userId) {
-    return map.get(userId);
-  },
-
-  update(userId, partial) {
-    const current = map.get(userId) || {};
-    map.set(userId, { ...current, ...partial });
-  },
-
-  delete(userId) {
-    map.delete(userId);
-  },
-
-  has(userId) {
-    return map.has(userId);
-  },
+  get,
+  set,
+  clear,
 };
