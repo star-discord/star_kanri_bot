@@ -1,19 +1,39 @@
-const inputBody = require('./buttons/input_body');
-const reportButton = require('./buttons/reportButton');
-const deleteButton = require('./buttons/delete');
-const resendButton = require('./buttons/再送信');
-const deleteTextButton = require('./buttons/本文削除');
-const editButton = require('./buttons/編集');
-const editSettingButton = require('./buttons/設定を編集');
-const submitSettingButton = require('./buttons/設置する');
+// utils/totusuna_setti/buttons.js
+const fs = require('fs');
+const path = require('path');
 
-module.exports = {
-  [inputBody.customId]: async (interaction, ...args) => inputBody.handle(interaction, ...args),
-  [reportButton.customId]: async (interaction, ...args) => reportButton.handle(interaction, ...args),
-  [deleteButton.customId]: async (interaction, ...args) => deleteButton.handle(interaction, ...args),
-  [resendButton.customId]: async (interaction, ...args) => resendButton.handle(interaction, ...args),
-  [deleteTextButton.customId]: async (interaction, ...args) => deleteTextButton.handle(interaction, ...args),
-  [editButton.customId]: async (interaction, ...args) => editButton.handle(interaction, ...args),
-  [editSettingButton.customId]: async (interaction, ...args) => editSettingButton.handle(interaction, ...args),
-  [submitSettingButton.customId]: async (interaction, ...args) => submitSettingButton.handle(interaction, ...args),
-};
+// buttons ディレクトリ内の全ボタンモジュールを動的に読み込む
+const handlers = {};
+
+// フォルダ内の全ファイルを読み込み
+const files = fs.readdirSync(path.join(__dirname, 'buttons')).filter(file => file.endsWith('.js'));
+
+for (const file of files) {
+  const modulePath = path.join(__dirname, 'buttons', file);
+  const handler = require(modulePath);
+
+  // customId（完全一致）または customIdStart（前方一致）で登録
+  if (handler.customId) {
+    handlers[handler.customId] = handler;
+  } else if (handler.customIdStart) {
+    handlers[handler.customIdStart] = handler;
+  }
+}
+
+/**
+ * 受け取った customId に対応するハンドラを探す
+ * @param {string} customId
+ * @returns {object|null} handler
+ */
+function findHandler(customId) {
+  if (handlers[customId]) return handlers[customId];
+
+  // prefix マッチ対応
+  for (const key of Object.keys(handlers)) {
+    if (customId.startsWith(key)) return handlers[key];
+  }
+
+  return null;
+}
+
+module.exports = findHandler;
