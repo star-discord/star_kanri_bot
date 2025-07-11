@@ -2,10 +2,10 @@
 
 module.exports = async (interaction) => {
   switch (interaction.customId) {
-    case 'tousuna_select_main':
+    case 'totusuna_select_main':
       return require('./totusuna_setti/selects/設置チャンネル.js')(interaction);
 
-    case 'tousuna_select_replicate':
+    case 'totusuna_select_replicate':
       return require('./totusuna_setti/selects/複製チャンネル.js')(interaction);
 
     default:
