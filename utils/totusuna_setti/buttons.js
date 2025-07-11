@@ -4,35 +4,38 @@ const path = require('path');
 
 // buttons ディレクトリ内の全ボタンモジュールを動的に読み込む
 const handlers = {};
+const startsWithHandlers = [];
 
-// フォルダ内の全ファイルを読み込み
-const files = fs.readdirSync(path.join(__dirname, 'buttons')).filter(file => file.endsWith('.js'));
+const buttonsDir = path.join(__dirname, 'buttons');
+const files = fs.readdirSync(buttonsDir).filter(file => file.endsWith('.js'));
 
 for (const file of files) {
-  const modulePath = path.join(__dirname, 'buttons', file);
+  const modulePath = path.join(buttonsDir, file);
   const handler = require(modulePath);
 
-  // customId（完全一致）または customIdStart（前方一致）で登録
   if (handler.customId) {
     handlers[handler.customId] = handler;
   } else if (handler.customIdStart) {
-    handlers[handler.customIdStart] = handler;
+    startsWithHandlers.push({ key: handler.customIdStart, handler });
+  } else {
+    console.warn(`⚠️ ボタンファイルに customId/customIdStart がありません: ${file}`);
   }
 }
 
 /**
  * 受け取った customId に対応するハンドラを探す
+ * 完全一致 → 前方一致 の順で判定
  * @param {string} customId
- * @returns {object|null} handler
+ * @returns {object|null}
  */
 function findHandler(customId) {
   if (handlers[customId]) return handlers[customId];
 
-  // prefix マッチ対応
-  for (const key of Object.keys(handlers)) {
-    if (customId.startsWith(key)) return handlers[key];
+  for (const { key, handler } of startsWithHandlers) {
+    if (customId.startsWith(key)) return handler;
   }
 
+  console.warn(`⚠️ ハンドラが見つかりません: ${customId}`);
   return null;
 }
 
