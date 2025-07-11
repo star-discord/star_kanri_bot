@@ -3,7 +3,7 @@ const path = require('path');
 const { InteractionResponseFlags } = require('discord.js');
 
 module.exports = {
-  customIdStart: 'tousuna_delete_',
+  customIdStart: 'totsusuna_setti:削除:',
 
   /**
    * 凸スナ設置削除ボタンの処理
@@ -22,7 +22,7 @@ module.exports = {
     }
 
     const json = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-    const list = json.tousuna?.instances;
+    const list = json.totsusuna?.instances;
 
     if (!Array.isArray(list)) {
       return await interaction.reply({
@@ -48,7 +48,7 @@ module.exports = {
         const message = await channel.messages.fetch(instance.messageId);
         if (message) await message.delete();
       } catch (err) {
-        console.warn(`[tousuna_delete] メッセージ削除失敗: ${err.message}`);
+        console.warn(`[totsusuna_setti:削除] メッセージ削除失敗: ${err.message}`);
       }
     }
 
