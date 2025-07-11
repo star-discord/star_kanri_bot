@@ -11,7 +11,7 @@ const tempState = require('../state/totsusunaTemp');
 const { ensureGuildJSON, readJSON, writeJSON } = require('../../fileHelper');
 
 module.exports = {
-  customId: 'totsusuna_setti:設置する',
+  customId: 'totsusuna_setti:install',
 
   /**
    * 凸スナ設置の処理
@@ -22,6 +22,7 @@ module.exports = {
     const userId = interaction.user.id;
 
     try {
+      // 一時保存データを取得
       const state = tempState.get(guildId, userId);
 
       if (!state || !state.body || !state.installChannelId) {
@@ -31,13 +32,16 @@ module.exports = {
         });
       }
 
+      // 新規UUID生成
       const uuid = uuidv4();
 
+      // Embedを構築
       const embed = new EmbedBuilder()
         .setTitle('📣 凸スナ報告受付中')
         .setDescription(state.body)
         .setColor(0x00bfff);
 
+      // ボタンを構築（UUID付与）
       const button = new ButtonBuilder()
         .setCustomId(`totusuna:report:${uuid}`)
         .setLabel('凸スナ報告')
@@ -47,6 +51,7 @@ module.exports = {
 
       let sentMessage;
       try {
+        // 設置チャンネルへ送信
         const installChannel = await interaction.guild.channels.fetch(state.installChannelId);
         if (!installChannel?.isTextBased?.()) throw new Error('対象チャンネルが無効です');
 
@@ -62,12 +67,15 @@ module.exports = {
         });
       }
 
+      // データファイルを準備・読み込み
       const jsonPath = await ensureGuildJSON(guildId);
       const json = await readJSON(jsonPath);
 
+      // インスタンス構造がなければ初期化
       if (!json.totusuna) json.totusuna = {};
       if (!Array.isArray(json.totusuna.instances)) json.totusuna.instances = [];
 
+      // 新しい設置情報を追加
       json.totusuna.instances.push({
         id: uuid,
         userId,
@@ -77,9 +85,13 @@ module.exports = {
         messageId: sentMessage.id
       });
 
+      // JSON保存
       await writeJSON(jsonPath, json);
+
+      // 一時状態を削除
       tempState.delete(guildId, userId);
 
+      // 成功応答
       await interaction.reply({
         content: '✅ 凸スナ設置が完了しました！',
         ephemeral: true
