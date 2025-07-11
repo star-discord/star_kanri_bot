@@ -4,15 +4,15 @@ const {
   EmbedBuilder,
   ActionRowBuilder,
   ButtonBuilder,
-  ButtonStyle
+  ButtonStyle,
 } = require('discord.js');
 const { v4: uuidv4 } = require('uuid');
 const tempState = require('../../state/totsusunaTemp');
 const { ensureGuildJSON, readJSON, writeJSON } = require('../../../fileHelper');
 
 module.exports = async (interaction) => {
-  const userId = interaction.user.id;
   const guildId = interaction.guildId;
+  const userId = interaction.user.id;
   const state = tempState.get(guildId, userId);
 
   if (!state || !state.body || !state.installChannelId) {
@@ -42,7 +42,7 @@ module.exports = async (interaction) => {
     components: [row],
   });
 
-  // 保存処理
+  // JSON保存
   const jsonPath = ensureGuildJSON(guildId);
   const json = readJSON(jsonPath);
 
@@ -59,6 +59,7 @@ module.exports = async (interaction) => {
   };
 
   writeJSON(jsonPath, json);
+
   tempState.delete(guildId, userId);
 
   await interaction.reply({
