@@ -53,7 +53,6 @@ module.exports = {
       const row2 = new ActionRowBuilder().addComponents(replicateSelect);
       const row3 = new ActionRowBuilder().addComponents(inputButton, createButton);
 
-      // Embedを作成
       const embed = new EmbedBuilder()
         .setTitle('凸スナ設置設定')
         .setDescription('🎯 以下の設定を行ってください。')
@@ -77,4 +76,3 @@ module.exports = {
     }
   },
 };
-
