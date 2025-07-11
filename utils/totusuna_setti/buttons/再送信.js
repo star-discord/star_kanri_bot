@@ -1,4 +1,3 @@
-// utils/totusuna_setti/buttons/再送信.js
 const fs = require('fs');
 const path = require('path');
 const {
@@ -10,7 +9,7 @@ const {
 } = require('discord.js');
 
 module.exports = {
-  customIdStart: 'totsusuna_setti:再送信:',
+  customIdStart: 'totsusuna_setti:resend:', // 英語化
 
   /**
    * 凸スナの再送信処理（再設置）
@@ -18,9 +17,7 @@ module.exports = {
    */
   async handle(interaction) {
     const guildId = interaction.guildId;
-    const customId = interaction.customId;
-
-    const uuid = customId.replace(this.customIdStart, '');
+    const uuid = interaction.customId.replace(this.customIdStart, '');
 
     const dataPath = path.join(__dirname, '../../../data', guildId, `${guildId}.json`);
     if (!fs.existsSync(dataPath)) {
@@ -30,8 +27,18 @@ module.exports = {
       });
     }
 
-    const json = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
-    const instances = json.tousuna?.instances ?? [];
+    let json;
+    try {
+      json = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
+    } catch (err) {
+      console.error('[再送信] JSON 読み込みエラー:', err);
+      return await interaction.reply({
+        content: '❌ データファイルの読み込みに失敗しました。',
+        flags: InteractionResponseFlags.Ephemeral,
+      });
+    }
+
+    const instances = json.totsusuna?.instances ?? [];
     const instance = instances.find(i => i.id === uuid);
 
     if (!instance) {
@@ -44,9 +51,9 @@ module.exports = {
     // チャンネル取得
     let channel;
     try {
-      channel = await interaction.guild.channels.fetch(instance.messageChannelId);
+      channel = await interaction.guild.channels.fetch(instance.installChannelId);
     } catch (err) {
-      console.warn(`[再送信] チャンネル取得失敗: ${instance.messageChannelId}`, err.message);
+      console.warn(`[再送信] チャンネル取得失敗: ${instance.installChannelId}`, err.message);
       return await interaction.reply({
         content: '⚠️ 対象チャンネルが存在しないか取得に失敗しました。',
         flags: InteractionResponseFlags.Ephemeral,
@@ -60,7 +67,7 @@ module.exports = {
       });
     }
 
-    // 再送信
+    // Embed と ボタン再生成
     try {
       const embed = new EmbedBuilder()
         .setTitle('📣 凸スナ報告受付中')
@@ -68,7 +75,7 @@ module.exports = {
         .setColor(0x00bfff);
 
       const button = new ButtonBuilder()
-        .setCustomId(`tousuna_report_button_${uuid}`)
+        .setCustomId(`totsusuna_report_button_${uuid}`) // customId に合わせて命名
         .setLabel('凸スナ報告')
         .setStyle(ButtonStyle.Primary);
 
@@ -84,6 +91,7 @@ module.exports = {
         content: '📤 再送信しました（設置チャンネルに投稿されました）。',
         flags: InteractionResponseFlags.Ephemeral,
       });
+
     } catch (err) {
       console.error('[再送信エラー]', err);
       await interaction.reply({
@@ -93,5 +101,3 @@ module.exports = {
     }
   },
 };
-
-
