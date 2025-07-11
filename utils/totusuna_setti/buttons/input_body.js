@@ -8,7 +8,7 @@ const {
 } = require('discord.js');
 
 module.exports = {
-  customId: 'totsusuna_setti:本文入力をする',
+  customId: 'totsusuna_setti:input_body',
 
   /**
    * 凸スナ本文入力モーダル表示
@@ -32,7 +32,7 @@ module.exports = {
 
       await interaction.showModal(modal);
     } catch (err) {
-      console.error('[totsusuna_setti:本文入力をする] モーダル表示エラー:', err);
+      console.error('[totsusuna_setti:input_body] モーダル表示エラー:', err);
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({
           content: '❌ モーダルの表示に失敗しました。',
