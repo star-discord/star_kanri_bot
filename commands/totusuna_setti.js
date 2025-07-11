@@ -11,7 +11,7 @@ const isAdmin = require('../utils/star_config/admin');
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('setup-totsusuna') // コマンド名英語化
+    .setName('凸スナ設置') 
     .setDescription('Create a message with a Totsusuna report button (set body and target channels).'),
 
   async execute(interaction) {
