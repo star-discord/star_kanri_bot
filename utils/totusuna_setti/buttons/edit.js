@@ -8,10 +8,10 @@ const {
 } = require('discord.js');
 
 module.exports = {
-  customIdStart: 'totusuna_setti:編集:',
+  customIdStart: 'totusuna_setti:edit:',
 
   /**
-   * 凸スナ本文編集モーダル表示
+   * Show modal to edit Totsusuna body
    * @param {import('discord.js').ButtonInteraction} interaction
    */
   async handle(interaction) {
@@ -22,28 +22,37 @@ module.exports = {
     const filePath = path.join(__dirname, '../../../data', guildId, `${guildId}.json`);
     if (!fs.existsSync(filePath)) {
       return await interaction.reply({
-        content: '⚠ データが存在しません。',
+        content: '⚠ Data file not found.',
         ephemeral: true
       });
     }
 
-    const json = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-    const target = json.totusuna?.instances?.[uuid];
+    let json;
+    try {
+      json = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    } catch (err) {
+      console.error('Failed to parse JSON:', err);
+      return await interaction.reply({
+        content: '❌ Failed to read the data file.',
+        ephemeral: true
+      });
+    }
 
+    const target = json.totusuna?.instances?.[uuid];
     if (!target) {
       return await interaction.reply({
-        content: '⚠ 該当する凸スナが見つかりません。',
+        content: '⚠ The specified Totsusuna instance could not be found.',
         ephemeral: true
       });
     }
 
     const modal = new ModalBuilder()
       .setCustomId(`totusuna_edit_modal:${uuid}`)
-      .setTitle('📘 凸スナ本文の編集');
+      .setTitle('📘 Edit Totsusuna Message Body');
 
     const input = new TextInputBuilder()
       .setCustomId('body')
-      .setLabel('本文')
+      .setLabel('Message Body')
       .setStyle(TextInputStyle.Paragraph)
       .setRequired(true)
       .setValue(target.body || '');
@@ -53,4 +62,3 @@ module.exports = {
     await interaction.showModal(modal);
   }
 };
-
