@@ -16,7 +16,7 @@ module.exports = {
   async execute(interaction) {
     const guildId = interaction.guild.id;
     const filePath = ensureGuildJSON(guildId);
-    const data = readJSON(filePath);
+    const data = await readJSON(filePath); // ← 修正：awaitを追加
 
     if (!data.star_config) data.star_config = {};
     const currentAdminRoleIds = data.star_config.adminRoleIds || [];
@@ -42,12 +42,18 @@ module.exports = {
 
     const row = new ActionRowBuilder().addComponents(roleSelect);
 
-    // 最初のEmbed送信（保持）
     const sentMessage = await interaction.reply({
       embeds: [getSettingsEmbed(currentAdminRoleIds)],
       components: [row],
       ephemeral: true
     });
+
+    if (!interaction.channel) {
+      return await interaction.followUp({
+        content: '⚠️ チャンネルが見つかりませんでした。',
+        ephemeral: true
+      });
+    }
 
     const collector = interaction.channel.createMessageComponentCollector({
       componentType: ComponentType.RoleSelect,
@@ -70,7 +76,7 @@ module.exports = {
       data.star_config.adminRoleIds = selectedRoleIds;
 
       try {
-        writeJSON(filePath, data);
+        await writeJSON(filePath, data); // ← 修正：awaitを追加
       } catch (err) {
         console.error('❌ JSON保存失敗:', err);
         return await selectInteraction.reply({
@@ -122,3 +128,4 @@ module.exports = {
     });
   }
 };
+
