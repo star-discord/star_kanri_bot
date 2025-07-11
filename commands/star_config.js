@@ -3,7 +3,8 @@ const {
   SlashCommandBuilder,
   ActionRowBuilder,
   RoleSelectMenuBuilder,
-  ComponentType
+  ComponentType,
+  EmbedBuilder
 } = require('discord.js');
 const { readJSON, writeJSON, ensureGuildJSON } = require('../utils/fileHelper');
 
@@ -20,7 +21,19 @@ module.exports = {
     if (!data.star_config) data.star_config = {};
     const currentAdminRoleIds = data.star_config.adminRoleIds || [];
 
-    // ロール選択メニュー生成（現在の設定をプレフィックス表示）
+    // Embed生成関数
+    const getSettingsEmbed = (roleIds) => {
+      const currentMentions =
+        roleIds.length > 0
+          ? roleIds.map(id => `<@&${id}>`).join('\n')
+          : '*未設定*';
+
+      return new EmbedBuilder()
+        .setTitle('🌟 STAR管理bot設定')
+        .setDescription('**管理者ロールの登録/解除**\n\n📌 現在の管理者ロール:\n' + currentMentions)
+        .setColor(0x0099ff);
+    };
+
     const roleSelect = new RoleSelectMenuBuilder()
       .setCustomId('admin_role_select')
       .setPlaceholder('管理者として許可するロールを選択')
@@ -29,18 +42,13 @@ module.exports = {
 
     const row = new ActionRowBuilder().addComponents(roleSelect);
 
-    const currentMentions =
-      currentAdminRoleIds.length > 0
-        ? currentAdminRoleIds.map(id => `<@&${id}>`).join(', ')
-        : '*未設定*';
-
-    await interaction.reply({
-      content: `👤 管理者ロールを選択してください（複数可）\n📌 現在の設定: ${currentMentions}`,
+    // 最初のEmbed送信（保持）
+    const sentMessage = await interaction.reply({
+      embeds: [getSettingsEmbed(currentAdminRoleIds)],
       components: [row],
-      ephemeral: true // ← v14ではこれが正式
+      ephemeral: true
     });
 
-    // コンポーネント応答を待機
     const collector = interaction.channel.createMessageComponentCollector({
       componentType: ComponentType.RoleSelect,
       time: 30_000,
@@ -56,6 +64,9 @@ module.exports = {
       }
 
       const selectedRoleIds = selectInteraction.values;
+      const added = selectedRoleIds.filter(id => !currentAdminRoleIds.includes(id));
+      const removed = currentAdminRoleIds.filter(id => !selectedRoleIds.includes(id));
+
       data.star_config.adminRoleIds = selectedRoleIds;
 
       try {
@@ -68,12 +79,36 @@ module.exports = {
         });
       }
 
-      const mentionText = selectedRoleIds.map(id => `<@&${id}>`).join(', ');
-      console.log(`🛠️ ${interaction.guild.name} (${guildId}) の管理者ロールを更新: ${mentionText}`);
+      // 古いメッセージ削除
+      try {
+        await sentMessage.delete();
+      } catch (e) {
+        console.warn('⚠️ 元の設定Embedを削除できませんでした。');
+      }
 
-      await selectInteraction.update({
-        content: `✅ 管理者ロールを設定しました: ${mentionText}`,
-        components: []
+      // 差分通知（登録）
+      if (added.length > 0) {
+        const embed = new EmbedBuilder()
+          .setTitle('✅ 管理者ロールを登録しました')
+          .setDescription(`登録されたロール：\n${added.map(id => `<@&${id}>`).join('\n')}`)
+          .setColor(0x00cc99);
+        await interaction.followUp({ embeds: [embed], ephemeral: true });
+      }
+
+      // 差分通知（解除）
+      if (removed.length > 0) {
+        const embed = new EmbedBuilder()
+          .setTitle('⚠️ 管理者ロールが解除されました')
+          .setDescription(`解除されたロール：\n${removed.map(id => `<@&${id}>`).join('\n')}`)
+          .setColor(0xff6600);
+        await interaction.followUp({ embeds: [embed], ephemeral: true });
+      }
+
+      // 再度設定Embedを送信（更新後の状態）
+      await interaction.followUp({
+        embeds: [getSettingsEmbed(selectedRoleIds)],
+        components: [new ActionRowBuilder().addComponents(roleSelect)],
+        ephemeral: true
       });
     });
 
@@ -87,5 +122,3 @@ module.exports = {
     });
   }
 };
-
-
