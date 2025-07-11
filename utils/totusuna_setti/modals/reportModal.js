@@ -1,3 +1,4 @@
+// utils/totusuna_setti/modals/reportModal.js
 const fs = require('fs');
 const path = require('path');
 const dayjs = require('dayjs');
@@ -5,7 +6,7 @@ const { writeCsvRow } = require('../../spreadsheetHandler');
 const { InteractionResponseFlags } = require('discord.js');
 
 module.exports = {
-  customIdStart: 'totusuna_modal_', // ← 変更済み
+  customIdStart: 'totusuna_modal:', // ← UUID対応のためコロン形式に変更
 
   /**
    * 凸スナ報告モーダル送信後処理
@@ -17,6 +18,9 @@ module.exports = {
     const now = dayjs();
     const timestamp = now.format('YYYY-MM-DD HH:mm:ss');
     const ym = now.format('YYYY-MM');
+
+    // UUIDを抽出
+    const uuid = interaction.customId.replace(this.customIdStart, '');
 
     // 入力値取得
     const group = interaction.fields.getTextInputValue('group');
@@ -43,21 +47,21 @@ module.exports = {
     }
 
     const json = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
-    const install = Object.values(json.totusuna?.instances || {}).find(v => v?.installChannelId);
+    const instance = (json.totusuna?.instances || []).find(i => i.id === uuid);
 
-    if (!install) {
+    if (!instance) {
       return await interaction.reply({
-        content: '⚠ 凸スナ設置チャンネルが未設定です。',
+        content: '⚠ 対応する凸スナ設置情報が見つかりません。',
         flags: InteractionResponseFlags.Ephemeral,
       });
     }
 
     try {
-      const targetChannel = await interaction.client.channels.fetch(install.installChannelId);
+      const targetChannel = await interaction.client.channels.fetch(instance.installChannelId);
       if (targetChannel?.isTextBased()) {
         await targetChannel.send({ content: report });
       } else {
-        console.warn(`[reportModal] テキストチャンネルでない: ${install.installChannelId}`);
+        console.warn(`[reportModal] テキストチャンネルでない: ${instance.installChannelId}`);
       }
     } catch (err) {
       console.error(`[reportModal] チャンネル送信失敗:`, err);
