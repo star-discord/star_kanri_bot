@@ -1,6 +1,7 @@
 // utils/totusuna_setti/selects/replicate_channel.js
 
-const tempStore = require('../../state/totsusunaTemp'); // ✅ 相対パス修正
+const tempStore = require('../../state/totsusunaTemp');
+const { InteractionResponseFlags } = require('discord.js'); // ← 追加
 
 module.exports = {
   customIdStart: 'totusuna_select_replicate:',
@@ -14,11 +15,10 @@ module.exports = {
     const guildId = interaction.guildId;
     const userId = interaction.user.id;
 
-    // ✅ 空選択のチェック
     if (!selected || selected.length === 0) {
       return await interaction.reply({
         content: '⚠️ チャンネルが選択されていません。',
-        ephemeral: true
+        flags: InteractionResponseFlags.Ephemeral,
       });
     }
 
@@ -29,7 +29,6 @@ module.exports = {
       replicateChannelIds: selected
     });
 
-    // ✅ 存在するチャンネル名の取得（オプション）
     const display = selected
       .map(id => {
         const ch = interaction.guild.channels.cache.get(id);
@@ -39,7 +38,7 @@ module.exports = {
 
     await interaction.reply({
       content: `🌀 複製チャンネルを ${display} に設定しました。`,
-      ephemeral: true
+      flags: InteractionResponseFlags.Ephemeral,
     });
   }
 };
