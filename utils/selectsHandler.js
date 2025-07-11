@@ -1,7 +1,7 @@
 // utils/selectsHandler.js
 const path = require('path');
 const { loadHandlers } = require('./handlerLoader');
-const { InteractionResponseFlags } = require('discord.js'); // 追加
+const { InteractionResponseFlags } = require('discord.js');
 
 // 「totusuna_setti/selects」配下のセレクトメニュー用ハンドラー群を読み込み
 const findHandler = loadHandlers(path.join(__dirname, 'totusuna_setti/selects'));
@@ -38,4 +38,3 @@ async function handleSelect(interaction) {
 }
 
 module.exports = { handleSelect };
-
