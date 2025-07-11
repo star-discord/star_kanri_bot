@@ -11,18 +11,18 @@ module.exports = {
   customId: 'totsusuna_setti:input_body',
 
   /**
-   * 凸スナ本文入力モーダル表示
+   * Show modal for entering Totsusuna message body
    * @param {import('discord.js').ButtonInteraction} interaction
    */
   async handle(interaction) {
     try {
       const modal = new ModalBuilder()
         .setCustomId('totsusuna_content_modal')
-        .setTitle('📘 凸スナ 本文入力');
+        .setTitle('📘 Enter Totsusuna Message Body');
 
       const bodyInput = new TextInputBuilder()
         .setCustomId('body')
-        .setLabel('📄 本文を入力してください（例: 報告はこちら！）')
+        .setLabel('📄 Please enter the message body (e.g., Report here!)')
         .setStyle(TextInputStyle.Paragraph)
         .setRequired(true);
 
@@ -32,10 +32,10 @@ module.exports = {
 
       await interaction.showModal(modal);
     } catch (err) {
-      console.error('[totsusuna_setti:input_body] モーダル表示エラー:', err);
+      console.error('[totsusuna_setti:input_body] Failed to show modal:', err);
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({
-          content: '❌ モーダルの表示に失敗しました。',
+          content: '❌ Failed to show the input modal.',
           flags: InteractionResponseFlags.Ephemeral,
         });
       }
