@@ -2,31 +2,42 @@
 const fs = require('fs');
 const path = require('path');
 
+// 完全一致 / 前方一致用のハンドラ格納
 const handlers = {};
 const startsWithHandlers = [];
 
+// モーダルハンドラを読み込むディレクトリ
 const modalsDir = path.join(__dirname, 'modals');
+
+// .js ファイルのみを対象
 const files = fs.readdirSync(modalsDir).filter(file => file.endsWith('.js'));
 
 for (const file of files) {
   const modulePath = path.join(modalsDir, file);
   try {
+    delete require.cache[require.resolve(modulePath)]; // ← キャッシュクリア（開発時用）
     const handler = require(modulePath);
 
-    if (handler.customId) {
+    if (typeof handler.handle !== 'function') {
+      console.warn(`⚠️ モーダルモジュールに handle 関数がありません: ${file}`);
+      continue;
+    }
+
+    if (typeof handler.customId === 'string') {
       handlers[handler.customId] = handler;
-    } else if (handler.customIdStart) {
+    } else if (typeof handler.customIdStart === 'string') {
       startsWithHandlers.push({ key: handler.customIdStart, handler });
     } else {
       console.warn(`⚠️ モーダルモジュールに customId/customIdStart が未定義: ${file}`);
     }
+
   } catch (err) {
-    console.warn(`❌ モーダルファイルの読み込みに失敗: ${file}`, err);
+    console.warn(`❌ モーダルファイルの読み込みに失敗 (${file}):`, err);
   }
 }
 
 /**
- * Custom ID に一致するモーダルハンドラを探す（完全一致 → 前方一致）
+ * モーダル customId に対応するハンドラを探す（完全一致 → 前方一致）
  * @param {string} customId
  * @returns {object|null}
  */
