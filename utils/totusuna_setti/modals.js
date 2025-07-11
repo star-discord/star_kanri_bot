@@ -2,20 +2,17 @@
 const fs = require('fs');
 const path = require('path');
 
-// 完全一致 / 前方一致用のハンドラ格納
 const handlers = {};
 const startsWithHandlers = [];
 
-// モーダルハンドラを読み込むディレクトリ
 const modalsDir = path.join(__dirname, 'modals');
 
-// .js ファイルのみを対象
 const files = fs.readdirSync(modalsDir).filter(file => file.endsWith('.js'));
 
 for (const file of files) {
   const modulePath = path.join(modalsDir, file);
   try {
-    delete require.cache[require.resolve(modulePath)]; // ← キャッシュクリア（開発時用）
+    delete require.cache[require.resolve(modulePath)]; // 開発中のキャッシュ無効化
     const handler = require(modulePath);
 
     if (typeof handler.handle !== 'function') {
