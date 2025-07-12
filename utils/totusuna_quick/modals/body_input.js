@@ -1,3 +1,4 @@
+// utils/totusuna_quick/modals/body_input.js
 const fs = require('fs');
 const path = require('path');
 const {
@@ -10,7 +11,8 @@ const {
 const { v4: uuidv4 } = require('uuid');
 
 module.exports = {
-  customIdStart: 'totusuna_quick_modal_',
+  // カスタムID接頭辞を「totusuna_quick:totusuna_quick」に設定
+  customIdStart: 'totusuna_quick:totusuna_quick',
 
   /**
    * クイック設置の本文モーダル送信後の処理
