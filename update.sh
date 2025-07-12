@@ -117,9 +117,59 @@ else
       exit 1
     }
     
-    # 追跡されていないファイルも削除
+    # 追跡されていないファイルも削除（重要ファイルは除外）
     echo "🧹 不要ファイルをクリーンアップ中..."
+    # 重要ファイルを一時的にバックアップ
+    BACKUP_DIR="/tmp/star_kanri_backup_$$"
+    mkdir -p "$BACKUP_DIR"
+    
+    # .envファイルをバックアップ
+    if [ -f .env ]; then
+      cp .env "$BACKUP_DIR/"
+      echo "📋 .envファイルを一時保護中..."
+    fi
+    
+    # dataフォルダをバックアップ
+    if [ -d data ]; then
+      cp -r data "$BACKUP_DIR/"
+      echo "� dataフォルダを一時保護中..."
+    fi
+    
+    # Google Cloud認証ファイルをバックアップ
+    for file in star-discord-bot-*.json data/star-discord-bot-*.json; do
+      if [ -f "$file" ]; then
+        mkdir -p "$BACKUP_DIR/$(dirname "$file")"
+        cp "$file" "$BACKUP_DIR/$file"
+        echo "🔐 認証ファイルを一時保護中: $file"
+      fi
+    done
+    
+    # クリーンアップ実行
     git clean -fdx
+    
+    # バックアップファイルを復元
+    if [ -f "$BACKUP_DIR/.env" ]; then
+      mv "$BACKUP_DIR/.env" .env
+      echo "📋 .envファイルを復元完了"
+    fi
+    
+    if [ -d "$BACKUP_DIR/data" ]; then
+      mv "$BACKUP_DIR/data" data
+      echo "� dataフォルダを復元完了"
+    fi
+    
+    # Google Cloud認証ファイルを復元
+    for file in "$BACKUP_DIR"/star-discord-bot-*.json "$BACKUP_DIR"/data/star-discord-bot-*.json; do
+      if [ -f "$file" ]; then
+        target_file="${file#$BACKUP_DIR/}"
+        mkdir -p "$(dirname "$target_file")"
+        mv "$file" "$target_file"
+        echo "🔐 認証ファイルを復元完了: $target_file"
+      fi
+    done
+    
+    # バックアップディレクトリを削除
+    rm -rf "$BACKUP_DIR"
     
     echo "✅ GitHub最新版への完全同期完了"
   else
