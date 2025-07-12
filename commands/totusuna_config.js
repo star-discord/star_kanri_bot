@@ -4,11 +4,22 @@ const {
   ActionRowBuilder,
   ComponentType,
   InteractionResponseFlags,
+  EmbedBuilder,
 } = require('discord.js');
 
 const { ensureGuildJSON, readJSON } = require('../utils/fileHelper.js');
 
 const requireAdmin = require('../utils/permissions/requireAdmin.js');
+
+// Embed作成ヘルパー関数
+function createAdminEmbed(title, description) {
+  return new EmbedBuilder()
+    .setTitle(title)
+    .setDescription(description)
+    .setColor(0x00AE86)
+    .setFooter({ text: 'STAR管理bot' })
+    .setTimestamp();
+}
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -19,7 +30,7 @@ module.exports = {
     const guildId = interaction.guildId;
     const filePath = await ensureGuildJSON(guildId);
     const data = await readJSON(filePath);
-    const instances = Object.values(data.tousuna?.instances || {});
+    const instances = data.totusuna_list || [];
 
     if (instances.length === 0) {
       return interaction.reply({
@@ -31,11 +42,11 @@ module.exports = {
     }
 
     const options = instances
-      .filter(i => i.uuid)
+      .filter(i => i.messageId || i.id)
       .map(i => ({
         label: i.body?.slice(0, 50) || '（無題）',
-        value: i.uuid,
-        description: i.installChannelId ? `#${i.installChannelId}` : '設置チャンネル不明',
+        value: i.messageId || i.id,
+        description: i.mainChannelId ? `<#${i.mainChannelId}>` : '設置チャンネル不明',
       }));
 
     if (options.length === 0) {

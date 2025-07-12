@@ -1,15 +1,15 @@
 
 const path = require('path');
-const { loadHandlers } = require('./handlerLoader');
+const { loadHandlers } = require('../../handlerLoader');
 
 // 「totusuna_setti」配下のセレクトメニュー用ハンドラー群を読み込み
-const totusunaHandler = loadHandlers(path.join(__dirname, 'totusuna_setti/selects'));
+const totusunaHandler = loadHandlers(path.join(__dirname, '../../totusuna_setti/selects'));
 
 // その他のセレクトメニュー用ハンドラー群（後方互換など）
 const fallbackDirs = [
   'star_config/selects',
   'totusuna_config/selects'
-].map(sub => loadHandlers(path.join(__dirname, sub)));
+].map(sub => loadHandlers(path.join(__dirname, '../../', sub)));
 
 /**
  * セレクトメニューインタラクションを処理するメイン関数
