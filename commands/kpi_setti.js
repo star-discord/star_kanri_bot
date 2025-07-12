@@ -1,3 +1,5 @@
+// ファイル参照: commands/kpi_setti.js
+
 const {
   SlashCommandBuilder,
   ActionRowBuilder,
@@ -25,7 +27,3 @@ module.exports = {
 
     await interaction.reply({
       content: 'KPI報告　目標設定/申請ボタン',
-      components: [row],
-    });
-  },
-};
