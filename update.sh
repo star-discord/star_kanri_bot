@@ -2,9 +2,9 @@
 
 echo "🚀 star_kanri_bot 更新処理開始"
 
-# 古いバックアップフォルダを削除（最新3つのみ保持）
+# 古いバックアップフォルダを削除（最新1つのみ保持）
 echo "🗑️ 古いバックアップフォルダを削除中..."
-ls -t "$HOME"/star_kanri_bot_data_backup_* 2>/dev/null | tail -n +4 | xargs rm -rf
+ls -t "$HOME"/star_kanri_bot_data_backup_* 2>/dev/null | tail -n +2 | xargs rm -rf
 
 # dataフォルダのみバックアップ
 DATE=$(date '+%Y%m%d_%H%M')
