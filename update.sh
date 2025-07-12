@@ -139,8 +139,8 @@ else
   echo "現在のブランチ: $(git branch --show-current)"
   echo "最新コミット: $(git log --oneline -1)"
   
-  # update.shに実行権限を自動付与
-  chmod +x update.sh
+  # update.shに実行権限を自動付与（最後に実行）
+  # chmod +x update.sh は最後に実行するため、ここではコメントアウト
   if [ -f sync_from_github.sh ]; then
     chmod +x sync_from_github.sh
   fi
@@ -188,6 +188,10 @@ fi
 # ログ確認
 echo "📄 最新ログ（50行）"
 pm2 logs star-kanri-bot --lines 50 --nostream
+
+# 最後にupdate.shの実行権限を付与（無限ループ防止のため最後に実行）
+echo "🔧 スクリプト権限を最終設定中..."
+chmod +x update.sh
 
 echo "✅ star_kanri_bot 更新完了"
 
