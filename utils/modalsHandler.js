@@ -3,8 +3,10 @@ const { loadHandlers } = require('./handlerLoader');
 const { logAndReplyError } = require('./errorHelper');
 
 const totusunaHandler = loadHandlers(path.join(__dirname, 'totusuna_setti/modals'));
+const starChatGptSettiHandler = require(path.join(__dirname, 'star_chat_gpt_setti', 'modals.js'));
 const fallbackHandlers = [
   loadHandlers(path.join(__dirname, 'star_config/modals')),
+  starChatGptSettiHandler,
   loadHandlers(path.join(__dirname, 'totusuna_config/modals')),
 ];
 

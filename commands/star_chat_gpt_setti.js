@@ -8,12 +8,17 @@ module.exports = {
 
   execute: requireAdmin(async (interaction) => {
     try {
-      const button = new ButtonBuilder()
+      const infoButton = new ButtonBuilder()
         .setCustomId('star_chat_gpt_setti_button')
-        .setLabel('今日のchat gpt')
+        .setLabel('🤖 今日のChatGPT')
         .setStyle(ButtonStyle.Primary);
 
-      const row = new ActionRowBuilder().addComponents(button);
+      const configButton = new ButtonBuilder()
+        .setCustomId('chatgpt_config_button')
+        .setLabel('⚙️ 設定')
+        .setStyle(ButtonStyle.Secondary);
+
+      const row = new ActionRowBuilder().addComponents(infoButton, configButton);
 
       const content = `🤖 **ChatGPT案内**\n以下のボタンを押すと、「天気」「ニュース」「豆知識」などの情報が届きます。`;
 

@@ -1,4 +1,4 @@
-// utils/star_config/buttons/star_chat_gpt_setti_button.js
+// utils/star_chat_gpt_setti/buttons/star_chat_gpt_setti_button.js
 const { MessageFlags } = require('discord.js');
 const { createAdminEmbed } = require('../../embedHelper');
 

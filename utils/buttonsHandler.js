@@ -6,12 +6,14 @@ const { logAndReplyError } = require('./errorHelper');
 
 // 各カテゴリのbuttons.jsを読み込み（.js付きでパス指定）
 const starConfigHandler = require(path.join(__dirname, 'star_config', 'buttons.js'));
+const starChatGptSettiHandler = require(path.join(__dirname, 'star_chat_gpt_setti', 'buttons.js'));
 const totusunaSettiHandler = loadHandlers(path.join(__dirname, 'totusuna_setti', 'buttons'));
 const totusunaConfigHandler = loadHandlers(path.join(__dirname, 'totusuna_config', 'buttons'));
 const kpiHandler = require(path.join(__dirname, 'kpi_setti', 'buttons.js'));
 
 const fallbackHandlers = [
   starConfigHandler,
+  starChatGptSettiHandler,
   totusunaSettiHandler,
   totusunaConfigHandler,
   kpiHandler,
