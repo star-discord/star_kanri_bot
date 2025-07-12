@@ -38,17 +38,20 @@ function writeJSON(filePath, data) {
   });
 }
 
-function ensureGuildJSON(guildId) {
+async function ensureGuildJSON(guildId) {
   const dir = `data/${guildId}`;
   const filePath = `${dir}/${guildId}.json`;
 
   try {
-    if (!fs.existsSync(filePath)) {
+    await fs.promises.mkdir(dir, { recursive: true });
+    try {
+      await fs.promises.access(filePath);
+    } catch {
+      // ファイルがなければ初期データを書き込み
       const initialData = {
         adminRoleId: null,
       };
-      fs.mkdirSync(dir, { recursive: true });
-      fs.writeFileSync(filePath, JSON.stringify(initialData, null, 2), 'utf8');
+      await fs.promises.writeFile(filePath, JSON.stringify(initialData, null, 2), 'utf8');
       console.log(`✅ 初期JSONファイルを作成しました: ${filePath}`);
     }
   } catch (err) {
