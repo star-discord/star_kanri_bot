@@ -3,7 +3,7 @@ const {
   StringSelectMenuBuilder,
   ActionRowBuilder,
   ComponentType,
-  InteractionResponseFlags,
+  MessageFlags,
   EmbedBuilder,
 } = require('discord.js');
 
@@ -37,7 +37,7 @@ module.exports = {
         embeds: [
           createAdminEmbed('📭 凸スナ設定メニュー', '現在、設置されている凸スナはありません。')
         ],
-        flags: InteractionResponseFlags.Ephemeral,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -54,7 +54,7 @@ module.exports = {
         embeds: [
           createAdminEmbed('⚠ データエラー', '有効な凸スナデータが見つかりません。')
         ],
-        flags: InteractionResponseFlags.Ephemeral,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -73,7 +73,7 @@ module.exports = {
         )
       ],
       components: [row],
-      flags: InteractionResponseFlags.Ephemeral,
+      flags: MessageFlags.Ephemeral,
     });
 
     const collector = interaction.channel.createMessageComponentCollector({

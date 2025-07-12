@@ -1,6 +1,6 @@
 // utils/buttonsHandler.js
 const path = require('path');
-const { InteractionResponseFlags } = require('discord.js');
+const { MessageFlags } = require('discord.js');
 const { loadHandlers } = require('./handlerLoader.js');
 const { logAndReplyError } = require('./errorHelper');
 
@@ -36,7 +36,7 @@ async function handleButton(interaction) {
     console.warn(`⚠️ 未対応のボタン: ${customId}`);
     return await interaction.reply({
       content: '⚠️ このボタンは現在利用できません。',
-      flags: InteractionResponseFlags.Ephemeral,
+      flags: MessageFlags.Ephemeral,
     });
   }
 
@@ -47,7 +47,7 @@ async function handleButton(interaction) {
       interaction,
       `❌ ボタン処理エラー: ${customId}\n${err?.stack || err}`,
       '❌ ボタン処理中にエラーが発生しました。',
-      { flags: InteractionResponseFlags.Ephemeral }
+      { flags: MessageFlags.Ephemeral }
     );
   }
 }

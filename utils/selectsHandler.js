@@ -1,7 +1,7 @@
 // commands/common/selectHandler.js
 const starSelectHandler = require('../utils/star_config/selects');
 const totsusunaSelectHandler = require('../utils/totusuna_setti/selects');
-const { InteractionResponseFlags } = require('discord.js');
+const { MessageFlags } = require('discord.js');
 const { logAndReplyError } = require('./errorHelper');
 
 /**
@@ -39,7 +39,7 @@ async function handleSelect(interaction) {
   if (!handler) {
     return await interaction.reply({
       content: '❌ セレクトメニューに対応する処理が見つかりませんでした。',
-      flags: InteractionResponseFlags.Ephemeral,
+      flags: MessageFlags.Ephemeral,
     });
   }
 
@@ -50,7 +50,7 @@ async function handleSelect(interaction) {
       interaction,
       `❌ セレクトエラー (${customId})\n${err?.stack || err}`,
       '❌ エラーが発生しました。',
-      { flags: InteractionResponseFlags.Ephemeral }
+      { flags: MessageFlags.Ephemeral }
     );
   }
 }

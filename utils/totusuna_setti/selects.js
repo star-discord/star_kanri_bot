@@ -1,5 +1,5 @@
 // utils/totusuna_setti/selects.js
-const { InteractionResponseFlags } = require('discord.js');
+const { MessageFlags } = require('discord.js');
 const path = require('path');
 const { loadHandlers } = require('../handlerLoader');
 

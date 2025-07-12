@@ -6,7 +6,7 @@ const {
   ButtonStyle,
   ChannelType,
   EmbedBuilder,
-  InteractionResponseFlags,
+  MessageFlags,
 } = require('discord.js');
 
 const requireAdmin = require('../utils/permissions/requireAdmin.js');
@@ -57,14 +57,14 @@ module.exports = {
       await interaction.reply({
         embeds: [embed],
         components: [row1, row2, row3],
-        flags: InteractionResponseFlags.Ephemeral,
+        flags: MessageFlags.Ephemeral,
       });
     } catch (error) {
       console.error(`❌ /凸スナ設置 コマンド実行中にエラーが発生しました: user=${interaction.user.tag}`, error);
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({
           content: '❌ コマンド実行中にエラーが発生しました。管理者にお問い合わせください。',
-          flags: InteractionResponseFlags.Ephemeral,
+          flags: MessageFlags.Ephemeral,
         });
       }
     }
