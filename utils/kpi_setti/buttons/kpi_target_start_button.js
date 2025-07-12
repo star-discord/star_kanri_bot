@@ -3,6 +3,7 @@
 const { activeReportSessions } = require('../stepChatHandler');
 
 module.exports = {
+  customId: 'kpi_target_start_button',
   handle: async (interaction) => {
     const userId = interaction.user.id;
 
