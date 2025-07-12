@@ -75,31 +75,16 @@ else
   echo "💾 現在の変更状況を確認中..."
   CHANGES=$(git status --porcelain 2>/dev/null)
   if [ -n "$CHANGES" ]; then
-    echo "⚠️ 検出されたローカル変更:"
-    echo "$CHANGES"
+    echo "⚠️ 検出されたローカル変更: $CHANGES"
     
-    if [ "$FORCE_SYNC" = false ]; then
-      echo ""
-      echo "🤔 ローカル変更が検出されました。どうしますか？"
-      echo "1) 変更を保持して通常更新 (推奨)"
-      echo "2) 変更を破棄して完全同期"
-      echo "3) 処理を中止"
-      read -p "選択してください (1-3): " choice
-      
-      case $choice in
-        2)
-          FORCE_SYNC=true
-          echo "⚡ 完全同期モードに変更しました"
-          ;;
-        3)
-          echo "❌ 処理を中止しました"
-          exit 0
-          ;;
-        *)
-          echo "📋 通常更新モードで続行します"
-          ;;
-      esac
+    # sync_from_github.shの衝突を自動解決
+    if echo "$CHANGES" | grep -q "sync_from_github.sh"; then
+      echo "🔧 sync_from_github.shの衝突を自動解決中..."
+      git checkout HEAD -- sync_from_github.sh
+      echo "✅ sync_from_github.shをGitHub最新版に自動更新完了"
     fi
+    
+    echo "📋 自動的に通常更新モードで続行します"
   else
     echo "✅ ローカル変更なし、安全に同期できます"
   fi
