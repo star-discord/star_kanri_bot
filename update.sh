@@ -22,6 +22,9 @@ if [ ! -d ~/star_kanri_bot ] || [ -z "$(ls -A ~/star_kanri_bot)" ]; then
     echo "❌ git clone 失敗"
     exit 1
   }
+  # 初回クローン後にupdate.shの実行権限を付与
+  cd ~/star_kanri_bot || exit 1
+  chmod +x update.sh
 else
   echo "📂 star_kanri_bot フォルダが存在し、中身があります。git pull 実行します。"
   cd ~/star_kanri_bot || exit 1
@@ -31,6 +34,9 @@ else
     echo "❌ git reset --hard 失敗。処理を中止します。"
     exit 1
   }
+  
+  # update.shに実行権限を自動付与
+  chmod +x update.sh
 fi
 
 # 依存関係インストール
