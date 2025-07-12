@@ -1,10 +1,12 @@
+// ファイル参照: utils/buttonsHandler.js
+
 const path = require('path');
 const { loadHandlers } = require('./handlerLoader');
 const { InteractionResponseFlags } = require('discord.js');
 
 // 各カテゴリのボタンハンドラを読み込み
 const totusunaHandler = loadHandlers(path.join(__dirname, 'totusuna_setti/buttons'));
-const kpiHandler = require('./kpi_setti/buttons.js'); // ← .js を明示！
+const kpiHandler = require('./kpi_setti/buttons.js'); // KPI中継ハンドラを追加
 
 const fallbackHandlers = [
   totusunaHandler,
