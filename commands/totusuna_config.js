@@ -1,4 +1,3 @@
-// commands/totusuna_config.js
 const {
   SlashCommandBuilder,
   StringSelectMenuBuilder,
@@ -6,10 +5,10 @@ const {
   ComponentType,
   InteractionResponseFlags,
 } = require('discord.js');
-const { ensureGuildJSON, readJSON } = require('../utils/fileHelper.js');
 
+const { ensureGuildJSON, readJSON } = require('../utils/fileHelper');
 
-const checkAdmin = require('../utils/star_config/checkAdmin.js');
+const checkAdmin = require('../utils/star_config/checkAdmin');
 
 module.exports = {
   data: new SlashCommandBuilder()
