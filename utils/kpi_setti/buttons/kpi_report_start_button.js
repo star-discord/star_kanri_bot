@@ -1,26 +1,25 @@
-// utils/kpi_setti/buttons/kpi_report_start_button.js
+// ファイル参照: utils/kpi_setti/buttons/kpi_report_start_button.js
 
-const { activeReportSessions, handleStepChatMessage } = require('../stepChatHandler');
-const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+const { activeReportSessions } = require('../stepChatHandler');
 
-module.exports = async (interaction) => {
-  const userId = interaction.user.id;
+module.exports = {
+  handle: async (interaction) => {
+    const userId = interaction.user.id;
 
-  if (activeReportSessions.has(userId)) {
-    await interaction.reply({ content: 'すでに申請入力中です。完了するまでお待ちください。', ephemeral: true });
-    return;
-  }
+    if (activeReportSessions.has(userId)) {
+      await interaction.reply({
+        content: 'すでに申請入力中です。完了するまでお待ちください。',
+        ephemeral: true,
+      });
+      return;
+    }
 
-  // セッション開始
-  activeReportSessions.set(userId, { step: 0, data: {} });
+    // KPI申請（実績入力）ステップチャット開始（stepChatHandlerに委譲）
+    activeReportSessions.set(userId, { step: 0, type: 'report', data: {} });
 
-  // ステップチャット開始メッセージ
-  await interaction.reply({ content: 'KPI申請を開始します。報告する日付を入力してください（例: 2025/07/13）' });
-
-  // このハンドラは開始のみのため、実際のメッセージ受付処理は
-  // botの messageCreate イベントで handleStepChatMessage が動作する想定です
+    await interaction.reply({
+      content: 'KPI実績申請を開始します。報告する日付を「YYYY/MM/DD」の形式で入力してください。',
+      ephemeral: true,
+    });
+  },
 };
-
-// 申請完了時の処理は stepChatHandler の handleStepChatMessage 内で行うのが望ましいです。
-// 例として、申請完了後のログ出力＋再案内メッセージ送信処理を
-// stepChatHandler.js の saveKpiReport 関数呼び出し直後に実装してください。
