@@ -2,7 +2,14 @@ const path = require('path');
 const { loadHandlers } = require('./handlerLoader');
 const { InteractionResponseFlags } = require('discord.js');
 
-const findHandler = loadHandlers(path.join(__dirname, 'totusuna_setti/buttons'));
+// 各カテゴリのボタンハンドラを読み込み
+const totusunaHandler = loadHandlers(path.join(__dirname, 'totusuna_setti/buttons'));
+const kpiHandler = require('./kpi_setti/buttons.js'); // ← .js を明示！
+
+const fallbackHandlers = [
+  totusunaHandler,
+  kpiHandler,
+];
 
 /**
  * ボタンインタラクションの処理
@@ -12,7 +19,12 @@ async function handleButton(interaction) {
   if (!interaction.isButton()) return;
 
   const customId = interaction.customId;
-  const handler = findHandler(customId);
+
+  let handler = null;
+  for (const find of fallbackHandlers) {
+    handler = find(customId);
+    if (handler) break;
+  }
 
   if (!handler) {
     console.warn(`⚠️ 未対応のボタン: ${customId}`);
