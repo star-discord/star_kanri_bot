@@ -7,7 +7,8 @@ const {
   InteractionResponseFlags,
 } = require('discord.js');
 const { ensureGuildJSON, readJSON } = require('../utils/fileHelper');
-const { createAdminEmbed } = require('../utils/embedHelper');
+const { ensureGuildJSON, readJSON } = require('../utils/fileHelper.js');
+
 const checkAdmin = require('../utils/star_config/checkAdmin');
 
 module.exports = {
