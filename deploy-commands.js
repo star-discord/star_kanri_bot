@@ -8,10 +8,11 @@ const commands = [];
 const commandsPath = path.join(__dirname, 'commands');
 const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
 
-// 管琁E��E��グの自動付加対象を記録
+// 管理者タグの自動付加対象を記録
 const adminCommandsWithoutTag = [];
 
-// コマンド�E読み込みとタグ付加処琁Efor (const file of commandFiles) {
+// コマンドの読み込みとタグ付加処理
+for (const file of commandFiles) {
   const filePath = path.join(commandsPath, file);
   const command = require(filePath);
 
@@ -35,7 +36,7 @@ const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
 
 (async () => {
   try {
-    console.log(`⏳ ${commands.length}個�EスラチE��ュコマンドを登録中...`);
+    console.log(`⏳ ${commands.length}個のスラッシュコマンドを登録中...`);
 
     // タグ付加されたコマンドを表示
     if (adminCommandsWithoutTag.length > 0) {
