@@ -1,12 +1,20 @@
+const isAdmin = require('./admin');
+const { createAdminRejectEmbed } = require('../embedHelper');
+const { InteractionResponseFlags } = require('discord.js');
+
 /**
- * 指定されたメンバーが、adminRoleIds のいずれかを持つか確認
- * @param {import('discord.js').GuildMember} member
- * @param {string[]} adminRoleIds
- * @returns {boolean}
+ * 管理者チェックを行い、NGならEmbedでリプライ（true: OK, false: 拒否済）
+ * @param {import('discord.js').CommandInteraction} interaction
+ * @returns {Promise<boolean>}
  */
-function checkAdmin(member, adminRoleIds = []) {
-  if (!member || !member.roles || !Array.isArray(adminRoleIds)) return false;
-  return member.roles.cache.some(role => adminRoleIds.includes(role.id));
+async function checkAdmin(interaction) {
+  if (isAdmin(interaction)) return true;
+
+  await interaction.reply({
+    embeds: [createAdminRejectEmbed()],
+    flags: InteractionResponseFlags.Ephemeral
+  });
+  return false;
 }
 
 module.exports = checkAdmin;
