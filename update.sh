@@ -2,12 +2,18 @@
 
 echo "🚀 star_kanri_bot 更新処理開始"
 
+# 古いバックアップフォルダを削除（最新3つのみ保持）
+echo "🗑️ 古いバックアップフォルダを削除中..."
+ls -t "$HOME"/star_kanri_bot_data_backup_* 2>/dev/null | tail -n +4 | xargs rm -rf
+
 # dataフォルダのみバックアップ
 DATE=$(date '+%Y%m%d_%H%M')
 BACKUP_DIR="$HOME/star_kanri_bot_data_backup_$DATE"
 echo "📁 dataフォルダのバックアップ作成: $BACKUP_DIR"
 mkdir -p "$BACKUP_DIR"
-cp -r ~/star_kanri_bot/data "$BACKUP_DIR"
+if [ -d ~/star_kanri_bot/data ]; then
+  cp -r ~/star_kanri_bot/data "$BACKUP_DIR"
+fi
 
 # Botディレクトリの存在と中身確認
 if [ ! -d ~/star_kanri_bot ] || [ -z "$(ls -A ~/star_kanri_bot)" ]; then
@@ -19,9 +25,10 @@ if [ ! -d ~/star_kanri_bot ] || [ -z "$(ls -A ~/star_kanri_bot)" ]; then
 else
   echo "📂 star_kanri_bot フォルダが存在し、中身があります。git pull 実行します。"
   cd ~/star_kanri_bot || exit 1
+  git fetch origin master
   git checkout master
-  git pull origin master || {
-    echo "❌ git pull 失敗。処理を中止します。"
+  git reset --hard origin/master || {
+    echo "❌ git reset --hard 失敗。処理を中止します。"
     exit 1
   }
 fi
@@ -52,6 +59,18 @@ fi
 echo "🔁 PM2 再起動"
 pm2 restart star-kanri-bot
 pm2 save
+
+# 最新バックアップからdataフォルダを復元
+echo "📥 最新バックアップからdataフォルダを復元中..."
+LATEST_BACKUP=$(ls -t "$HOME"/star_kanri_bot_data_backup_* 2>/dev/null | head -n 1)
+if [ -n "$LATEST_BACKUP" ] && [ -d "$LATEST_BACKUP/data" ]; then
+  echo "復元元: $LATEST_BACKUP"
+  rm -rf ~/star_kanri_bot/data
+  cp -r "$LATEST_BACKUP/data" ~/star_kanri_bot/
+  echo "✅ dataフォルダの復元完了"
+else
+  echo "⚠️ 復元可能なバックアップが見つかりません"
+fi
 
 # ログ確認
 echo "📄 最新ログ（50行）"
