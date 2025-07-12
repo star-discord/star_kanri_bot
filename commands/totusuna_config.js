@@ -6,7 +6,7 @@ const {
   ComponentType,
   InteractionResponseFlags,
 } = require('discord.js');
-const { ensureGuildJSON, readJSON } = require('../utils/fileHelper.js');
+const { ensureGuildJSON, readJSON } = require('../utils/fileHelper');
 
 const checkAdmin = require('../utils/star_config/checkAdmin');
 
