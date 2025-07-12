@@ -9,7 +9,8 @@ const {
   InteractionResponseFlags,
 } = require('discord.js');
 
-const isAdmin = require('../utils/star_config/admin');
+const isAdmin = require('../utils/permissions/checkAdmin.js');
+
 
 module.exports = {
   data: new SlashCommandBuilder()
