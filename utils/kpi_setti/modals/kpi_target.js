@@ -30,16 +30,20 @@ module.exports = async (interaction) => {
     });
   }
 
-  const fileName = `KPI_${start.replace(/\//g, '').slice(0, 6)}-${endDate.getDate()}.json`;
+  // ファイル名生成：KPI_YYYY_MM_DD-日.json 形式
+  const startFormatted = start.replace(/\//g, '_'); // "2025/07/13" → "2025_07_13"
+  const endDay = endDate.getDate();                  // 18
+  const fileName = `KPI_${startFormatted}-${endDay}.json`;
+
   const dataDir = path.join(__dirname, `../../data/${guildId}`);
   await ensureDirectory(dataDir);
 
   const filePath = path.join(dataDir, fileName);
 
-  // 実績データの初期化（各日付に0でセット）
+  // 実績データの初期化（期間内の各日付に0でセット）
   const actual = {};
   for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-    const key = d.toISOString().split('T')[0].replace(/-/g, '/');
+    const key = d.toISOString().split('T')[0].replace(/-/g, '/'); // "2025/07/13"
     actual[key] = {
       '来客数': 0,
       '指名本数': 0,
