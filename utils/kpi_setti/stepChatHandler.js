@@ -2,7 +2,7 @@
 
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { validateDate, isHalfWidthNumber } = require('./utils');
-const { saveKpiTarget, saveKpiReport, formatProgressLog } = require('./kpiDataHandler');
+const { saveKpiTarget, saveKpiReport, formatProgressLog } = require('./step/kpiDataHandler');
 
 // ユーザーIDをキーにして進行中セッションを管理
 const activeReportSessions = new Map();

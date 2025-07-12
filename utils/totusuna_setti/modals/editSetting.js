@@ -4,6 +4,7 @@ const path = require('path');
 const { InteractionResponseFlags } = require('discord.js'); // ← 追加
 
 module.exports = {
+  customId: 'edit_setting_modal',
   async handle(interaction, uuid) {
     const guildId = interaction.guildId;
     const dataPath = path.join(__dirname, '../../../data', guildId, `${guildId}.json`);
