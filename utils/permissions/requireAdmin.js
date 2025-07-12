@@ -1,33 +1,54 @@
-/**
- * 管琁E��E��限があるかチェチE��し、E * なければ拒否し、あれ�E次の処琁E��呼び出すミドルウェア
- * @param {Function} next
- * @returns {Function}
- */
-function requireAdmin(next) {
-  return async function(interaction) {
-    const { ensureGuildJSON, readJSON } = require('../fileHelper');
-    const filePath = await ensureGuildJSON(interaction.guild.id);
-    const data = await readJSON(filePath);
-    const adminRoleIds = data.star_config?.adminRoleIds || [];
+const { MessageFlags } = require('discord.js');
+const { readJSON, ensureGuildJSON } = require('../fileHelper');
 
+/**
+ * 管理者権限チェック用ミドルウェア
+ * @param {Function} executeFunction - 実行する関数
+ * @returns {Function} - ラップされた実行関数
+ */
+function requireAdmin(executeFunction) {
+  return async (interaction) => {
+    const guildId = interaction.guildId;
+    const userId = interaction.user.id;
     const member = interaction.member;
-    
-    // Discord サーバ�Eの管琁E��E��限をチェチE��
-    if (member && member.permissions.has('Administrator')) {
-      await next(interaction);
-      return;
-    }
-    
-    // Bot専用の管琁E��E��ールをチェチE��
-    if (!member || !member.roles.cache.some(r => adminRoleIds.includes(r.id))) {
-      return interaction.reply({
-        content: '❁Eあなたには権限がありません、E,
-        ephemeral: true
+
+    try {
+      // 設定ファイル読み込み
+      const filePath = await ensureGuildJSON(guildId);
+      const data = await readJSON(filePath);
+
+      // データ構造の互換性確保
+      let adminRoleIds = [];
+      if (data.star_config?.adminRoleIds) {
+        adminRoleIds = data.star_config.adminRoleIds;
+      } else if (data.adminRoleIds) {
+        adminRoleIds = data.adminRoleIds;
+      }
+
+      // 管理者権限チェック
+      const hasAdminRole = adminRoleIds.some(roleId => 
+        member.roles.cache.has(roleId)
+      );
+
+      if (!hasAdminRole) {
+        return await interaction.reply({
+          content: '❌ あなたには権限がありません。',
+          flags: MessageFlags.Ephemeral
+        });
+      }
+
+      // 権限があれば元の関数を実行
+      return await executeFunction(interaction);
+
+    } catch (error) {
+      console.error('requireAdmin エラー:', error);
+      return await interaction.reply({
+        content: '❌ 権限チェック中にエラーが発生しました。',
+        flags: MessageFlags.Ephemeral
       });
     }
-
-    await next(interaction);
   };
 }
 
 module.exports = requireAdmin;
+
