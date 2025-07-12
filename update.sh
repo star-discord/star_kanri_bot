@@ -205,6 +205,9 @@ else
 fi
 
 # pm2再起動 (プロセス再起動＋キャッシュクリア)
+echo "🧹 古いPM2ログを削除中..."
+pm2 flush star-kanri-bot
+
 echo "🔁 PM2 再起動"
 pm2 restart star-kanri-bot
 pm2 save
