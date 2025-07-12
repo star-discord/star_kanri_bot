@@ -8,8 +8,7 @@ const totusunaHandler = loadHandlers(path.join(__dirname, 'totusuna_setti/select
 // その他のセレクトメニュー用ハンドラー群（後方互換など）
 const fallbackDirs = [
   'star_config/selects',
-  'totusuna_config/selects',
-  'totusuna_quick/selects'
+  'totusuna_config/selects'
 ].map(sub => loadHandlers(path.join(__dirname, sub)));
 
 /**

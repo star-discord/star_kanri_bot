@@ -4,7 +4,7 @@ const { ensureGuildJSON, readJSON, writeJSON } = require('../../fileHelper');
 module.exports = {
   customId: 'totusuna_select_replicate',
 
-  execute: requireAdmin(async (interaction) => {
+  handle: requireAdmin(async (interaction) => {
     try {
       const guild = interaction.guild;
       const selectedChannelIds = interaction.values;

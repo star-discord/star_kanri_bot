@@ -8,14 +8,12 @@ const { logAndReplyError } = require('./errorHelper');
 const starConfigHandler = require(path.join(__dirname, 'star_config', 'buttons.js'));
 const totusunaSettiHandler = loadHandlers(path.join(__dirname, 'totusuna_setti', 'buttons'));
 const totusunaConfigHandler = loadHandlers(path.join(__dirname, 'totusuna_config', 'buttons'));
-const totusunaQuickHandler = loadHandlers(path.join(__dirname, 'totusuna_quick', 'buttons.js'));
 const kpiHandler = require(path.join(__dirname, 'kpi_setti', 'buttons.js'));
 
 const fallbackHandlers = [
   starConfigHandler,
   totusunaSettiHandler,
   totusunaConfigHandler,
-  totusunaQuickHandler,
   kpiHandler,
 ];
 

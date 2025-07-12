@@ -86,5 +86,5 @@ async function actualHandler(interaction) {
 
 module.exports = {
   customId: 'admin_role_select',
-  execute: requireAdmin(actualHandler)
+  handle: requireAdmin(actualHandler)
 };

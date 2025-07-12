@@ -3,7 +3,7 @@ const { ensureGuildJSON, readJSON, writeJSON } = require('../../fileHelper');
 
 module.exports = {
   customId: 'notify_channel_select',
-  execute: requireAdmin(async (interaction) => {
+  handle: requireAdmin(async (interaction) => {
     try {
       const guild = interaction.guild;
       const selected = interaction.values[0];

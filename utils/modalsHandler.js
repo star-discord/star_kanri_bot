@@ -6,7 +6,6 @@ const totusunaHandler = loadHandlers(path.join(__dirname, 'totusuna_setti/modals
 const fallbackHandlers = [
   loadHandlers(path.join(__dirname, 'star_config/modals')),
   loadHandlers(path.join(__dirname, 'totusuna_config/modals')),
-  loadHandlers(path.join(__dirname, 'totusuna_quick/modals')),
 ];
 
 /**
