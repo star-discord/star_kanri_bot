@@ -1,6 +1,6 @@
 // commands/common/selectHandler.js
 const starSelectHandler = require('../utils/star_config/selects');
-const totsusunaSelectHandler = require('../utils/totsusuna_setti/selects');
+const totsusunaSelectHandler = require('../utils/totusuna_setti/selects');
 const { InteractionResponseFlags } = require('discord.js');
 const { logAndReplyError } = require('./errorHelper');
 
