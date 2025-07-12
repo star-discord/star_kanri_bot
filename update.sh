@@ -4,7 +4,36 @@ echo "🚀 star_kanri_bot 更新処理開始"
 
 # 古いバックアップフォルダを削除（最新1つのみ保持）
 echo "🗑️ 古いバックアップフォルダを削除中..."
-ls -t "$HOME"/star_kanri_bot_data_backup_* 2>/dev/null | tail -n +2 | xargs rm -rf
+cd "$HOME" || exit 1
+
+# バックアップフォルダの総数確認
+cd "$HOME" || exit 1
+BACKUP_DIRS=($(ls -td star_kanri_bot_data_backup_*/ 2>/dev/null))
+TOTAL_BACKUPS=${#BACKUP_DIRS[@]}
+echo "📊 現在のバックアップフォルダ数: ${TOTAL_BACKUPS}個"
+
+if [ "$TOTAL_BACKUPS" -gt 1 ]; then
+  DELETED_COUNT=0
+  echo "🗑️ 最新1つを除いて削除開始..."
+  echo "📌 保持対象: ${BACKUP_DIRS[0]%/}"
+  
+  i=1
+  while [ $i -lt $TOTAL_BACKUPS ]; do
+    DIR_NAME="${BACKUP_DIRS[$i]%/}"  # 末尾のスラッシュを除去
+    if [ -d "$DIR_NAME" ]; then
+      echo "  削除中: $DIR_NAME"
+      if rm -rf "$DIR_NAME"; then
+        DELETED_COUNT=`expr $DELETED_COUNT + 1`
+      fi
+    fi
+    i=`expr $i + 1`
+  done
+  
+  echo "✅ ${DELETED_COUNT}個のバックアップフォルダを削除完了"
+  echo "📊 削除後のバックアップ数: $(ls -ld star_kanri_bot_data_backup_*/ 2>/dev/null | wc -l)個"
+else
+  echo "📁 削除対象のバックアップフォルダはありません（最新1つのみ保持）"
+fi
 
 # dataフォルダのみバックアップ
 DATE=$(date '+%Y%m%d_%H%M')
@@ -81,6 +110,9 @@ fi
 # ログ確認
 echo "📄 最新ログ（50行）"
 pm2 logs star-kanri-bot --lines 50 --nostream
+
+echo "✅ star_kanri_bot 更新完了"
+
 
 echo "✅ star_kanri_bot 更新完了"
 
