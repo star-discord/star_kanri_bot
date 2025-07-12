@@ -1,6 +1,6 @@
 // utils/star_config/selects.js
 const path = require('path');
-const loadHandlers = require('../../handlerLoader'); // 汎用ハンドラ読み込み関数
+const { loadHandlers } = require('../handlerLoader'); // 汎用ハンドラ読み込み関数
 const handlers = loadHandlers(path.join(__dirname, 'selects'));
 
 /**
@@ -8,11 +8,11 @@ const handlers = loadHandlers(path.join(__dirname, 'selects'));
  * @param {import('discord.js').AnySelectMenuInteraction} interaction
  */
 module.exports = async function handleStarConfigSelect(interaction) {
-  const handler = handlers.get(interaction.customId);
+  const handler = handlers(interaction.customId);
   if (!handler) return;
 
   try {
-    await handler(interaction);
+    await handler.handle(interaction);
   } catch (err) {
     console.error(`[selects/${interaction.customId}] ハンドラー実行エラー:`, err);
     await interaction.reply({
