@@ -12,14 +12,15 @@ cp -r ~/star_kanri_bot/data "$BACKUP_DIR"
 # Botディレクトリの存在と中身確認
 if [ ! -d ~/star_kanri_bot ] || [ -z "$(ls -A ~/star_kanri_bot)" ]; then
   echo "📂 star_kanri_bot フォルダが存在しないか空です。git clone 実行します。"
-  git clone https://github.com/star-discord/star_kanri_bot.git ~/star_kanri_bot || {
+  git clone --branch master https://github.com/star-discord/star_kanri_bot.git ~/star_kanri_bot || {
     echo "❌ git clone 失敗"
     exit 1
   }
 else
   echo "📂 star_kanri_bot フォルダが存在し、中身があります。git pull 実行します。"
   cd ~/star_kanri_bot || exit 1
-  git pull origin main || {
+  git checkout master
+  git pull origin master || {
     echo "❌ git pull 失敗。処理を中止します。"
     exit 1
   }
