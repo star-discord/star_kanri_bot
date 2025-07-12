@@ -1,4 +1,4 @@
-// ファイル参照: commands/kpi_setti.js
+// ファイル参�E: commands/kpi_setti.js
 
 const {
   SlashCommandBuilder,
@@ -28,9 +28,9 @@ module.exports = {
     const row = new ActionRowBuilder().addComponents(targetButton, reportButton);
 
     await interaction.reply({
-      content: 'KPI報告　目標設定/申請ボタン',
+      content: 'KPI報告　目標設宁E申請�Eタン',
       components: [row],
-      ephemeral: true,  // 必要に応じてtrue/falseを調整してください
+      ephemeral: true,  // 忁E��に応じてtrue/falseを調整してください
     });
   }),
 };

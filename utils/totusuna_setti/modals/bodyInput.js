@@ -1,4 +1,4 @@
-const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, InteractionResponseFlags } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
 const { v4: uuidv4 } = require('uuid');
 const { ensureGuildJSON, readJSON, writeJSON } = require('../../../utils/fileHelper');
 const tempStore = require('../state/totsusunaTemp');
@@ -7,8 +7,7 @@ module.exports = {
   customIdStart: 'totsusuna_modal_body_input:',
 
   /**
-   * 本文モーダルの送信後処理
-   * @param {import('discord.js').ModalSubmitInteraction} interaction
+   * 本斁E��ーダルの送信後�E琁E   * @param {import('discord.js').ModalSubmitInteraction} interaction
    */
   async handle(interaction) {
     const guildId = interaction.guildId;
@@ -24,8 +23,8 @@ module.exports = {
     const userData = tempStore.get(guildId, userId);
     if (!userData?.installChannelId) {
       return await interaction.reply({
-        content: '⚠ 設置チャンネルが未設定です。先にチャンネルを選択してください。',
-        flags: InteractionResponseFlags.Ephemeral,
+        content: '⚠ 設置チャンネルが未設定です。�Eにチャンネルを選択してください、E,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -46,7 +45,7 @@ module.exports = {
 
     const button = new ButtonBuilder()
       .setCustomId(`totusuna:report:${uuid}`)
-      .setLabel('凸スナ報告')
+      .setLabel('凸スナ報呁E)
       .setStyle(ButtonStyle.Primary);
 
     const row = new ActionRowBuilder().addComponents(button);
@@ -54,8 +53,8 @@ module.exports = {
     const targetChannel = await interaction.guild.channels.fetch(userData.installChannelId);
     if (!targetChannel?.isTextBased()) {
       return await interaction.reply({
-        content: '⚠ 指定された設置チャンネルが見つかりません。',
-        flags: InteractionResponseFlags.Ephemeral,
+        content: '⚠ 持E��された設置チャンネルが見つかりません、E,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -70,8 +69,8 @@ module.exports = {
     writeJSON(jsonPath, json);
 
     await interaction.reply({
-      content: '✅ 本文を保存し、凸スナボタンを設置しました。',
-      flags: InteractionResponseFlags.Ephemeral,
+      content: '✁E本斁E��保存し、�Eスナ�Eタンを設置しました、E,
+      flags: MessageFlags.Ephemeral,
     });
   }
 };

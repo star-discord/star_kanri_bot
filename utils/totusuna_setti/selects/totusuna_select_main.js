@@ -12,31 +12,31 @@ module.exports = {
       const filePath = await ensureGuildJSON(guild.id);
       const data = await readJSON(filePath);
 
-      // totusuna_settiセクションの初期化
+      // totusuna_settiセクションの初期匁E
       if (!data.totusuna_setti) {
         data.totusuna_setti = {};
       }
 
-      // メインチャンネルを設定
+      // メインチャンネルを設宁E
       data.totusuna_setti.mainChannelId = selectedChannelId;
       await writeJSON(filePath, data);
 
       await interaction.reply({
-        content: `✅ メインチャンネルを <#${selectedChannelId}> に設定しました。`,
+        content: `✁EメインチャンネルめE<#${selectedChannelId}> に設定しました。`,
         ephemeral: true
       });
 
     } catch (error) {
-      console.error('totusuna_select_main処理エラー:', error);
+      console.error('totusuna_select_main処琁E��ラー:', error);
       
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({
-          content: '❌ チャンネル設定中にエラーが発生しました。',
+          content: '❁Eチャンネル設定中にエラーが発生しました、E,
           ephemeral: true
         });
       } else {
         await interaction.followUp({
-          content: '❌ チャンネル設定中にエラーが発生しました。',
+          content: '❁Eチャンネル設定中にエラーが発生しました、E,
           ephemeral: true
         });
       }

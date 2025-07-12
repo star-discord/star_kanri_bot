@@ -3,23 +3,21 @@ const path = require('path');
 const fs = require('fs');
 
 /**
- * 凸スナ報告をCSVファイルに追記します
- * @param {string} guildId ギルドID
- * @param {string} yearMonth 例: "2025-07"
- * @param {object} entry 報告内容
+ * 凸スナ報告をCSVファイルに追記しまぁE * @param {string} guildId ギルドID
+ * @param {string} yearMonth 侁E "2025-07"
+ * @param {object} entry 報告�E容
  */
 async function writeTotusunaReport(guildId, yearMonth, entry) {
   const dir = path.join(__dirname, `../../../data/${guildId}`);
-  const csvPath = path.join(dir, `${guildId}-${yearMonth}-凸スナ報告.csv`);
+  const csvPath = path.join(dir, `${guildId}-${yearMonth}-凸スナ報呁Ecsv`);
 
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
 
-  // 日付が未定義なら現在時刻で補完
-  const dateStr = entry.date || new Date().toISOString();
+  // 日付が未定義なら現在時刻で補宁E  const dateStr = entry.date || new Date().toISOString();
 
-  const headers = ['報告者名', '日時', '何組', '何名', '卓1', '卓2', '卓3', '卓4', '詳細'];
+  const headers = ['報告老E��', '日晁E, '何絁E, '何名', '十E', '十E', '十E', '十E', '詳細'];
   const values = [
     entry.username,
     dateStr,

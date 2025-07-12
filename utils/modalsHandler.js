@@ -11,8 +11,7 @@ const fallbackHandlers = [
 ];
 
 /**
- * モーダルインタラクションを処理する
- * @param {import('discord.js').ModalSubmitInteraction} interaction
+ * モーダルインタラクションを�E琁E��めE * @param {import('discord.js').ModalSubmitInteraction} interaction
  */
 async function handleModal(interaction) {
   if (!interaction.isModalSubmit()) return;
@@ -33,7 +32,7 @@ async function handleModal(interaction) {
 
     if (!handler) {
       return await interaction.reply({
-        content: '❌ モーダルに対応する処理が見つかりませんでした。',
+        content: '❁Eモーダルに対応する�E琁E��見つかりませんでした、E,
         ephemeral: true,
       });
     }
@@ -43,8 +42,8 @@ async function handleModal(interaction) {
   } catch (err) {
     await logAndReplyError(
       interaction,
-      `❌ モーダル処理エラー: ${customId}\n${err?.stack || err}`,
-      '❌ モーダル処理中にエラーが発生しました。',
+      `❁Eモーダル処琁E��ラー: ${customId}\n${err?.stack || err}`,
+      '❁Eモーダル処琁E��にエラーが発生しました、E,
       { ephemeral: true }
     );
   }

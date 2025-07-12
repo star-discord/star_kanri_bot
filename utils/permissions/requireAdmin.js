@@ -1,6 +1,5 @@
 /**
- * 管理者権限があるかチェックし、
- * なければ拒否し、あれば次の処理を呼び出すミドルウェア
+ * 管琁E��E��限があるかチェチE��し、E * なければ拒否し、あれ�E次の処琁E��呼び出すミドルウェア
  * @param {Function} next
  * @returns {Function}
  */
@@ -13,16 +12,16 @@ function requireAdmin(next) {
 
     const member = interaction.member;
     
-    // Discord サーバーの管理者権限をチェック
+    // Discord サーバ�Eの管琁E��E��限をチェチE��
     if (member && member.permissions.has('Administrator')) {
       await next(interaction);
       return;
     }
     
-    // Bot専用の管理者ロールをチェック
+    // Bot専用の管琁E��E��ールをチェチE��
     if (!member || !member.roles.cache.some(r => adminRoleIds.includes(r.id))) {
       return interaction.reply({
-        content: '❌ あなたには権限がありません。',
+        content: '❁Eあなたには権限がありません、E,
         ephemeral: true
       });
     }

@@ -8,7 +8,7 @@ module.exports = {
     try {
       const modal = new ModalBuilder()
         .setCustomId('chatgpt_config_modal')
-        .setTitle('🤖 ChatGPT設定');
+        .setTitle('🤁EChatGPT設宁E);
 
       const apiKeyInput = new TextInputBuilder()
         .setCustomId('chatgpt_api_key')
@@ -19,16 +19,16 @@ module.exports = {
 
       const maxTokensInput = new TextInputBuilder()
         .setCustomId('chatgpt_max_tokens')
-        .setLabel('最大トークン数')
+        .setLabel('最大ト�Eクン数')
         .setStyle(TextInputStyle.Short)
-        .setPlaceholder('例: 150')
+        .setPlaceholder('侁E 150')
         .setRequired(false);
 
       const temperatureInput = new TextInputBuilder()
         .setCustomId('chatgpt_temperature')
-        .setLabel('温度設定 (0.0-2.0)')
+        .setLabel('温度設宁E(0.0-2.0)')
         .setStyle(TextInputStyle.Short)
-        .setPlaceholder('例: 0.7')
+        .setPlaceholder('侁E 0.7')
         .setRequired(false);
 
       const row1 = new ActionRowBuilder().addComponents(apiKeyInput);
@@ -40,11 +40,11 @@ module.exports = {
       await interaction.showModal(modal);
 
     } catch (error) {
-      console.error('ChatGPT設定ボタン処理エラー:', error);
+      console.error('ChatGPT設定�Eタン処琁E��ラー:', error);
       
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({
-          content: '❌ 設定画面の表示中にエラーが発生しました。',
+          content: '❁E設定画面の表示中にエラーが発生しました、E,
           flags: MessageFlags.Ephemeral,
         });
       }

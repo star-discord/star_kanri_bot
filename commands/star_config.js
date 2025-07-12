@@ -16,7 +16,7 @@ const requireAdmin = require('../utils/permissions/requireAdmin');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('star管理bot設定')
-    .setDescription('管理者用のロールと通知チャンネルを設定します')
+    .setDescription('管理者のロールと通知チャンネルを設定します')
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 
   execute: requireAdmin(async (interaction) => {
@@ -37,7 +37,17 @@ module.exports = {
       });
     }
 
+    // データ構造の互換性確保
     if (!data.star_config) data.star_config = {};
+    
+    // 既存データのマイグレーション（古い形式から新しい形式へ）
+    if (data.adminRoleIds && !data.star_config.adminRoleIds) {
+      data.star_config.adminRoleIds = data.adminRoleIds;
+    }
+    if (data.notifyChannelId && !data.star_config.notifyChannelId) {
+      data.star_config.notifyChannelId = data.notifyChannelId;
+    }
+    
     const currentAdminRoleIds = data.star_config.adminRoleIds || [];
     const currentNotifyChannelId = data.star_config.notifyChannelId || null;
 
@@ -48,28 +58,28 @@ module.exports = {
               const role = guild.roles.cache.get(id);
               return role ? `<@&${id}>` : `~~(削除済ロール: ${id})~~`;
             }).join('\n')
-          : '*未設定*';
+          : '*未設宁E';
 
       const notifyChannel = notifyId ? guild.channels.cache.get(notifyId) : null;
       const notifyDisplay = notifyChannel
         ? `<#${notifyId}>`
-        : notifyId ? `~~(削除済チャンネル: ${notifyId})~~` : '*未設定*';
+        : notifyId ? `~~(削除済チャンネル: ${notifyId})~~` : '*未設宁E';
 
       return new EmbedBuilder()
-        .setTitle('🌟 STAR管理bot設定')
-        .setDescription(`**管理者ロール / 通知チャンネル 設定**\n\n📌 現在の管理者ロール:\n${roleMentions}\n\n📣 現在の通知チャンネル:\n${notifyDisplay}`)
+        .setTitle('🌟 STAR管琁Eot設宁E)
+        .setDescription(`**管琁E��E��ール / 通知チャンネル 設宁E*\n\n📌 現在の管琁E��E��ール:\n${roleMentions}\n\n📣 現在の通知チャンネル:\n${notifyDisplay}`)
         .setColor(0x0099ff);
     };
 
     const roleSelect = new RoleSelectMenuBuilder()
       .setCustomId('admin_role_select')
-      .setPlaceholder('管理者として許可するロールを選択')
+      .setPlaceholder('管琁E��E��して許可するロールを選抁E)
       .setMinValues(0)
       .setMaxValues(25);
 
     const channelSelect = new ChannelSelectMenuBuilder()
       .setCustomId('notify_channel_select')
-      .setPlaceholder('通知チャンネルを選択')
+      .setPlaceholder('通知チャンネルを選抁E)
       .addChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement)
       .setMinValues(1)
       .setMaxValues(1);
@@ -93,7 +103,7 @@ module.exports = {
     collector.on('collect', async selectInteraction => {
       if (selectInteraction.user.id !== interaction.user.id) {
         return await selectInteraction.reply({
-          content: '❌ この操作はコマンドを実行したユーザーのみが行えます。',
+          content: '❁Eこ�E操作�Eコマンドを実行したユーザーのみが行えます、E,
           flags: 1 << 6
         });
       }
@@ -111,9 +121,9 @@ module.exports = {
         try {
           await writeJSON(filePath, data);
         } catch (err) {
-          console.error('❌ ロール保存失敗:', err);
+          console.error('❁Eロール保存失敁E', err);
           return await selectInteraction.reply({
-            content: '❌ ロール設定の保存に失敗しました。',
+            content: '❁Eロール設定�E保存に失敗しました、E,
             flags: 1 << 6
           });
         }
@@ -123,8 +133,8 @@ module.exports = {
         if (added.length > 0) {
           embeds.push(
             new EmbedBuilder()
-              .setTitle('✅ 管理者ロールを登録しました')
-              .setDescription(`登録されたロール：\n${added.map(id => `<@&${id}>`).join('\n')}`)
+              .setTitle('✁E管琁E��E��ールを登録しました')
+              .setDescription(`登録されたロール�E�\n${added.map(id => `<@&${id}>`).join('\n')}`)
               .setColor(0x00cc99)
           );
         }
@@ -132,8 +142,8 @@ module.exports = {
         if (removed.length > 0) {
           embeds.push(
             new EmbedBuilder()
-              .setTitle('⚠️ 管理者ロールが解除されました')
-              .setDescription(`解除されたロール：\n${removed.map(id => `<@&${id}>`).join('\n')}`)
+              .setTitle('⚠�E�E管琁E��E��ールが解除されました')
+              .setDescription(`解除されたロール�E�\n${removed.map(id => `<@&${id}>`).join('\n')}`)
               .setColor(0xff6600)
           );
         }
@@ -150,7 +160,7 @@ module.exports = {
 
         if (!channel || !channel.isTextBased()) {
           return await selectInteraction.reply({
-            content: '❌ 無効なチャンネルです。もう一度選択してください。',
+            content: '❁E無効なチャンネルです。もぁE��度選択してください、E,
             flags: 1 << 6
           });
         }
@@ -160,9 +170,9 @@ module.exports = {
         try {
           await writeJSON(filePath, data);
         } catch (err) {
-          console.error('❌ チャンネル保存失敗:', err);
+          console.error('❁Eチャンネル保存失敁E', err);
           return await selectInteraction.reply({
-            content: '❌ 通知チャンネルの保存に失敗しました。',
+            content: '❁E通知チャンネルの保存に失敗しました、E,
             flags: 1 << 6
           });
         }
@@ -178,7 +188,7 @@ module.exports = {
     collector.on('end', collected => {
       if (collected.size === 0 && !(interaction.replied || interaction.deferred)) {
         interaction.editReply({
-          content: '⏱️ 時間切れのため設定はキャンセルされました。',
+          content: '⏱�E�E時間刁E��のため設定�Eキャンセルされました、E,
           components: []
         });
       }

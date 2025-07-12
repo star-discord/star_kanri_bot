@@ -2,14 +2,13 @@ const fs = require('fs');
 const path = require('path');
 const dayjs = require('dayjs');
 const { writeCsvRow } = require('../../spreadsheetHandler');
-const { InteractionResponseFlags } = require('discord.js');
+const { MessageFlags } = require('discord.js');
 
 module.exports = {
   customIdStart: 'totusuna_modal:',
 
   /**
-   * 凸スナ報告モーダル送信後処理
-   * @param {import('discord.js').ModalSubmitInteraction} interaction
+   * 凸スナ報告モーダル送信後�E琁E   * @param {import('discord.js').ModalSubmitInteraction} interaction
    */
   async handle(interaction) {
     const guildId = interaction.guildId;
@@ -21,8 +20,7 @@ module.exports = {
     // UUIDを抽出
     const uuid = interaction.customId.replace(this.customIdStart, '');
 
-    // 入力値取得
-    const group = interaction.fields.getTextInputValue('group');
+    // 入力値取征E    const group = interaction.fields.getTextInputValue('group');
     const name = interaction.fields.getTextInputValue('name');
     const table1 = interaction.fields.getTextInputValue('table1') || '';
     const table2 = interaction.fields.getTextInputValue('table2') || '';
@@ -32,16 +30,16 @@ module.exports = {
 
     const tableText = [table1, table2, table3, table4]
       .filter(t => t)
-      .map((t, i) => `卓${i + 1}: ${t}`)
+      .map((t, i) => `十E{i + 1}: ${t}`)
       .join('\n');
 
-    const report = `📝 **凸スナ報告**\n組: ${group}組\n名: ${name}名\n${tableText ? `${tableText}\n` : ''}詳細: ${detail || 'なし'}`;
+    const report = `📝 **凸スナ報呁E*\n絁E ${group}組\n吁E ${name}名\n${tableText ? `${tableText}\n` : ''}詳細: ${detail || 'なぁE}`;
 
     const dataPath = path.join(__dirname, '../../../data', guildId, `${guildId}.json`);
     if (!fs.existsSync(dataPath)) {
       return await interaction.reply({
-        content: '⚠ 設定ファイルが見つかりません。',
-        flags: InteractionResponseFlags.Ephemeral,
+        content: '⚠ 設定ファイルが見つかりません、E,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -50,8 +48,8 @@ module.exports = {
 
     if (!instance) {
       return await interaction.reply({
-        content: '⚠ 対応する凸スナ設置情報が見つかりません。',
-        flags: InteractionResponseFlags.Ephemeral,
+        content: '⚠ 対応する�Eスナ設置惁E��が見つかりません、E,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -60,13 +58,13 @@ module.exports = {
       if (targetChannel?.isTextBased()) {
         await targetChannel.send({ content: report });
       } else {
-        console.warn(`[reportModal] テキストチャンネルでない: ${instance.installChannelId}`);
+        console.warn(`[reportModal] チE��ストチャンネルでなぁE ${instance.installChannelId}`);
       }
     } catch (err) {
-      console.error(`[reportModal] チャンネル送信失敗:`, err);
+      console.error(`[reportModal] チャンネル送信失敁E`, err);
     }
 
-    const csvPath = path.join(__dirname, '../../../data', guildId, `${guildId}-${ym}-凸スナ報告.csv`);
+    const csvPath = path.join(__dirname, '../../../data', guildId, `${guildId}-${ym}-凸スナ報呁Ecsv`);
     await writeCsvRow(csvPath, [
       timestamp,
       group,
@@ -80,8 +78,8 @@ module.exports = {
     ]);
 
     await interaction.reply({
-      content: '✅ 報告を送信し、記録しました。',
-      flags: InteractionResponseFlags.Ephemeral,
+      content: '✁E報告を送信し、記録しました、E,
+      flags: MessageFlags.Ephemeral,
     });
   },
 };

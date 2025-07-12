@@ -1,20 +1,18 @@
 const path = require('path');
 const { ensureGuildJSON, readJSON, writeJSON } = require('../../fileHelper');
-const { InteractionResponseFlags } = require('discord.js'); // 追加
+const { MessageFlags } = require('discord.js'); // 追加
 
 module.exports = {
   customId: 'star_config:set_admin_roles',
 
   /**
    * ボタン: star_config:set_admin_roles
-   * RoleSelect で選択されたロールを JSON に保存（star_config.adminRoleIds）
-   */
+   * RoleSelect で選択されたロールめEJSON に保存！Etar_config.adminRoleIds�E�E   */
   async handle(interaction) {
-    // RoleSelectMenu Interactionであることを想定
-    if (!interaction.isRoleSelectMenu()) {
+    // RoleSelectMenu Interactionであることを想宁E    if (!interaction.isRoleSelectMenu()) {
       return interaction.reply({
-        content: '❌ この操作はロール選択からのみ可能です。',
-        flags: InteractionResponseFlags.Ephemeral
+        content: '❁Eこ�E操作�Eロール選択から�Eみ可能です、E,
+        flags: MessageFlags.Ephemeral
       });
     }
 
@@ -23,8 +21,8 @@ module.exports = {
 
     if (!selectedRoles || selectedRoles.length === 0) {
       return interaction.reply({
-        content: '⚠️ ロールが選択されていません。',
-        flags: InteractionResponseFlags.Ephemeral
+        content: '⚠�E�Eロールが選択されてぁE��せん、E,
+        flags: MessageFlags.Ephemeral
       });
     }
 
@@ -40,15 +38,15 @@ module.exports = {
       const mentionText = selectedRoles.map(id => `<@&${id}>`).join(', ');
 
       await interaction.reply({
-        content: `✅ 管理者ロールを以下の通り設定しました:\n${mentionText}`,
-        flags: InteractionResponseFlags.Ephemeral
+        content: `✁E管琁E��E��ールを以下�E通り設定しました:\n${mentionText}`,
+        flags: MessageFlags.Ephemeral
       });
 
     } catch (err) {
-      console.error(`❌ 管理者ロール保存中にエラー (${guildId}):`, err);
+      console.error(`❁E管琁E��E��ール保存中にエラー (${guildId}):`, err);
       await interaction.reply({
-        content: '❌ 管理者ロールの保存に失敗しました。',
-        flags: InteractionResponseFlags.Ephemeral
+        content: '❁E管琁E��E��ールの保存に失敗しました、E,
+        flags: MessageFlags.Ephemeral
       });
     }
   }

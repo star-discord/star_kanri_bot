@@ -11,7 +11,7 @@ const { ensureGuildJSON, readJSON } = require('../utils/fileHelper.js');
 
 const requireAdmin = require('../utils/permissions/requireAdmin.js');
 
-// Embed作成ヘルパー関数
+// Embed作�Eヘルパ�E関数
 function createAdminEmbed(title, description) {
   return new EmbedBuilder()
     .setTitle(title)
@@ -35,7 +35,7 @@ module.exports = {
     if (instances.length === 0) {
       return interaction.reply({
         embeds: [
-          createAdminEmbed('📭 凸スナ設定メニュー', '現在、設置されている凸スナはありません。')
+          createAdminEmbed('📭 凸スナ設定メニュー', '現在、設置されてぁE��凸スナ�Eありません、E)
         ],
         flags: MessageFlags.Ephemeral,
       });
@@ -44,15 +44,15 @@ module.exports = {
     const options = instances
       .filter(i => i.messageId || i.id)
       .map(i => ({
-        label: i.body?.slice(0, 50) || '（無題）',
+        label: i.body?.slice(0, 50) || '�E�無題！E,
         value: i.messageId || i.id,
-        description: i.mainChannelId ? `<#${i.mainChannelId}>` : '設置チャンネル不明',
+        description: i.mainChannelId ? `<#${i.mainChannelId}>` : '設置チャンネル不�E',
       }));
 
     if (options.length === 0) {
       return interaction.reply({
         embeds: [
-          createAdminEmbed('⚠ データエラー', '有効な凸スナデータが見つかりません。')
+          createAdminEmbed('⚠ チE�Eタエラー', '有効な凸スナデータが見つかりません、E)
         ],
         flags: MessageFlags.Ephemeral,
       });
@@ -60,16 +60,15 @@ module.exports = {
 
     const selectMenu = new StringSelectMenuBuilder()
       .setCustomId('totusuna_config_select')
-      .setPlaceholder('⚙ 編集したい凸スナを選択してください')
-      .addOptions(options.slice(0, 25)); // Discord制限
-
+      .setPlaceholder('⚁E編雁E��たい凸スナを選択してください')
+      .addOptions(options.slice(0, 25)); // Discord制陁E
     const row = new ActionRowBuilder().addComponents(selectMenu);
 
     await interaction.reply({
       embeds: [
         createAdminEmbed(
           '🔧 凸スナ設定メニュー',
-          `設置済み凸スナ一覧（${options.length}件）から選択してください。`
+          `設置済み凸スナ一覧�E�E{options.length}件�E�から選択してください。`
         )
       ],
       components: [row],
@@ -89,30 +88,30 @@ module.exports = {
       if (!instance) {
         return selectInteraction.update({
           embeds: [
-            createAdminEmbed('❌ エラー', '選択された凸スナが見つかりませんでした。')
+            createAdminEmbed('❁Eエラー', '選択された凸スナが見つかりませんでした、E)
           ],
           components: [],
         });
       }
 
       const detailEmbed = createAdminEmbed(
-        '📌 凸スナ設置情報（選択中）',
-        instance.body?.slice(0, 150) || '（本文なし）'
+        '📌 凸スナ設置惁E���E�選択中�E�E,
+        instance.body?.slice(0, 150) || '�E�本斁E��し！E
       ).addFields(
         {
           name: '設置チャンネル',
-          value: instance.installChannelId ? `<#${instance.installChannelId}>` : '不明',
+          value: instance.installChannelId ? `<#${instance.installChannelId}>` : '不�E',
           inline: true,
         },
         {
-          name: '複製チャンネル',
-          value: (instance.replicateChannelIds || []).map(id => `<#${id}>`).join('\n') || 'なし',
+          name: '褁E��チャンネル',
+          value: (instance.replicateChannelIds || []).map(id => `<#${id}>`).join('\n') || 'なぁE,
           inline: true,
         }
       ).setFooter({ text: `UUID: ${instance.uuid}` });
 
       await selectInteraction.update({
-        content: `✅ 凸スナ「${instance.body?.slice(0, 20) || '（無題）'}」の詳細：`,
+        content: `✁E凸スナ、E{instance.body?.slice(0, 20) || '�E�無題！E}」�E詳細�E�`,
         embeds: [detailEmbed],
         components: [],
       });
@@ -122,7 +121,7 @@ module.exports = {
       if (collected.size === 0 && interaction.channel) {
         interaction.editReply({
           embeds: [
-            createAdminEmbed('⌛ タイムアウト', 'メニューの操作時間が終了しました。')
+            createAdminEmbed('⌁EタイムアウチE, 'メニューの操作時間が終亁E��ました、E)
           ],
           components: [],
         }).catch(() => {});

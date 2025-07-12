@@ -4,8 +4,7 @@ const { MessageFlags } = require('discord.js');
 const { loadHandlers } = require('./handlerLoader.js');
 const { logAndReplyError } = require('./errorHelper');
 
-// 各カテゴリのbuttons.jsを読み込み（.js付きでパス指定）
-const starConfigHandler = require(path.join(__dirname, 'star_config', 'buttons.js'));
+// 吁E��チE��リのbuttons.jsを読み込み�E�Ejs付きでパス持E��！Econst starConfigHandler = require(path.join(__dirname, 'star_config', 'buttons.js'));
 const starChatGptSettiHandler = require(path.join(__dirname, 'star_chat_gpt_setti', 'buttons.js'));
 const totusunaSettiHandler = loadHandlers(path.join(__dirname, 'totusuna_setti', 'buttons'));
 const totusunaConfigHandler = loadHandlers(path.join(__dirname, 'totusuna_config', 'buttons'));
@@ -20,8 +19,7 @@ const fallbackHandlers = [
 ];
 
 /**
- * ボタンインタラクションの処理
- * @param {import('discord.js').ButtonInteraction} interaction
+ * ボタンインタラクションの処琁E * @param {import('discord.js').ButtonInteraction} interaction
  */
 async function handleButton(interaction) {
   if (!interaction.isButton()) return;
@@ -35,9 +33,9 @@ async function handleButton(interaction) {
   }
 
   if (!handler) {
-    console.warn(`⚠️ 未対応のボタン: ${customId}`);
+    console.warn(`⚠�E�E未対応�Eボタン: ${customId}`);
     return await interaction.reply({
-      content: '⚠️ このボタンは現在利用できません。',
+      content: '⚠�E�Eこ�Eボタンは現在利用できません、E,
       flags: MessageFlags.Ephemeral,
     });
   }
@@ -47,8 +45,8 @@ async function handleButton(interaction) {
   } catch (err) {
     await logAndReplyError(
       interaction,
-      `❌ ボタン処理エラー: ${customId}\n${err?.stack || err}`,
-      '❌ ボタン処理中にエラーが発生しました。',
+      `❁Eボタン処琁E��ラー: ${customId}\n${err?.stack || err}`,
+      '❁Eボタン処琁E��にエラーが発生しました、E,
       { flags: MessageFlags.Ephemeral }
     );
   }

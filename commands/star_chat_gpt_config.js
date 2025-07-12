@@ -10,24 +10,24 @@ module.exports = {
   execute: requireAdmin(async (interaction) => {
     try {
       const embed = createAdminEmbed(
-        '🤖 ChatGPT設定管理',
+        '� ChatGPT設定管理',
         'ChatGPTの各種設定を管理できます。'
       ).addFields(
         {
-          name: '🔧 設定項目',
-          value: '• APIキー\n• 最大トークン数\n• 温度設定\n• プロンプト設定',
+          name: '🔧 設定頁E��',
+          value: '• APIキー\n• 最大ト�Eクン数\n• 温度設定\n• プロンプト設宁E,
           inline: false
         },
         {
-          name: '📋 現在の状態',
-          value: 'APIキー: 未設定\n最大トークン: 150\n温度: 0.7',
+          name: '📋 現在の状慁E,
+          value: 'APIキー: 未設定\n最大ト�Eクン: 150\n温度: 0.7',
           inline: false
         }
       );
 
       const configButton = new ButtonBuilder()
         .setCustomId('chatgpt_config_button')
-        .setLabel('⚙️ 設定変更')
+        .setLabel('⚙︁E設定変更')
         .setStyle(ButtonStyle.Primary);
 
       const row = new ActionRowBuilder().addComponents(configButton);
@@ -40,7 +40,7 @@ module.exports = {
     } catch (error) {
       console.error('ChatGPT設定コマンドエラー:', error);
       await interaction.reply({
-        content: '❌ 設定コマンドの実行中にエラーが発生しました。',
+        content: '❁E設定コマンド�E実行中にエラーが発生しました、E,
         ephemeral: true
       });
     }

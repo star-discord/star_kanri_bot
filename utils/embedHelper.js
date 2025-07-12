@@ -1,19 +1,19 @@
 // utils/embedHelper.js
 const { EmbedBuilder } = require('discord.js');
 
-// 既存: 管理者専用UIのEmbed
+// 既孁E 管琁E��E��用UIのEmbed
 function createAdminEmbed(title, description, color = 0x0099ff) {
   return new EmbedBuilder()
-    .setTitle(`${title} 🔒 管理者専用`)
+    .setTitle(`${title} 🔒 管琁E��E��用`)
     .setDescription(description)
     .setColor(color);
 }
 
-// ✅ 新規追加: 権限エラー用Embed
+// ✁E新規追加: 権限エラー用Embed
 function createAdminRejectEmbed() {
   return new EmbedBuilder()
-    .setTitle('❌ 管理者権限が必要です')
-    .setDescription('このコマンドは **管理者ロールに登録されたユーザーのみ** 使用できます。')
+    .setTitle('❁E管琁E��E��限が忁E��でぁE)
+    .setDescription('こ�Eコマンド�E **管琁E��E��ールに登録されたユーザーのみ** 使用できます、E)
     .setColor(0xff0000);
 }
 

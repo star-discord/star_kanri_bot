@@ -1,7 +1,7 @@
 // utils/totusuna_setti/modals/editSetting.js
 const fs = require('fs');
 const path = require('path');
-const { InteractionResponseFlags } = require('discord.js'); // ← 追加
+const { MessageFlags } = require('discord.js'); // ↁE追加
 
 module.exports = {
   customId: 'edit_setting_modal',
@@ -11,37 +11,36 @@ module.exports = {
 
     if (!fs.existsSync(dataPath)) {
       return await interaction.reply({
-        content: '⚠ 設定ファイルが見つかりません。',
-        flags: InteractionResponseFlags.Ephemeral,
+        content: '⚠ 設定ファイルが見つかりません、E,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
     const json = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
-    const instance = json?.totusuna?.[uuid]; // ← 修正
+    const instance = json?.totusuna?.[uuid]; // ↁE修正
 
     if (!instance) {
       return await interaction.reply({
-        content: '⚠ 該当の凸スナ情報が見つかりません。',
-        flags: InteractionResponseFlags.Ephemeral,
+        content: '⚠ 該当�E凸スナ情報が見つかりません、E,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
     const newBody = interaction.fields.getTextInputValue('body')?.trim();
     if (!newBody || newBody.length === 0) {
       return await interaction.reply({
-        content: '❌ 本文が空です。',
-        flags: InteractionResponseFlags.Ephemeral,
+        content: '❁E本斁E��空です、E,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
     instance.body = newBody;
 
-    // 保存
-    fs.writeFileSync(dataPath, JSON.stringify(json, null, 2));
+    // 保孁E    fs.writeFileSync(dataPath, JSON.stringify(json, null, 2));
 
     await interaction.reply({
-      content: '✅ 本文を更新しました。\n※設置チャンネルのメッセージを再送信したい場合は `/凸スナ設定` から「再送信ボタン」を使用してください。',
-      flags: InteractionResponseFlags.Ephemeral,
+      content: '✁E本斁E��更新しました、En※設置チャンネルのメチE��ージを�E送信したぁE��合�E `/凸スナ設定` から「�E送信ボタン」を使用してください、E,
+      flags: MessageFlags.Ephemeral,
     });
   }
 };

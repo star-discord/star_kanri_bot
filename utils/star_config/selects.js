@@ -4,7 +4,7 @@ const { loadHandlers } = require('../handlerLoader'); // 汎用ハンドラ読�
 const handlers = loadHandlers(path.join(__dirname, 'selects'));
 
 /**
- * STAR管理bot設定用 selectメニューの dispatcher
+ * STAR管琁Eot設定用 selectメニューの dispatcher
  * @param {import('discord.js').AnySelectMenuInteraction} interaction
  */
 module.exports = async function handleStarConfigSelect(interaction) {
@@ -16,7 +16,7 @@ module.exports = async function handleStarConfigSelect(interaction) {
   } catch (err) {
     console.error(`[selects/${interaction.customId}] ハンドラー実行エラー:`, err);
     await interaction.reply({
-      content: '❌ 設定処理でエラーが発生しました。',
+      content: '❁E設定�E琁E��エラーが発生しました、E,
       ephemeral: true
     });
   }

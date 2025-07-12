@@ -5,14 +5,14 @@ const {
   TextInputBuilder,
   TextInputStyle,
   ActionRowBuilder,
-  InteractionResponseFlags,
+  MessageFlags,
 } = require('discord.js');
 
 module.exports = {
   customIdStart: 'totsusuna_setti:edit_settings:',
 
   /**
-   * 凸スナ設置の編集モーダル表示
+   * 凸スナ設置の編雁E��ーダル表示
    * @param {import('discord.js').ButtonInteraction} interaction
    */
   async handle(interaction) {
@@ -24,8 +24,8 @@ module.exports = {
       await fs.access(dataPath);
     } catch {
       return await interaction.reply({
-        content: '⚠️ データファイルが見つかりません。',
-        flags: InteractionResponseFlags.Ephemeral,
+        content: '⚠�E�EチE�Eタファイルが見つかりません、E,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -34,36 +34,36 @@ module.exports = {
       const fileContent = await fs.readFile(dataPath, 'utf-8');
       json = JSON.parse(fileContent);
     } catch (err) {
-      console.error('[edit_settings] JSON読み込み失敗:', err);
+      console.error('[edit_settings] JSON読み込み失敁E', err);
       return await interaction.reply({
-        content: '❌ データファイルの読み込みに失敗しました。',
-        flags: InteractionResponseFlags.Ephemeral,
+        content: '❁EチE�Eタファイルの読み込みに失敗しました、E,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
     const instances = json.totsusuna?.instances;
     if (!Array.isArray(instances)) {
       return await interaction.reply({
-        content: '⚠️ インスタンスデータが見つかりません。',
-        flags: InteractionResponseFlags.Ephemeral,
+        content: '⚠�E�EインスタンスチE�Eタが見つかりません、E,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
     const instance = instances.find(i => i.id === uuid);
     if (!instance) {
       return await interaction.reply({
-        content: '⚠️ 指定された設置情報が存在しません。',
-        flags: InteractionResponseFlags.Ephemeral,
+        content: '⚠�E�E持E��された設置惁E��が存在しません、E,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
     const modal = new ModalBuilder()
       .setCustomId(this.customIdStart + uuid)
-      .setTitle('📘 凸スナ本文を編集');
+      .setTitle('📘 凸スナ本斁E��編雁E);
 
     const bodyInput = new TextInputBuilder()
       .setCustomId('body')
-      .setLabel('本文メッセージ')
+      .setLabel('本斁E��チE��ージ')
       .setStyle(TextInputStyle.Paragraph)
       .setValue(instance.body || '')
       .setRequired(true);

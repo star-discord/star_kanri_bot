@@ -14,44 +14,40 @@ module.exports = {
   customId: 'totsuna_setti:install',
 
   /**
-   * 凸スナ設置の処理
-   * @param {import('discord.js').ButtonInteraction} interaction
+   * 凸スナ設置の処琁E   * @param {import('discord.js').ButtonInteraction} interaction
    */
   async handle(interaction) {
     const guildId = interaction.guildId;
     const userId = interaction.user.id;
 
     try {
-      // 一時保存データを取得
-      const state = tempState.get(guildId, userId);
+      // 一時保存データを取征E      const state = tempState.get(guildId, userId);
 
       if (!state || !state.body || !state.installChannelId) {
         return await interaction.reply({
-          content: '⚠ 本文やチャンネル設定が不足しています。',
-          flags: 1 << 6, // InteractionResponseFlags.Ephemeral
+          content: '⚠ 本斁E��チャンネル設定が不足してぁE��す、E,
+          flags: 1 << 6, // MessageFlags.Ephemeral
         });
       }
 
-      // 新規UUID生成
+      // 新規UUID生�E
       const uuid = uuidv4();
 
-      // Embedを構築
-      const embed = new EmbedBuilder()
+      // Embedを構篁E      const embed = new EmbedBuilder()
         .setTitle('📣 凸スナ報告受付中')
         .setDescription(state.body)
         .setColor(0x00bfff);
 
-      // ボタンを構築（UUID付与）
-      const button = new ButtonBuilder()
+      // ボタンを構築！EUID付与！E      const button = new ButtonBuilder()
         .setCustomId(`totsuna:report:${uuid}`)
-        .setLabel('凸スナ報告')
+        .setLabel('凸スナ報呁E)
         .setStyle(ButtonStyle.Primary);
 
       const row = new ActionRowBuilder().addComponents(button);
 
       // 設置チャンネルを取得し送信
       const installChannel = await interaction.guild.channels.fetch(state.installChannelId);
-      if (!installChannel?.isTextBased?.()) throw new Error('対象チャンネルが無効です');
+      if (!installChannel?.isTextBased?.()) throw new Error('対象チャンネルが無効でぁE);
 
       const sentMessage = await installChannel.send({
         embeds: [embed],
@@ -62,11 +58,10 @@ module.exports = {
       const jsonPath = await ensureGuildJSON(guildId);
       const json = await readJSON(jsonPath);
 
-      // 初期化処理
-      if (!json.totsuna) json.totsuna = {};
+      // 初期化�E琁E      if (!json.totsuna) json.totsuna = {};
       if (!Array.isArray(json.totsuna.instances)) json.totsuna.instances = [];
 
-      // 新しい設置情報を追加
+      // 新しい設置惁E��を追加
       json.totsuna.instances.push({
         id: uuid,
         userId,
@@ -76,22 +71,21 @@ module.exports = {
         messageId: sentMessage.id,
       });
 
-      // JSON保存
-      await writeJSON(jsonPath, json);
+      // JSON保孁E      await writeJSON(jsonPath, json);
 
       // 一時データ削除
       tempState.delete(guildId, userId);
 
       // 成功レスポンス
       await interaction.reply({
-        content: '✅ 凸スナ設置が完了しました！',
-        flags: 1 << 6, // InteractionResponseFlags.Ephemeral
+        content: '✁E凸スナ設置が完亁E��ました�E�E,
+        flags: 1 << 6, // MessageFlags.Ephemeral
       });
     } catch (error) {
-      console.error('[設置ボタン処理中エラー]', error);
+      console.error('[設置ボタン処琁E��エラー]', error);
 
       const errorReply = {
-        content: '❌ 設置処理中に予期せぬエラーが発生しました。',
+        content: '❁E設置処琁E��に予期せぬエラーが発生しました、E,
         flags: 1 << 6,
       };
 

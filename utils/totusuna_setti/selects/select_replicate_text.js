@@ -1,12 +1,11 @@
-const { InteractionResponseFlags } = require('discord.js');
+const { MessageFlags } = require('discord.js');
 const tempState = require('../state/totsusunaTemp');
 
 module.exports = {
   customId: 'totsusuna_setti:select_replicate_text',
 
   /**
-   * 複製チャンネルの選択を処理
-   * @param {import('discord.js').StringSelectMenuInteraction} interaction
+   * 褁E��チャンネルの選択を処琁E   * @param {import('discord.js').StringSelectMenuInteraction} interaction
    */
   async handle(interaction) {
     const guildId = interaction.guildId;
@@ -15,21 +14,20 @@ module.exports = {
 
     if (!Array.isArray(selected) || selected.length === 0) {
       return await interaction.reply({
-        content: '⚠️ 複製チャンネルが選択されていません。',
-        flags: InteractionResponseFlags.Ephemeral,
+        content: '⚠�E�E褁E��チャンネルが選択されてぁE��せん、E,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
-    // 既存の一時データと統合
-    const prev = tempState.get(guildId, userId) || {};
+    // 既存�E一時データと統吁E    const prev = tempState.get(guildId, userId) || {};
     tempState.set(guildId, userId, {
       ...prev,
       replicateChannelIds: selected,
     });
 
     await interaction.reply({
-      content: `✅ 複製チャンネルとして ${selected.map(id => `<#${id}>`).join(', ')} を設定しました。`,
-      flags: InteractionResponseFlags.Ephemeral,
+      content: `✁E褁E��チャンネルとして ${selected.map(id => `<#${id}>`).join(', ')} を設定しました。`,
+      flags: MessageFlags.Ephemeral,
     });
   },
 };

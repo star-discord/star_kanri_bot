@@ -1,9 +1,6 @@
-// ファイル参照: utils/kpi_setti/step/targetStep.js
+// ファイル参�E: utils/kpi_setti/step/targetStep.js
 
-// こちらは現在のステップチャット処理に統合済みで
-// もし分割管理する場合はこちらに処理を移行できます。
-// 今回はstepChatHandler.jsに統合しているため空ファイルか不要です。
-
-// もし将来的に目標入力ステップの細分化をしたい場合に使用してください。
-
+// こちら�E現在のスチE��プチャチE��処琁E��統合済みで
+// もし刁E��管琁E��る場合�Eこちらに処琁E��移行できます、E// 今回はstepChatHandler.jsに統合してぁE��ため空ファイルか不要です、E
+// もし封E��皁E��目標�E力スチE��プ�E細刁E��をしたい場合に使用してください、E
 module.exports = {};

@@ -1,7 +1,7 @@
 // utils/totusuna_setti/buttons/delete.js
 const fs = require('fs');
 const path = require('path');
-const { InteractionResponseFlags } = require('discord.js');
+const { MessageFlags } = require('discord.js');
 
 module.exports = {
   customIdStart: 'totsusuna_setti:delete:',
@@ -17,8 +17,8 @@ module.exports = {
 
     if (!fs.existsSync(filePath)) {
       return await interaction.reply({
-        content: 'âš ï¸ Data file not found.',
-        flags: InteractionResponseFlags.Ephemeral,
+        content: 'âš EEData file not found.',
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -27,16 +27,16 @@ module.exports = {
 
     if (!Array.isArray(list)) {
       return await interaction.reply({
-        content: 'âš ï¸ No instance data available.',
-        flags: InteractionResponseFlags.Ephemeral,
+        content: 'âš EENo instance data available.',
+        flags: MessageFlags.Ephemeral,
       });
     }
 
     const targetIndex = list.findIndex(i => i.id === uuid);
     if (targetIndex === -1) {
       return await interaction.reply({
-        content: 'âš ï¸ Target instance not found.',
-        flags: InteractionResponseFlags.Ephemeral,
+        content: 'âš EETarget instance not found.',
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -58,8 +58,8 @@ module.exports = {
     fs.writeFileSync(filePath, JSON.stringify(json, null, 2));
 
     await interaction.reply({
-      content: 'ğŸ—‘ï¸ Totsusuna instance deleted successfully.',
-      flags: InteractionResponseFlags.Ephemeral,
+      content: 'ğŸ—‘EETotsusuna instance deleted successfully.',
+      flags: MessageFlags.Ephemeral,
     });
   },
 };

@@ -5,14 +5,12 @@ module.exports = {
    * @param {import('discord.js').StringSelectMenuInteraction} interaction
    */
   async handle(interaction) {
-    // 選択値の取得例
-    const selectedChannelId = interaction.values[0];
+    // 選択値の取得侁E    const selectedChannelId = interaction.values[0];
 
-    // 何か状態を更新する処理など
+    // 何か状態を更新する処琁E��ど
 
-    // メッセージ更新や状態更新は必要ならここで行う
+    // メチE��ージ更新めE��態更新は忁E��ならここで行う
 
-    // 新しいメッセージを送らずにインタラクションを終える
-    await interaction.deferUpdate();
+    // 新しいメチE��ージを送らずにインタラクションを終えめE    await interaction.deferUpdate();
   }
 };

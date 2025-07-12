@@ -63,10 +63,14 @@ async function ensureGuildJSON(guildId) {
 
     try {
       await fs.promises.access(filePath); // 存在確認
+      console.log(`📄 既存JSONファイルを使用: ${filePath}`);
     } catch {
+      // ファイルが存在しない場合のみ新規作成
       const initialData = {
-        adminRoleIds: [],
-        notifyChannelId: null,
+        star_config: {
+          adminRoleIds: [],
+          notifyChannelId: null
+        },
         // 他の初期設定項目をここに追加
       };
       await fs.promises.writeFile(filePath, JSON.stringify(initialData, null, 2), 'utf8');

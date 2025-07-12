@@ -15,7 +15,7 @@ for (const file of files) {
     const handler = require(modulePath);
 
     if (typeof handler.handle !== 'function') {
-      console.warn(`⚠️ ChatGPTモーダルモジュールに handle 関数がありません: ${file}`);
+      console.warn(`⚠�E�EChatGPTモーダルモジュールに handle 関数がありません: ${file}`);
       continue;
     }
 
@@ -24,15 +24,15 @@ for (const file of files) {
     } else if (typeof handler.customIdStart === 'string') {
       startsWithHandlers.push({ key: handler.customIdStart, handler });
     } else {
-      console.warn(`⚠️ ChatGPTモーダルモジュールに customId/customIdStart が未定義: ${file}`);
+      console.warn(`⚠�E�EChatGPTモーダルモジュールに customId/customIdStart が未定義: ${file}`);
     }
   } catch (err) {
-    console.warn(`❌ ChatGPTモーダルファイルの読み込みに失敗 (${file}):`, err);
+    console.warn(`❁EChatGPTモーダルファイルの読み込みに失敁E(${file}):`, err);
   }
 }
 
 /**
- * customId に対応するChatGPTモーダルハンドラを探す（完全一致 → 前方一致）
+ * customId に対応するChatGPTモーダルハンドラを探す（完�E一致 ↁE前方一致�E�E
  * @param {string} customId
  * @returns {object|null}
  */
@@ -43,7 +43,7 @@ function findHandler(customId) {
     if (customId.startsWith(key)) return handler;
   }
 
-  console.warn(`⚠️ 対応するChatGPTモーダルハンドラが見つかりません: ${customId}`);
+  console.warn(`⚠�E�E対応するChatGPTモーダルハンドラが見つかりません: ${customId}`);
   return null;
 }
 

@@ -15,7 +15,7 @@ for (const file of files) {
     const handler = require(modulePath);
 
     if (typeof handler.handle !== 'function') {
-      console.warn(`⚠️ ボタンモジュールに handle 関数がありません: ${file}`);
+      console.warn(`⚠�E�Eボタンモジュールに handle 関数がありません: ${file}`);
       continue;
     }
 
@@ -24,16 +24,15 @@ for (const file of files) {
     } else if (typeof handler.customIdStart === 'string') {
       startsWithHandlers.push({ key: handler.customIdStart, handler });
     } else {
-      console.warn(`⚠️ ボタンモジュールに customId/customIdStart が未定義: ${file}`);
+      console.warn(`⚠�E�Eボタンモジュールに customId/customIdStart が未定義: ${file}`);
     }
   } catch (err) {
-    console.warn(`❌ ボタンファイルの読み込みに失敗 (${file}):`, err);
+    console.warn(`❁Eボタンファイルの読み込みに失敁E(${file}):`, err);
   }
 }
 
 /**
- * customId に対応するボタンハンドラを探す（完全一致 → 前方一致）
- * @param {string} customId
+ * customId に対応する�Eタンハンドラを探す（完�E一致 ↁE前方一致�E�E * @param {string} customId
  * @returns {object|null}
  */
 function findHandler(customId) {
@@ -43,7 +42,7 @@ function findHandler(customId) {
     if (customId.startsWith(key)) return handler;
   }
 
-  console.warn(`⚠️ 対応するボタンハンドラが見つかりません: ${customId}`);
+  console.warn(`⚠�E�E対応する�Eタンハンドラが見つかりません: ${customId}`);
   return null;
 }
 

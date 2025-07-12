@@ -21,7 +21,7 @@ async function readShopList() {
     return JSON.parse(data);
   } catch (e) {
     if (e.code === 'ENOENT') return [];
-    console.error('店舗リスト読み込みエラー:', e);
+    console.error('店�Eリスト読み込みエラー:', e);
     return [];
   }
 }
@@ -40,7 +40,7 @@ async function addShop(shopName) {
     fileLock = false;
     return { success: true };
   } catch (e) {
-    console.error('店舗リスト書き込みエラー:', e);
+    console.error('店�Eリスト書き込みエラー:', e);
     fileLock = false;
     return { success: false, reason: 'exception', error: e };
   }

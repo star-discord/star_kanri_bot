@@ -12,39 +12,39 @@ module.exports = {
       const filePath = await ensureGuildJSON(guild.id);
       const data = await readJSON(filePath);
 
-      // totusuna_settiセクションの初期化
+      // totusuna_settiセクションの初期匁E
       if (!data.totusuna_setti) {
         data.totusuna_setti = {};
       }
 
-      // 複製チャンネルを設定
+      // 褁E��チャンネルを設宁E
       data.totusuna_setti.replicateChannelIds = selectedChannelIds;
       await writeJSON(filePath, data);
 
       if (selectedChannelIds.length > 0) {
         const channelMentions = selectedChannelIds.map(id => `<#${id}>`).join(', ');
         await interaction.reply({
-          content: `✅ 複製チャンネルを ${channelMentions} に設定しました。`,
+          content: `✁E褁E��チャンネルめE${channelMentions} に設定しました。`,
           ephemeral: true
         });
       } else {
         await interaction.reply({
-          content: `✅ 複製チャンネルを未設定にしました。`,
+          content: `✁E褁E��チャンネルを未設定にしました。`,
           ephemeral: true
         });
       }
 
     } catch (error) {
-      console.error('totusuna_select_replicate処理エラー:', error);
+      console.error('totusuna_select_replicate処琁E��ラー:', error);
       
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({
-          content: '❌ 複製チャンネル設定中にエラーが発生しました。',
+          content: '❁E褁E��チャンネル設定中にエラーが発生しました、E,
           ephemeral: true
         });
       } else {
         await interaction.followUp({
-          content: '❌ 複製チャンネル設定中にエラーが発生しました。',
+          content: '❁E褁E��チャンネル設定中にエラーが発生しました、E,
           ephemeral: true
         });
       }
