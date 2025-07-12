@@ -74,7 +74,6 @@ if (fs.existsSync(eventsPath)) {
 }
 
 // ======== インタラクションハンドラー ========
-const interactionHandler = require('./utils/interactionHandler');
 const { handleButton } = require('./utils/buttonsHandler');
 const { handleModal } = require('./utils/modalsHandler');
 const { handleSelect } = require('./utils/selectsHandler');
@@ -82,7 +81,9 @@ const { handleSelect } = require('./utils/selectsHandler');
 client.on('interactionCreate', async interaction => {
   try {
     if (interaction.isChatInputCommand()) {
-      await interactionHandler.execute(interaction);
+      const command = client.commands.get(interaction.commandName);
+      if (!command) return;
+      await command.execute(interaction);
     } else if (interaction.isButton()) {
       await handleButton(interaction);
     } else if (interaction.isStringSelectMenu()) {
