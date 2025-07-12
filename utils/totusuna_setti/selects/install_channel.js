@@ -1,5 +1,5 @@
 const { InteractionResponseFlags } = require('discord.js');
-const findHandler = require('./selects');
+const findHandler = require('../selects');
 
 /**
  * セレクトメニューインタラクションを処理するメイン関数

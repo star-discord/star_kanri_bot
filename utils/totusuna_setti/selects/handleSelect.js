@@ -1,8 +1,8 @@
 const { InteractionResponseFlags } = require('discord.js');
 
 // カテゴリごとの findHandler を読み込み
-const findTotsusunaHandler = require('../totusuna_setti/selects');
-const findStarHandler = require('../star_config/selects');
+const findTotsusunaHandler = require('../../totusuna_setti/selects');
+const findStarHandler = require('../../star_config/selects');
 
 /**
  * セレクトメニューインタラクションを処理するメイン関数
