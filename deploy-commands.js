@@ -8,26 +8,26 @@ const commands = [];
 const commandsPath = path.join(__dirname, 'commands');
 const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
 
-// 管琁E��E��グの自動付加対象を記録
+// 管琁E��E��グの自動付加対象を記録
 const adminCommandsWithoutTag = [];
 
-// コマンド�E読み込みとタグ付加処琁Efor (const file of commandFiles) {
+// コマンド�E読み込みとタグ付加処琁Efor (const file of commandFiles) {
   const filePath = path.join(commandsPath, file);
   const command = require(filePath);
 
   if ('data' in command && 'execute' in command) {
-    // 管琁E��E��マンドに "(管琁E��E��用)" を�E動付加
+    // 管理者コマンドに "(管理者専用)" を自動付加
     if (command.isAdminCommand) {
       const desc = command.data.description;
-      if (!desc.includes('�E�管琁E��E��用�E�E)) {
-        command.data.setDescription(desc + '�E�管琁E��E��用�E�E);
+      if (!desc.includes('（管理者専用）')) {
+        command.data.setDescription(desc + '（管理者専用）');
         adminCommandsWithoutTag.push(command.data.name);
       }
     }
 
     commands.push(command.data.toJSON());
   } else {
-    console.warn(`[WARNING] スラチE��ュコマンド形式不正: ${filePath}`);
+    console.warn(`[WARNING] スラッシュコマンド形式不正: ${filePath}`);
   }
 }
 
@@ -35,31 +35,33 @@ const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
 
 (async () => {
   try {
-    console.log(`⏳ ${commands.length}個�EスラチE��ュコマンドを登録中...`);
+    console.log(`⏳ ${commands.length}個�EスラチE��ュコマンドを登録中...`);
 
     // タグ付加されたコマンドを表示
     if (adminCommandsWithoutTag.length > 0) {
-      console.log('🔧 "(管琁E��E��用)" タグを�E動で追加したコマンチE');
+      console.log('🔧 "(管理者専用)" タグを自動で追加したコマンド:');
       adminCommandsWithoutTag.forEach(name => console.log(`- /${name}`));
     }
 
-    // ギルドコマンド登録�E�即時反映�E�開発用�E�E    if (process.env.GUILD_ID) {
+    // ギルドコマンド登録（即時反映・開発用）
+    if (process.env.GUILD_ID) {
       await rest.put(
         Routes.applicationGuildCommands(process.env.CLIENT_ID, process.env.GUILD_ID),
         { body: commands },
       );
-      console.log('✁Eギルドコマンド登録完亁E��即時反映�E�E);
+      console.log('✅ ギルドコマンド登録完了（即時反映）');
     } else {
-      console.log('⚠�E�EGUILD_ID が未設定�Eため、ギルド登録はスキチE�Eされました');
+      console.log('⚠️ GUILD_ID が未設定のため、ギルド登録はスキップされました');
     }
 
-    // グローバルコマンド登録�E�反映に時間あり�E�本番用�E�E    await rest.put(
+    // グローバルコマンド登録（反映に時間あり・本番用）
+    await rest.put(
       Routes.applicationCommands(process.env.CLIENT_ID),
       { body: commands },
     );
-    console.log('✁Eグローバルコマンド登録完亁E��反映まで最大1時間�E�E);
+    console.log('✅ グローバルコマンド登録完了（反映まで最大1時間）');
 
   } catch (error) {
-    console.error('❁Eコマンド登録失敁E', error);
+    console.error('❌ コマンド登録失敗', error);
   }
 })();
