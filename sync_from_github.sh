@@ -2,13 +2,7 @@
 
 echo "🚀 GitHub完全同期スクリプト開始"
 echo "⚠️  注意: すべてのローカル変更が破棄され、GitHubの最新版に上書きされます"
-
-# ユーザー確認
-read -p "続行しますか？ (y/N): " confirm
-if [[ ! $confirm =~ ^[Yy]$ ]]; then
-    echo "❌ 処理を中止しました"
-    exit 0
-fi
+echo "🔄 自動実行モードで続行します..."
 
 cd ~/star_kanri_bot || {
     echo "❌ star_kanri_botディレクトリが見つかりません"
