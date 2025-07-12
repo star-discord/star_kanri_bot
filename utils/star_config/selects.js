@@ -1,18 +1,23 @@
-module.exports = {
-  customId: 'totsusuna_setti:select_main',
+// utils/star_config/selects.js
+const path = require('path');
+const loadHandlers = require('../../handlerLoader'); // 汎用ハンドラ読み込み関数
+const handlers = loadHandlers(path.join(__dirname, 'selects'));
 
-  /**
-   * @param {import('discord.js').StringSelectMenuInteraction} interaction
-   */
-  async handle(interaction) {
-    // 選択値の取得例
-    const selectedChannelId = interaction.values[0];
+/**
+ * STAR管理bot設定用 selectメニューの dispatcher
+ * @param {import('discord.js').AnySelectMenuInteraction} interaction
+ */
+module.exports = async function handleStarConfigSelect(interaction) {
+  const handler = handlers.get(interaction.customId);
+  if (!handler) return;
 
-    // 何か状態を更新する処理など
-
-    // メッセージ更新や状態更新は必要ならここで行う
-
-    // 新しいメッセージを送らずにインタラクションを終える
-    await interaction.deferUpdate();
+  try {
+    await handler(interaction);
+  } catch (err) {
+    console.error(`[selects/${interaction.customId}] ハンドラー実行エラー:`, err);
+    await interaction.reply({
+      content: '❌ 設定処理でエラーが発生しました。',
+      ephemeral: true
+    });
   }
 };
