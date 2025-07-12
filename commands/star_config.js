@@ -8,6 +8,7 @@ const {
   EmbedBuilder,
   ChannelType
 } = require('discord.js');
+const { PermissionFlagsBits } = require('discord.js');
 const { readJSON, writeJSON, ensureGuildJSON } = require('../utils/fileHelper');
 
 const requireAdmin = require('../utils/permissions/requireAdmin');
