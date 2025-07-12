@@ -2,7 +2,14 @@
 
 echo "🚀 star_kanri_bot 更新処理開始"
 
-# 古いバックアップフォルダを削除（最新1つのみ保持）
+# コマンドライン引数チェック
+FORCE_SYNC=false
+if [ "$1" = "--force-sync" ] || [ "$1" = "-f" ]; then
+  FORCE_SYNC=true
+  echo "⚡ 強制同期モード: すべてのローカル変更が破棄されます"
+fi
+
+# 古いバックアップフォルダを削除（最新2つのみ保持）
 echo "🗑️ 古いバックアップフォルダを削除中..."
 cd "$HOME" || exit 1
 
@@ -12,23 +19,28 @@ BACKUP_DIRS=($(ls -td star_kanri_bot_data_backup_*/ 2>/dev/null))
 TOTAL_BACKUPS=${#BACKUP_DIRS[@]}
 echo "📊 現在のバックアップフォルダ数: ${TOTAL_BACKUPS}個"
 
-if [ "$TOTAL_BACKUPS" -gt 1 ]; then
+if [ "$TOTAL_BACKUPS" -gt 2 ]; then
   DELETED_COUNT=0
-  echo "🗑️ 最新1つを除いて削除開始..."
-  echo "📌 保持対象: ${BACKUP_DIRS[0]%/}"
+  echo "🗑️ 最新2つを除いて削除開始..."
+  echo "📌 保持対象: ${BACKUP_DIRS[0]%/} (最新)"
+  echo "📌 保持対象: ${BACKUP_DIRS[1]%/} (予備)"
   
-  for (( i=1; i<$TOTAL_BACKUPS; i++ )); do
+  i=2
+  while [ $i -lt $TOTAL_BACKUPS ]; do
     DIR_NAME="${BACKUP_DIRS[$i]%/}"  # 末尾のスラッシュを除去
     if [ -d "$DIR_NAME" ]; then
       echo "  削除中: $DIR_NAME"
-      rm -rf "$DIR_NAME" && DELETED_COUNT=$((DELETED_COUNT + 1))
+      if rm -rf "$DIR_NAME"; then
+        DELETED_COUNT=`expr $DELETED_COUNT + 1`
+      fi
     fi
+    i=`expr $i + 1`
   done
   
   echo "✅ ${DELETED_COUNT}個のバックアップフォルダを削除完了"
   echo "📊 削除後のバックアップ数: $(ls -ld star_kanri_bot_data_backup_*/ 2>/dev/null | wc -l)個"
 else
-  echo "📁 削除対象のバックアップフォルダはありません（最新1つのみ保持）"
+  echo "📁 削除対象のバックアップフォルダはありません（最新2つまで保持）"
 fi
 
 # dataフォルダのみバックアップ
@@ -51,17 +63,87 @@ if [ ! -d ~/star_kanri_bot ] || [ -z "$(ls -A ~/star_kanri_bot)" ]; then
   cd ~/star_kanri_bot || exit 1
   chmod +x update.sh
 else
-  echo "📂 star_kanri_bot フォルダが存在し、中身があります。git pull 実行します。"
+  echo "📂 star_kanri_bot フォルダが存在し、中身があります。GitHub最新版に同期します。"
   cd ~/star_kanri_bot || exit 1
+  
+  # 現在の状態確認
+  echo "📊 同期前の状態確認..."
+  echo "現在のブランチ: $(git branch --show-current 2>/dev/null || echo 'unknown')"
+  echo "最新コミット: $(git log --oneline -1 2>/dev/null || echo 'unknown')"
+  
+  # 現在の変更状況を表示
+  echo "💾 現在の変更状況を確認中..."
+  CHANGES=$(git status --porcelain 2>/dev/null)
+  if [ -n "$CHANGES" ]; then
+    echo "⚠️ 検出されたローカル変更:"
+    echo "$CHANGES"
+    
+    if [ "$FORCE_SYNC" = false ]; then
+      echo ""
+      echo "🤔 ローカル変更が検出されました。どうしますか？"
+      echo "1) 変更を保持して通常更新 (推奨)"
+      echo "2) 変更を破棄して完全同期"
+      echo "3) 処理を中止"
+      read -p "選択してください (1-3): " choice
+      
+      case $choice in
+        2)
+          FORCE_SYNC=true
+          echo "⚡ 完全同期モードに変更しました"
+          ;;
+        3)
+          echo "❌ 処理を中止しました"
+          exit 0
+          ;;
+        *)
+          echo "📋 通常更新モードで続行します"
+          ;;
+      esac
+    fi
+  else
+    echo "✅ ローカル変更なし、安全に同期できます"
+  fi
+  
+  echo ""
+  echo "🔄 GitHubから最新版を取得中..."
   git fetch origin master
   git checkout master
-  git reset --hard origin/master || {
-    echo "❌ git reset --hard 失敗。処理を中止します。"
-    exit 1
-  }
+  
+  if [ "$FORCE_SYNC" = true ]; then
+    # 完全同期モード
+    echo "⚡ 完全同期実行中（すべてのローカル変更を破棄）..."
+    git reset --hard origin/master || {
+      echo "❌ git reset --hard 失敗。処理を中止します。"
+      exit 1
+    }
+    
+    # 追跡されていないファイルも削除
+    echo "🧹 不要ファイルをクリーンアップ中..."
+    git clean -fdx
+    
+    echo "✅ GitHub最新版への完全同期完了"
+  else
+    # 通常更新モード
+    echo "📥 通常更新実行中..."
+    if git merge origin/master --no-edit; then
+      echo "✅ GitHub最新版への更新完了"
+    else
+      echo "⚠️ マージで競合が発生しました。手動解決が必要です。"
+      echo "💡 完全同期を行う場合は: ./update.sh --force-sync"
+      exit 1
+    fi
+  fi
+  
+  echo ""
+  echo "📊 同期後の状態:"
+  echo "現在のブランチ: $(git branch --show-current)"
+  echo "最新コミット: $(git log --oneline -1)"
   
   # update.shに実行権限を自動付与
   chmod +x update.sh
+  if [ -f sync_from_github.sh ]; then
+    chmod +x sync_from_github.sh
+  fi
 fi
 
 # 依存関係インストール
