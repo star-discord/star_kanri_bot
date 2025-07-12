@@ -17,7 +17,7 @@ function loadHandlers(dirPath) {
     return () => null;
   }
 
-  const files = fs.readdirSync(dirPath).filter(file => file.endsWith('.js'));
+  const files = fs.readdirSync(dirPath).filter(file => file.endsWith('.js') && file !== 'index.js');
 
   for (const file of files) {
     const modulePath = path.join(dirPath, file);
