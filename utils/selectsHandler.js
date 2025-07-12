@@ -25,6 +25,11 @@ async function handleSelect(interaction) {
     await starSelectHandler(interaction);
     return;
   }
+  // totusuna_setti関連のプレフィックスなしcustomIdを処理
+  else if (customId === 'totusuna_select_main' || customId === 'totusuna_select_replicate' || customId === 'totusuna_config_select') {
+    await totsusunaSelectHandler(interaction);
+    return;
+  }
   // その他のプレフィックスなしcustomIdの処理
   else {
     // 他のハンドラーがあれば追加

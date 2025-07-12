@@ -1,9 +1,10 @@
 // utils/totusuna_setti/selects.js
 const { InteractionResponseFlags } = require('discord.js');
+const path = require('path');
+const { loadHandlers } = require('../handlerLoader');
 
-// カテゴリごとの findHandler を読み込み
-const findTotsusunaHandler = require('../totusuna_setti/selects');
-const findStarHandler = require('../star_config/selects');
+// totusuna_setti専用のハンドラを読み込み
+const totusunaHandlers = loadHandlers(path.join(__dirname, 'selects'));
 
 /**
  * セレクトメニューインタラクションを処理するメイン関数
@@ -15,12 +16,8 @@ async function handleSelect(interaction) {
   const customId = interaction.customId;
   let handler;
 
-  // customId に応じて適切なハンドラを探す
-  if (customId.startsWith('totsusuna_setti:')) {
-    handler = findTotsusunaHandler(customId);
-  } else {
-    handler = findStarHandler(customId);
-  }
+  // totusuna関連のハンドラを探す
+  handler = totusunaHandlers(customId);
 
   if (!handler) {
     await interaction.reply({
