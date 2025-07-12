@@ -1,5 +1,9 @@
-const { SlashCommandBuilder, ActionRowBuilder, StringSelectMenuBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const { readShopList } = require('../utils/kpiFileUtil.js');
+const {
+  SlashCommandBuilder,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+} = require('discord.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -7,38 +11,21 @@ module.exports = {
     .setDescription('KPI報告の案内メッセージを送信します'),
 
   async execute(interaction) {
-    const shops = await readShopList();
-    if (shops.length === 0) {
-      await interaction.reply({
-        content: 'まだ店舗が設定されていません。先に `/kpi_設定` で追加してください。',
-        flags: InteractionResponseFlags.Ephemeral,
-      });
-      return;
-    }
-
-    const shopOptions = shops.map(shop => ({
-      label: shop,
-      value: shop,
-    }));
-
-    const selectMenu = new StringSelectMenuBuilder()
-      .setCustomId('kpi_shop_select')
-      .setPlaceholder('店舗を選択してください')
-      .addOptions(shopOptions);
-
-    const row1 = new ActionRowBuilder().addComponents(selectMenu);
-
-    const button = new ButtonBuilder()
-      .setCustomId('kpi_input_button')
-      .setLabel('KPIを入力する')
+    const targetButton = new ButtonBuilder()
+      .setCustomId('kpi_target_start_button')
+      .setLabel('KPI目標')
       .setStyle(ButtonStyle.Primary);
 
-    const row2 = new ActionRowBuilder().addComponents(button);
+    const reportButton = new ButtonBuilder()
+      .setCustomId('kpi_report_start_button')
+      .setLabel('KPI申請')
+      .setStyle(ButtonStyle.Success);
+
+    const row = new ActionRowBuilder().addComponents(targetButton, reportButton);
 
     await interaction.reply({
-      content: 'KPI報告を行うには店舗を選択し、入力ボタンを押してください。',
-      components: [row1, row2],
+      content: 'KPI報告　目標設定/申請ボタン',
+      components: [row],
     });
-  }
+  },
 };
-
