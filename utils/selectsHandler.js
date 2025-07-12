@@ -12,11 +12,24 @@ async function handleSelect(interaction) {
 
   const { customId } = interaction;
 
-  const handler = customId.startsWith('star_config:')
-    ? starSelectHandler(customId)
-    : customId.startsWith('totsusuna_setti:')
-      ? totsusunaSelectHandler(customId)
-      : null;
+  let handler = null;
+
+  // プレフィックス付きのcustomIdを処理
+  if (customId.startsWith('star_config:')) {
+    handler = starSelectHandler(customId);
+  } else if (customId.startsWith('totsusuna_setti:')) {
+    handler = totsusunaSelectHandler(customId);
+  } 
+  // STAR設定関連のプレフィックスなしcustomIdを処理
+  else if (customId === 'admin_role_select' || customId === 'notify_channel_select') {
+    await starSelectHandler(interaction);
+    return;
+  }
+  // その他のプレフィックスなしcustomIdの処理
+  else {
+    // 他のハンドラーがあれば追加
+    handler = null;
+  }
 
   if (!handler) {
     return await interaction.reply({

@@ -4,20 +4,40 @@ const { ensureGuildJSON, readJSON, writeJSON } = require('../../fileHelper');
 module.exports = {
   customId: 'notify_channel_select',
   execute: requireAdmin(async (interaction) => {
-    const guild = interaction.guild;
-    const selected = interaction.values[0];
+    try {
+      const guild = interaction.guild;
+      const selected = interaction.values[0];
 
-    const filePath = await ensureGuildJSON(guild.id);
-    const data = await readJSON(filePath);
+      const filePath = await ensureGuildJSON(guild.id);
+      const data = await readJSON(filePath);
 
-    data.star_config = data.star_config || {};
-    data.star_config.notifyChannelId = selected;
+      // star_configの初期化
+      if (!data.star_config) {
+        data.star_config = {};
+      }
+      
+      data.star_config.notifyChannelId = selected;
+      await writeJSON(filePath, data);
 
-    await writeJSON(filePath, data);
+      await interaction.reply({
+        content: `✅ 通知チャンネルを <#${selected}> に設定しました。`,
+        ephemeral: true
+      });
 
-    await interaction.reply({
-      content: `✅ 通知チャンネルを <#${selected}> に設定しました。`,
-      ephemeral: true
-    });
+    } catch (error) {
+      console.error('notify_channel_select処理エラー:', error);
+      
+      if (!interaction.replied && !interaction.deferred) {
+        await interaction.reply({
+          content: '❌ 通知チャンネル設定中にエラーが発生しました。',
+          ephemeral: true
+        });
+      } else {
+        await interaction.followUp({
+          content: '❌ 通知チャンネル設定中にエラーが発生しました。',
+          ephemeral: true
+        });
+      }
+    }
   })
 };
