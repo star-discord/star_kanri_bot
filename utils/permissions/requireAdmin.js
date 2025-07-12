@@ -12,6 +12,14 @@ function requireAdmin(next) {
     const adminRoleIds = data.star_config?.adminRoleIds || [];
 
     const member = interaction.member;
+    
+    // Discord サーバーの管理者権限をチェック
+    if (member && member.permissions.has('Administrator')) {
+      await next(interaction);
+      return;
+    }
+    
+    // Bot専用の管理者ロールをチェック
     if (!member || !member.roles.cache.some(r => adminRoleIds.includes(r.id))) {
       return interaction.reply({
         content: '❌ あなたには権限がありません。',
