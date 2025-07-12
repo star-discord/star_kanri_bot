@@ -189,12 +189,12 @@ else
   echo "現在のブランチ: $(git branch --show-current)"
   echo "最新コミット: $(git log --oneline -1)"
   
-  # 実行権限を設定（git追跡対象外ファイルのみ）
+  # 実行権限を設定（常に両方のスクリプトに権限付与）
+  chmod +x update.sh
   if [ -f sync_from_github.sh ]; then
     chmod +x sync_from_github.sh
+    echo "🔓 両スクリプトに実行権限を付与完了"
   fi
-  # update.shの権限も復元（git reset後に失われるため）
-  chmod +x update.sh
 fi
 
 # 依存関係インストール
