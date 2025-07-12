@@ -8,19 +8,17 @@ const {
 
 const { ensureGuildJSON, readJSON } = require('../utils/fileHelper.js');
 
-const checkAdmin = require('../utils/permissions/checkAdmin.js');
+const requireAdmin = require('../utils/permissions/requireAdmin.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('凸スナ設定')
     .setDescription('設置済みの凸スナ一覧を表示し、内容の確認・編集ができます（管理者専用）'),
 
-  async execute(interaction) {
-    if (!(await checkAdmin(interaction))) return;
-
+  execute: requireAdmin(async (interaction) => {
     const guildId = interaction.guildId;
-    const filePath = ensureGuildJSON(guildId);
-    const data = readJSON(filePath);
+    const filePath = await ensureGuildJSON(guildId);
+    const data = await readJSON(filePath);
     const instances = Object.values(data.tousuna?.instances || {});
 
     if (instances.length === 0) {
@@ -119,5 +117,5 @@ module.exports = {
         }).catch(() => {});
       }
     });
-  },
+  }),
 };

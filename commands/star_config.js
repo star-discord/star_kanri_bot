@@ -10,12 +10,15 @@ const {
 } = require('discord.js');
 const { readJSON, writeJSON, ensureGuildJSON } = require('../utils/fileHelper');
 
+const requireAdmin = require('../utils/permissions/requireAdmin');
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('star管理bot設定')
-    .setDescription('管理者用のロールと通知チャンネルを設定します'),
+    .setDescription('管理者用のロールと通知チャンネルを設定します')
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 
-  async execute(interaction) {
+  execute: requireAdmin(async (interaction) => {
     const guild = interaction.guild;
     const guildId = guild.id;
 
@@ -179,5 +182,5 @@ module.exports = {
         });
       }
     });
-  }
+  })
 };

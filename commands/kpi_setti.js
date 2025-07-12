@@ -7,12 +7,14 @@ const {
   ButtonStyle,
 } = require('discord.js');
 
+const requireAdmin = require('../utils/permissions/requireAdmin');
+
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('kpi_設置')
+    .setName('kpi_設定')
     .setDescription('KPI報告の案内メッセージを送信します'),
 
-  async execute(interaction) {
+  execute: requireAdmin(async (interaction) => {
     const targetButton = new ButtonBuilder()
       .setCustomId('kpi_target_start_button')
       .setLabel('KPI目標')
@@ -27,9 +29,9 @@ module.exports = {
 
     await interaction.reply({
       content: 'KPI報告　目標設定/申請ボタン',
-            components: [row],
+      components: [row],
       ephemeral: true,  // 必要に応じてtrue/falseを調整してください
     });
-  },
+  }),
 };
 

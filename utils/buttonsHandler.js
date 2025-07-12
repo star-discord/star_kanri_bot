@@ -2,6 +2,7 @@
 const path = require('path');
 const { InteractionResponseFlags } = require('discord.js');
 const { loadHandlers } = require('./handlerLoader.js');
+const { logAndReplyError } = require('./errorHelper');
 
 // 各カテゴリのbuttons.jsを読み込み（.js付きでパス指定）
 const starConfigHandler = require(path.join(__dirname, 'star_config', 'buttons.js'));
@@ -44,13 +45,12 @@ async function handleButton(interaction) {
   try {
     await handler.handle(interaction);
   } catch (err) {
-    console.error(`❌ ボタン処理エラー: ${customId}`, err);
-    if (!interaction.replied && !interaction.deferred) {
-      await interaction.reply({
-        content: '❌ ボタン処理中にエラーが発生しました。',
-        flags: InteractionResponseFlags.Ephemeral,
-      });
-    }
+    await logAndReplyError(
+      interaction,
+      `❌ ボタン処理エラー: ${customId}\n${err?.stack || err}`,
+      '❌ ボタン処理中にエラーが発生しました。',
+      { flags: InteractionResponseFlags.Ephemeral }
+    );
   }
 }
 

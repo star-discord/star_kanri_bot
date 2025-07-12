@@ -75,7 +75,28 @@ if (fs.existsSync(eventsPath)) {
 
 // ======== インタラクションハンドラー ========
 const interactionHandler = require('./utils/interactionHandler');
-client.on('interactionCreate', interaction => interactionHandler.execute(interaction));
+const { handleButton } = require('./utils/buttonsHandler');
+const { handleModal } = require('./utils/modalsHandler');
+const { handleSelect } = require('./utils/selectsHandler');
+
+client.on('interactionCreate', async interaction => {
+  try {
+    if (interaction.isChatInputCommand()) {
+      await interactionHandler.execute(interaction);
+    } else if (interaction.isButton()) {
+      await handleButton(interaction);
+    } else if (interaction.isStringSelectMenu()) {
+      await handleSelect(interaction);
+    } else if (interaction.isModalSubmit()) {
+      await handleModal(interaction);
+    }
+  } catch (err) {
+    console.error('❌ interactionCreateハンドリングエラー', err);
+    if (!interaction.replied && !interaction.deferred) {
+      await interaction.reply({ content: '❌ 予期せぬエラーが発生しました。', ephemeral: true });
+    }
+  }
+});
 
 // ======== 起動ログ ========
 client.once('ready', () => {

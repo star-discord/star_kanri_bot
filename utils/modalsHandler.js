@@ -1,5 +1,6 @@
 const path = require('path');
 const { loadHandlers } = require('./handlerLoader');
+const { logAndReplyError } = require('./errorHelper');
 
 const totusunaHandler = loadHandlers(path.join(__dirname, 'totusuna_setti/modals'));
 const fallbackHandlers = [
@@ -39,13 +40,12 @@ async function handleModal(interaction) {
     await handler.handle(interaction);
 
   } catch (err) {
-    console.error(`❌ モーダル処理エラー: ${customId}`, err);
-    if (!interaction.replied && !interaction.deferred) {
-      await interaction.reply({
-        content: '❌ モーダル処理中にエラーが発生しました。',
-        ephemeral: true,
-      });
-    }
+    await logAndReplyError(
+      interaction,
+      `❌ モーダル処理エラー: ${customId}\n${err?.stack || err}`,
+      '❌ モーダル処理中にエラーが発生しました。',
+      { ephemeral: true }
+    );
   }
 }
 

@@ -1,18 +1,18 @@
 const {
   SlashCommandBuilder,
-  InteractionResponseFlags // 追加
+  InteractionResponseFlags
 } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 const { createAdminEmbed } = require('../utils/embedHelper');
+const requireAdmin = require('../utils/permissions/requireAdmin');
 
 module.exports = {
-  isAdminCommand: true,
   data: new SlashCommandBuilder()
     .setName('凸スナcsv')
     .setDescription('今月の凸スナ報告CSVの保存状況を確認します（管理者専用）'),
 
-  async execute(interaction) {
+  execute: requireAdmin(async (interaction) => {
     const guildId = interaction.guild.id;
     const now = new Date();
     const yyyyMM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -29,5 +29,5 @@ module.exports = {
       embeds: [embed],
       flags: InteractionResponseFlags.Ephemeral,
     });
-  }
+  })
 };

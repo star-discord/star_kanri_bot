@@ -1,11 +1,12 @@
 const { SlashCommandBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
+const requireAdmin = require('../utils/permissions/requireAdmin');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('kpi_setting')
     .setDescription('KPI設定用のモーダルを表示します'),
 
-  async execute(interaction) {
+  execute: requireAdmin(async (interaction) => {
     // モーダル作成
     const modal = new ModalBuilder()
       .setCustomId('kpi_setting_modal')
@@ -38,5 +39,5 @@ module.exports = {
 
     // モーダル表示
     await interaction.showModal(modal);
-  },
+  }),
 };

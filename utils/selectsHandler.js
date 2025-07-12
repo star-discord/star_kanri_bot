@@ -2,6 +2,7 @@
 const starSelectHandler = require('../utils/star_config/selects');
 const totsusunaSelectHandler = require('../utils/totsusuna_setti/selects');
 const { InteractionResponseFlags } = require('discord.js');
+const { logAndReplyError } = require('./errorHelper');
 
 /**
  * @param {import('discord.js').StringSelectMenuInteraction} interaction
@@ -27,13 +28,12 @@ async function handleSelect(interaction) {
   try {
     await handler.handle(interaction);
   } catch (err) {
-    console.error(`❌ セレクトエラー (${customId})`, err);
-    if (!interaction.replied && !interaction.deferred) {
-      await interaction.reply({
-        content: '❌ エラーが発生しました。',
-        flags: InteractionResponseFlags.Ephemeral,
-      });
-    }
+    await logAndReplyError(
+      interaction,
+      `❌ セレクトエラー (${customId})\n${err?.stack || err}`,
+      '❌ エラーが発生しました。',
+      { flags: InteractionResponseFlags.Ephemeral }
+    );
   }
 }
 

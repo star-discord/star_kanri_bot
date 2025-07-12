@@ -9,7 +9,7 @@ const {
   InteractionResponseFlags,
 } = require('discord.js');
 
-const isAdmin = require('../utils/permissions/checkAdmin.js');
+const requireAdmin = require('../utils/permissions/requireAdmin.js');
 
 
 module.exports = {
@@ -17,37 +17,29 @@ module.exports = {
     .setName('凸スナ設置')
     .setDescription('凸スナ報告ボタンのメッセージを作成します（本文・対象チャンネル設定）'),
 
-  async execute(interaction) {
+  execute: requireAdmin(async (interaction) => {
     try {
-      const admin = await isAdmin(interaction);
-      if (!admin) {
-        return await interaction.reply({
-          content: '❌ このコマンドを使用する権限がありません。',
-          flags: InteractionResponseFlags.Ephemeral,
-        });
-      }
-
       const channelSelect = new ChannelSelectMenuBuilder()
-        .setCustomId('totsusuna_setti:select_main')
+        .setCustomId('totusuna_select_main')
         .setPlaceholder('📌 ボタンを投稿するメインチャンネルを選択してください')
         .setMinValues(1)
         .setMaxValues(1)
         .addChannelTypes(ChannelType.GuildText);
 
       const replicateSelect = new ChannelSelectMenuBuilder()
-        .setCustomId('totsusuna_setti:select_replicate')
+        .setCustomId('totusuna_select_replicate')
         .setPlaceholder('🌀 複製投稿するチャンネルを選択してください（任意、複数選択可）')
         .setMinValues(0)
         .setMaxValues(5)
         .addChannelTypes(ChannelType.GuildText);
 
       const inputButton = new ButtonBuilder()
-        .setCustomId('totsusuna_setti:本文入力をする')
+        .setCustomId('totsusuna_setti:input_body')
         .setLabel('📄 本文を入力する')
         .setStyle(ButtonStyle.Secondary);
 
       const createButton = new ButtonBuilder()
-        .setCustomId('totsusuna_setti:設置する')
+        .setCustomId('totsusuna_setti:install')
         .setLabel('☑ 設置する')
         .setStyle(ButtonStyle.Primary);
 
@@ -76,5 +68,5 @@ module.exports = {
         });
       }
     }
-  },
+  }),
 };
