@@ -24,7 +24,7 @@ module.exports = {
           weatherInfo = weatherResponse.fallback_content.weather;
         }
       } else {
-        weatherInfo = weatherResponse.data?.choices?.[0]?.message?.content || weatherInfo;
+        weatherInfo = weatherResponse?.choices?.[0]?.message?.content || weatherInfo;
       }
 
       if (newsResponse.error) {
@@ -33,7 +33,7 @@ module.exports = {
           newsInfo = newsResponse.fallback_content.news;
         }
       } else {
-        newsInfo = newsResponse.data?.choices?.[0]?.message?.content || newsInfo;
+        newsInfo = newsResponse?.choices?.[0]?.message?.content || newsInfo;
       }
 
       if (triviaResponse.error) {
@@ -42,7 +42,7 @@ module.exports = {
           triviaInfo = triviaResponse.fallback_content.trivia;
         }
       } else {
-        triviaInfo = triviaResponse.data?.choices?.[0]?.message?.content || triviaInfo;
+        triviaInfo = triviaResponse?.choices?.[0]?.message?.content || triviaInfo;
       }
 
       const embed = createAdminEmbed(

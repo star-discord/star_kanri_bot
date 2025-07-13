@@ -1,5 +1,5 @@
 // utils/openai.js
-const { OpenAIApi, Configuration } = require('openai');
+const OpenAI = require('openai');
 const dotenv = require('dotenv');
 dotenv.config();
 
@@ -8,11 +8,9 @@ if (!process.env.OPENAI_API_KEY) {
   console.warn('OPENAI_API_KEY が設定されていません。OpenAI連携は無効になります。');
 }
 
-const configuration = new Configuration({
+const openai = process.env.OPENAI_API_KEY ? new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
-});
-
-const openai = new OpenAIApi(configuration);
+}) : null;
 
 /**
  * OpenAI APIエラーハンドリング付きラッパー関数
@@ -21,7 +19,7 @@ const openai = new OpenAIApi(configuration);
  * @returns {Promise<Object>} API結果またはフォールバックレスポンス
  */
 async function safeOpenAICall(apiCall, fallbackResponse = null) {
-  if (!process.env.OPENAI_API_KEY) {
+  if (!openai) {
     console.warn('OpenAI APIキーが設定されていません。フォールバック応答を返します。');
     return fallbackResponse || {
       error: true,
@@ -34,13 +32,11 @@ async function safeOpenAICall(apiCall, fallbackResponse = null) {
     const response = await apiCall();
     return response;
   } catch (error) {
-    console.error('OpenAI APIエラー:', error.response?.data || error.message);
+    console.error('OpenAI APIエラー:', error.message);
     
     // エラータイプ別の処理
-    if (error.response?.data?.error) {
-      const apiError = error.response.data.error;
-      
-      switch (apiError.code) {
+    if (error.code) {
+      switch (error.code) {
         case 'insufficient_quota':
           return {
             error: true,
@@ -68,9 +64,9 @@ async function safeOpenAICall(apiCall, fallbackResponse = null) {
         default:
           return {
             error: true,
-            message: `❌ OpenAI APIエラー: ${apiError.message}`,
-            type: apiError.type || 'unknown_error',
-            details: apiError.message
+            message: `❌ OpenAI APIエラー: ${error.message}`,
+            type: error.type || 'unknown_error',
+            details: error.message
           };
       }
     }
@@ -101,7 +97,7 @@ async function getChatCompletion(prompt, options = {}) {
   };
   
   return await safeOpenAICall(
-    () => openai.createChatCompletion(defaultOptions),
+    () => openai.chat.completions.create(defaultOptions),
     {
       error: true,
       message: '🤖 申し訳ございませんが、現在ChatGPT機能をご利用いただけません。',
