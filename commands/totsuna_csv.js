@@ -21,8 +21,8 @@ module.exports = {
 
     const exists = fs.existsSync(filePath);
     const embed = createAdminEmbed(
-      '🧾 今月の凸スナCSV保存状況E,
-      `📁 ファイル名：\`${fileName}\`\n\n保存状態！E{exists ? '✁E存在' : '❁EなぁE}`
+      '🧾 今月の凸スナCSV保存状況',
+      `📁 ファイル名：\`${fileName}\`\n\n保存状態：${exists ? '✅ 存在' : '❌ なし'}`
     );
 
     await interaction.reply({
