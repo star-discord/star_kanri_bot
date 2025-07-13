@@ -17,7 +17,7 @@ module.exports = {
     try {
       // モーダルを作成
       const modal = new ModalBuilder()
-        .setCustomId('totsusuna_content_modal')
+        .setCustomId('totsusuna_modal_body_input:input')
         .setTitle('📘 凸スナ本文の作成');
 
       // 本文入力欄を作成

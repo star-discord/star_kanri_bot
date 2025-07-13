@@ -22,7 +22,7 @@ async function handleModal(interaction) {
   let handler = null;
 
   try {
-    if (customId.startsWith('totusuna_')) {
+    if (customId.startsWith('totsusuna_') || customId.startsWith('totusuna_')) {
       handler = totusunaHandler(customId);
     } else {
       for (const find of fallbackHandlers) {

@@ -10,6 +10,7 @@ const starChatGptSettiHandler = require(path.join(__dirname, 'star_chat_gpt_sett
 const totusunaSettiHandler = loadHandlers(path.join(__dirname, 'totusuna_setti', 'buttons'));
 const totusunaConfigHandler = loadHandlers(path.join(__dirname, 'totusuna_config', 'buttons'));
 const kpiHandler = require(path.join(__dirname, 'kpi_setti', 'buttons.js'));
+const attendanceHandler = require(path.join(__dirname, 'attendance', 'buttons.js'));
 
 const fallbackHandlers = [
   starConfigHandler,
@@ -17,6 +18,7 @@ const fallbackHandlers = [
   totusunaSettiHandler,
   totusunaConfigHandler,
   kpiHandler,
+  attendanceHandler,
 ];
 
 /**

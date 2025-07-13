@@ -26,7 +26,7 @@ async function handleSelect(interaction) {
     return;
   }
   // totusuna_setti関連のプレフィックスなしcustomIdを処理
-  else if (customId === 'totusuna_select_main' || customId === 'totusuna_select_replicate' || customId === 'totusuna_config_select') {
+  else if (customId === 'totusuna_select_main' || customId === 'totusuna_select_replicate' || customId === 'totusuna_config_select' || customId === 'totusuna_install_channel_select') {
     await totsusunaSelectHandler(interaction);
     return;
   }

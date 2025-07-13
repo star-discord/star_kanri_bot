@@ -12,11 +12,11 @@ module.exports = {
     try {
       // 凸スナ本文入力用のモーダルを表示
       const modal = new ModalBuilder()
-        .setCustomId('totusuna_body_input_modal')
+        .setCustomId('totsusuna_modal_body_input:install')
         .setTitle('📝 凸スナ本文設定');
 
       const bodyInput = new TextInputBuilder()
-        .setCustomId('totusuna_body')
+        .setCustomId('body')
         .setLabel('凸スナの本文を入力してください')
         .setStyle(TextInputStyle.Paragraph)
         .setPlaceholder('例: 今日の凸スナを報告してください。\n\n・来店時間:\n・退店時間:\n・売上金額:')
@@ -24,7 +24,7 @@ module.exports = {
         .setMaxLength(1000);
 
       const titleInput = new TextInputBuilder()
-        .setCustomId('totusuna_title')
+        .setCustomId('title')
         .setLabel('タイトル（省略可）')
         .setStyle(TextInputStyle.Short)
         .setPlaceholder('例: 本日の凸スナ報告')
