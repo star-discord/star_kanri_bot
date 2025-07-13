@@ -18,8 +18,8 @@ async function handleStepChatMessage(message) {
   const session = activeReportSessions.get(userId);
   const content = message.content.trim();
 
-  // 半角数字�EスラチE��ュ・ハイフン等�E検証ユーチE��リチE��を使用
-  // session.type: 'target' また�E 'report'
+  // 半角数字、スラッシュ、ピリオド・ハイフン等の検証ユーティリティを使用
+  // session.type: 'target' または 'report'
 
   if (session.type === 'target') {
     await handleTargetStep(message, session, content);
@@ -29,81 +29,83 @@ async function handleStepChatMessage(message) {
 }
 
 /**
- * KPI目標�E力スチE��プ�E琁E */
+ * KPI目標入力ステップの処理
+ */
 async function handleTargetStep(message, session, content) {
   try {
     switch (session.step) {
       case 0:
         if (!validateDate(content)) {
-          await message.reply('❁E期間開始日は「YYYY/MM/DD」形式で正しく入力してください。侁E 2025/07/13');
+          await message.reply('❌ 期間開始日は「YYYY/MM/DD」形式で正しく入力してください。例: 2025/07/13');
           return;
         }
         session.data.startDate = content;
         session.step++;
-        await message.reply('終亁E��を「YYYY/MM/DD」�E形式で入力してください、E);
+        await message.reply('終了日を「YYYY/MM/DD」の形式で入力してください。');
         break;
 
       case 1:
         if (!validateDate(content)) {
-          await message.reply('❁E期間終亁E��は「YYYY/MM/DD」形式で正しく入力してください、E);
+          await message.reply('❌ 期間終了日は「YYYY/MM/DD」形式で正しく入力してください。');
           return;
         }
         session.data.endDate = content;
         session.step++;
-        await message.reply('来客数目標を入力してください�E�数字�Eみ�E�、E);
+        await message.reply('来客数目標を入力してください（数字のみ）。');
         break;
 
       case 2:
         if (!isHalfWidthNumber(content)) {
-          await message.reply('❁E来客数目標�E半角数字で入力してください、E);
+          await message.reply('❌ 来客数目標は半角数字で入力してください。');
           return;
         }
         session.data.visitors = Number(content);
         session.step++;
-        await message.reply('持E��本数目標を入力してください�E�数字�Eみ�E�、E);
+        await message.reply('指名本数目標を入力してください（数字のみ）。');
         break;
 
       case 3:
         if (!isHalfWidthNumber(content)) {
-          await message.reply('❁E持E��本数目標�E半角数字で入力してください、E);
+          await message.reply('❌ 指名本数目標は半角数字で入力してください。');
           return;
         }
         session.data.shimei_count = Number(content);
         session.step++;
-        await message.reply('持E��売上目標を入力してください�E�数字�Eみ�E�、E);
+        await message.reply('指名売上目標を入力してください（数字のみ）。');
         break;
 
       case 4:
         if (!isHalfWidthNumber(content)) {
-          await message.reply('❁E持E��売上目標�E半角数字で入力してください、E);
+          await message.reply('❌ 指名売上目標は半角数字で入力してください。');
           return;
         }
         session.data.shimei_sales = Number(content);
         session.step++;
-        await message.reply('フリー売上目標を入力してください�E�数字�Eみ�E�、E);
+        await message.reply('フリー売上目標を入力してください（数字のみ）。');
         break;
 
       case 5:
         if (!isHalfWidthNumber(content)) {
-          await message.reply('❁Eフリー売上目標�E半角数字で入力してください、E);
+          await message.reply('❌ フリー売上目標は半角数字で入力してください。');
           return;
         }
         session.data.free_sales = Number(content);
         session.step++;
-        await message.reply('純売上目標を入力してください�E�数字�Eみ�E�、E);
+        await message.reply('純売上目標を入力してください（数字のみ）。');
         break;
 
       case 6:
         if (!isHalfWidthNumber(content)) {
-          await message.reply('❁E純売上目標�E半角数字で入力してください、E);
+          await message.reply('❌ 純売上目標は半角数字で入力してください。');
           return;
         }
         session.data.total_sales = Number(content);
 
-        // 保存�E琁E        await saveKpiTarget(message.guildId, session.data);
+        // 保存処理
+        await saveKpiTarget(message.guildId, session.data);
 
-        // 完亁E��チE��ージ�E�次の操作�Eタン表示
-        await message.channel.send('✁EKPI目標が保存されました、E);
+        // 完了メッセージと次の操作ボタン表示
+        await message.channel.send('✅ KPI目標が保存されました。');
 
         await sendKpiStartButtons(message.channel);
 
@@ -111,121 +113,123 @@ async function handleTargetStep(message, session, content) {
         break;
 
       default:
-        await message.reply('❁E不�Eなエラーが発生しました、E);
+        await message.reply('❌ 不明なエラーが発生しました。');
         activeReportSessions.delete(message.author.id);
         break;
     }
   } catch (err) {
-    console.error('KPI目標�E力�E琁E��ラー:', err);
-    await message.reply('❁EKPI目標�E保存中にエラーが発生しました、E);
+    console.error('KPI目標入力処理エラー:', err);
+    await message.reply('❌ KPI目標の保存中にエラーが発生しました。');
     activeReportSessions.delete(message.author.id);
   }
 }
 
 /**
- * KPI実績申請�E力スチE��プ�E琁E */
+ * KPI実績申請入力ステップの処理
+ */
 async function handleReportStep(message, session, content) {
   try {
     switch (session.step) {
       case 0:
         if (!validateDate(content)) {
-          await message.reply('❁E申請日付�E「YYYY/MM/DD」形式で正しく入力してください、E);
+          await message.reply('❌ 申請日付は「YYYY/MM/DD」形式で正しく入力してください。');
           return;
         }
         session.data.date = content;
         session.step++;
-        await message.reply('来客数を�E力してください�E�数字�Eみ�E�、E);
+        await message.reply('来客数を入力してください（数字のみ）。');
         break;
 
       case 1:
         if (!isHalfWidthNumber(content)) {
-          await message.reply('❁E来客数は半角数字で入力してください、E);
+          await message.reply('❌ 来客数は半角数字で入力してください。');
           return;
         }
         session.data.visitors = Number(content);
         session.step++;
-        await message.reply('持E��本数を�E力してください�E�数字�Eみ�E�、E);
+        await message.reply('指名本数を入力してください（数字のみ）。');
         break;
 
       case 2:
         if (!isHalfWidthNumber(content)) {
-          await message.reply('❁E持E��本数は半角数字で入力してください、E);
+          await message.reply('❌ 指名本数は半角数字で入力してください。');
           return;
         }
         session.data.shimei_count = Number(content);
         session.step++;
-        await message.reply('持E��売上を入力してください�E�数字�Eみ�E�、E);
+        await message.reply('指名売上を入力してください（数字のみ）。');
         break;
 
       case 3:
         if (!isHalfWidthNumber(content)) {
-          await message.reply('❁E持E��売上�E半角数字で入力してください、E);
+          await message.reply('❌ 指名売上は半角数字で入力してください。');
           return;
         }
         session.data.shimei_sales = Number(content);
         session.step++;
-        await message.reply('フリー売上を入力してください�E�数字�Eみ�E�、E);
+        await message.reply('フリー売上を入力してください（数字のみ）。');
         break;
 
       case 4:
         if (!isHalfWidthNumber(content)) {
-          await message.reply('❁Eフリー売上�E半角数字で入力してください、E);
+          await message.reply('❌ フリー売上は半角数字で入力してください。');
           return;
         }
         session.data.free_sales = Number(content);
         session.step++;
-        await message.reply('純売上を入力してください�E�数字�Eみ�E�、E);
+        await message.reply('純売上を入力してください（数字のみ）。');
         break;
 
       case 5:
         if (!isHalfWidthNumber(content)) {
-          await message.reply('❁E純売上�E半角数字で入力してください、E);
+          await message.reply('❌ 純売上は半角数字で入力してください。');
           return;
         }
         session.data.total_sales = Number(content);
 
-        // 実績保存！E��グ生�E
+        // 実績保存とログ生成
         const log = await saveKpiReport(message.guildId, session.data);
 
-        // ログ出劁E        await message.channel.send('✁EKPI申請が完亁E��ました。進捗状況�E以下�E通りです、E);
+        // ログ出力
+        await message.channel.send('✅ KPI申請が完了しました。進捗状況は以下の通りです。');
         await message.channel.send('```' + log + '```');
 
-        // KPI報告開始�Eタンを�E表示
+        // KPI報告開始ボタンを再表示
         await sendKpiStartButtons(message.channel);
 
         activeReportSessions.delete(message.author.id);
         break;
 
       default:
-        await message.reply('❁E不�Eなエラーが発生しました、E);
+        await message.reply('❌ 不明なエラーが発生しました。');
         activeReportSessions.delete(message.author.id);
         break;
     }
   } catch (err) {
-    console.error('KPI実績申請�E力�E琁E��ラー:', err);
-    await message.reply('❁EKPI申請�E保存中にエラーが発生しました、E);
+    console.error('KPI実績申請入力処理エラー:', err);
+    await message.reply('❌ KPI申請の保存中にエラーが発生しました。');
     activeReportSessions.delete(message.author.id);
   }
 }
 
 /**
- * KPI報告開始用の目標／申請�Eタンを送信するユーチE��リチE��
+ * KPI報告開始用の目標／申請ボタンを送信するユーティリティ
  * @param {import('discord.js').TextChannel | import('discord.js').DMChannel | import('discord.js').NewsChannel} channel
  */
 async function sendKpiStartButtons(channel) {
   const row = new ActionRowBuilder().addComponents(
     new ButtonBuilder()
       .setCustomId('kpi_target_start_button')
-      .setLabel('KPI目樁E)
+      .setLabel('KPI目標')
       .setStyle(ButtonStyle.Primary),
     new ButtonBuilder()
       .setCustomId('kpi_report_start_button')
-      .setLabel('KPI申諁E)
+      .setLabel('KPI申請')
       .setStyle(ButtonStyle.Success)
   );
 
   await channel.send({
-    content: 'KPI報告　目標設宁E申請�Eタン',
+    content: 'KPI報告　目標設定・申請ボタン',
     components: [row],
   });
 }
