@@ -20,4 +20,19 @@ function set(guildId, userId, data) {
   store.set(`${guildId}:${userId}`, data);
 }
 
-module.exports = { get, set };
+/**
+ * @param {string} guildId
+ * @param {string} userId
+ */
+function deleteData(guildId, userId) {
+  return store.delete(`${guildId}:${userId}`);
+}
+
+/**
+ * Get all stored data for debugging
+ */
+function getAll() {
+  return Array.from(store.entries());
+}
+
+module.exports = { get, set, delete: deleteData, getAll };
