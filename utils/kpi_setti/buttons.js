@@ -1,4 +1,4 @@
-// ファイル参�E: utils/kpi_setti/buttons.js
+// ファイル参照: utils/kpi_setti/buttons.js
 
 const path = require('path');
 const { loadHandlers } = require('../handlerLoader');

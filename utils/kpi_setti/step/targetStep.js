@@ -1,4 +1,4 @@
-// ファイル参�E: utils/kpi_setti/step/targetStep.js
+// ファイル参照: utils/kpi_setti/step/targetStep.js
 
 // こちらは現在のステップチャット処理に統合済みです
 // もし独立管理する場合は、こちらに処理を移行できます。

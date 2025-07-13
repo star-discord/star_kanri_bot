@@ -19,7 +19,7 @@ module.exports = {
 
       const maxTokensInput = new TextInputBuilder()
         .setCustomId('chatgpt_max_tokens')
-        .setLabel('最大ト�Eクン数')
+        .setLabel('最大トークン数')
         .setStyle(TextInputStyle.Short)
         .setPlaceholder('例: 150')
         .setRequired(false);

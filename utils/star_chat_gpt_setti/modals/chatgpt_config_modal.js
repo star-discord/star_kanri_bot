@@ -24,7 +24,7 @@ module.exports = {
           inline: true
         },
         {
-          name: '最大ト�Eクン数',
+          name: '最大トークン数',
           value: maxTokensField || '未設定',
           inline: true
         },

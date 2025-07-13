@@ -1,9 +1,9 @@
-// ファイル参�E: utils/kpi_setti/kpiDataHandler.js
+// ファイル参照: utils/kpi_setti/kpiDataHandler.js
 
 const fs = require('fs/promises');
 const path = require('path');
 
-// KPI保存�Eのベ�EスチE��レクトリ
+// KPI保存用のベースディレクトリ
 const baseDir = path.resolve(__dirname, '../../data');
 
 /**
@@ -44,7 +44,7 @@ async function saveKpiTarget(guildId, data) {
 }
 
 /**
- * KPI実績申請を保存し、E��捗ログを文字�Eで返す
+ * KPI実績申請を保存し、進捗ログを文字列で返す
  * @param {string} guildId
  * @param {object} data
  *  data: {
@@ -55,11 +55,11 @@ async function saveKpiTarget(guildId, data) {
  *    free_sales: number,
  *    total_sales: number,
  *  }
- * @returns {Promise<string>} 進捗ログチE��スチE */
+ * @returns {Promise<string>} 進捗ログテキスト */
 async function saveKpiReport(guildId, data) {
   const { date } = data;
 
-  // チE��レクトリと対象ファイルの検索
+  // ディレクトリと対象ファイルの検索
   const dir = path.join(baseDir, guildId);
   const files = await fs.readdir(dir);
 
