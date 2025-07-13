@@ -27,7 +27,7 @@ async function saveKpiTarget(guildId, data) {
 
   await fs.mkdir(dir, { recursive: true });
 
-  // 目標�Eトップレベルに保孁E  const targetData = {
+  // 目標をトップレベルに保存  const targetData = {
     target: {
       startDate,
       endDate,
@@ -91,7 +91,7 @@ async function saveKpiReport(guildId, data) {
   const fileDataRaw = await fs.readFile(filePath, 'utf8');
   const fileData = JSON.parse(fileDataRaw);
 
-  // 実績の保孁E  if (!fileData.actual) fileData.actual = {};
+  // 実績の保存  if (!fileData.actual) fileData.actual = {};
   fileData.actual[date] = {
     visitors: data.visitors,
     shimei_count: data.shimei_count,
