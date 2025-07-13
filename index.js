@@ -99,11 +99,38 @@ const { handleModal } = require('./utils/modalsHandler');
 const { handleSelect } = require('./utils/selectsHandler');
 
 client.on('interactionCreate', async interaction => {
+  const startTime = Date.now();
+  const interactionId = interaction.id;
+  
+  console.log('🔔 [interactionCreate] 受信:', {
+    type: interaction.type,
+    commandName: interaction.commandName || interaction.customId || 'unknown',
+    user: interaction.user.tag,
+    guild: interaction.guild?.name || 'DM',
+    timestamp: new Date().toISOString()
+  });
+
   try {
     if (interaction.isChatInputCommand()) {
       const command = client.commands.get(interaction.commandName);
-      if (!command) return;
+      if (!command) {
+        console.warn(`⚠️ [interactionCreate] 未知のコマンド: ${interaction.commandName}`);
+        return;
+      }
+
+      // 長時間処理が予想されるコマンドは予防的にデファー
+      const shouldDefer = ['凸スナ設置', 'star管理bot設定', 'kpi_設定'].includes(interaction.commandName);
+      if (shouldDefer && !interaction.deferred && !interaction.replied) {
+        try {
+          await interaction.deferReply({ ephemeral: true });
+          console.log(`✅ [interactionCreate] 予防的デファー: ${interaction.commandName}`);
+        } catch (deferError) {
+          console.error('❌ [interactionCreate] デファー失敗:', deferError.message);
+        }
+      }
+
       await command.execute(interaction);
+      
     } else if (interaction.isButton()) {
       await handleButton(interaction);
     } else if (interaction.isStringSelectMenu()) {
@@ -111,10 +138,50 @@ client.on('interactionCreate', async interaction => {
     } else if (interaction.isModalSubmit()) {
       await handleModal(interaction);
     }
+
+    const duration = Date.now() - startTime;
+    console.log(`✅ [interactionCreate] 処理完了: ${interaction.commandName || interaction.customId} (${duration}ms)`);
+
   } catch (err) {
-    console.error('❌ interactionCreateハンドリングエラー', err);
-    if (!interaction.replied && !interaction.deferred) {
-      await interaction.reply({ content: '❌ 予期せぬエラーが発生しました。', ephemeral: true });
+    const duration = Date.now() - startTime;
+    console.error('❌ [interactionCreate] ハンドリングエラー:', {
+      error: err.message,
+      stack: err.stack?.split('\n').slice(0, 3).join('\n'), // スタック短縮
+      commandName: interaction.commandName || interaction.customId,
+      interactionId,
+      duration,
+      deferred: interaction.deferred,
+      replied: interaction.replied,
+      user: interaction.user?.tag
+    });
+
+    // エラーレスポンスの安全な送信
+    try {
+      const errorMessage = '⚠️ 処理中にエラーが発生しました。しばらく時間をおいて再試行してください。';
+      
+      if (interaction.deferred) {
+        // デファー済みの場合はeditReply
+        await interaction.editReply({ 
+          content: errorMessage,
+          ephemeral: true 
+        });
+      } else if (!interaction.replied) {
+        // 未応答の場合はreply
+        await interaction.reply({ 
+          content: errorMessage, 
+          ephemeral: true 
+        });
+      }
+      // 既に応答済みの場合は何もしない（重複応答防止）
+      
+    } catch (replyError) {
+      console.error('❌ [interactionCreate] エラーレスポンス送信失敗:', {
+        error: replyError.message,
+        interactionId,
+        deferred: interaction.deferred,
+        replied: interaction.replied
+      });
+      // エラーレスポンス送信失敗でもプロセスを継続
     }
   }
 });
@@ -127,10 +194,47 @@ client.once('ready', () => {
 // ======== Discordにログイン ========
 client.login(process.env.DISCORD_TOKEN);
 
-// ======== エラーフック（開発中推奨） ========
-process.on('unhandledRejection', (reason) => {
-  console.error('❌ [UnhandledRejection]', reason);
+// ======== エラーフック（プロダクション対応強化） ========
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ [UnhandledRejection]', {
+    reason: reason?.message || reason,
+    stack: reason?.stack?.split('\n').slice(0, 5).join('\n'),
+    promise: promise.toString(),
+    timestamp: new Date().toISOString()
+  });
+  // プロセス継続（PM2が管理）
 });
-process.on('uncaughtException', (err) => {
-  console.error('❌ [UncaughtException]', err);
+
+process.on('uncaughtException', (err, origin) => {
+  console.error('❌ [UncaughtException]', {
+    error: err.message,
+    stack: err.stack?.split('\n').slice(0, 5).join('\n'),
+    origin,
+    timestamp: new Date().toISOString()
+  });
+  
+  // グレースフルシャットダウン
+  console.log('🔄 [UncaughtException] プロセス再起動...');
+  process.exit(1); // PM2が自動的に再起動
+});
+
+process.on('warning', (warning) => {
+  console.warn('⚠️ [ProcessWarning]', {
+    name: warning.name,
+    message: warning.message,
+    stack: warning.stack?.split('\n').slice(0, 3).join('\n')
+  });
+});
+
+// SIGTERM/SIGINT ハンドリング（グレースフルシャットダウン）
+process.on('SIGTERM', () => {
+  console.log('📡 [SIGTERM] 受信 - グレースフルシャットダウン開始');
+  client.destroy();
+  process.exit(0);
+});
+
+process.on('SIGINT', () => {
+  console.log('📡 [SIGINT] 受信 - グレースフルシャットダウン開始');
+  client.destroy();
+  process.exit(0);
 });
