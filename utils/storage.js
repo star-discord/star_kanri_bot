@@ -3,19 +3,19 @@ const { Storage } = require('@google-cloud/storage');
 const path = require('path');
 const fs = require('fs');
 
-// .env 等で設定する環墁E��数
+// .env 等で設定する環境変数
 const BUCKET_NAME = process.env.GCS_BUCKET_NAME;
 const PROJECT_ID = process.env.GCP_PROJECT_ID;
 const KEY_FILE = process.env.GCP_CREDENTIALS_JSON || 'gcp-service-account.json';
 
-// GCS 利用可否の判宁E
+// GCS 利用可否の判定
 const isGCSConfigured = BUCKET_NAME && PROJECT_ID && fs.existsSync(KEY_FILE);
 
 if (!isGCSConfigured) {
-  console.warn('⚠�E�EGCS設定が不足してぁE��ため、storage.js の機�Eは無効化されます、E);
+  console.warn('警告: GCS設定が不足しているため、storage.js の機能は無効化されます。');
 }
 
-// ストレージ初期化（有効な場合�Eみ�E�E
+// ストレージ初期化（有効な場合のみ）
 const storage = isGCSConfigured ? new Storage({
   projectId: PROJECT_ID,
   keyFilename: KEY_FILE
@@ -24,14 +24,14 @@ const storage = isGCSConfigured ? new Storage({
 const bucket = isGCSConfigured ? storage.bucket(BUCKET_NAME) : null;
 
 /**
- * GCS にファイルをアチE�EローチE
+ * GCS にファイルをアップロード
  * @param {string} localFilePath - ローカルファイルのパス
- * @param {string} destinationPath - GCS保存パス�E�侁E 1234567890123/2025-07-凸スナ報呁Exlsx�E�E
+ * @param {string} destinationPath - GCS保存パス（例: 1234567890123/2025-07-凸スナ報告.xlsx）
  */
 async function uploadFile(localFilePath, destinationPath) {
   if (!isGCSConfigured) return;
   if (!fs.existsSync(localFilePath)) {
-    console.warn(`⚠�E�EアチE�Eロード�Eファイルが存在しません: ${localFilePath}`);
+    console.warn(`警告: アップロード用ファイルが存在しません: ${localFilePath}`);
     return;
   }
 
@@ -41,27 +41,27 @@ async function uploadFile(localFilePath, destinationPath) {
       gzip: true,
       metadata: { cacheControl: 'no-cache' }
     });
-    console.log(`☁E��EアチE�Eロード完亁E ${destinationPath}`);
+    console.log(`クラウド: アップロード完了 ${destinationPath}`);
   } catch (err) {
-    console.error(`❁EアチE�Eロード失敁E ${destinationPath}`, err);
+    console.error(`エラー: アップロード失敗 ${destinationPath}`, err);
   }
 }
 
 /**
- * GCS からファイルをダウンローチE
- * @param {string} destinationPath - GCS上�Eファイルパス
- * @param {string} localFilePath - 保存�Eローカルパス
- * @returns {Promise<boolean>} - 成功なめEtrue
+ * GCS からファイルをダウンロード
+ * @param {string} destinationPath - GCS上のファイルパス
+ * @param {string} localFilePath - 保存先ローカルパス
+ * @returns {Promise<boolean>} - 成功ならtrue
  */
 async function downloadFile(destinationPath, localFilePath) {
   if (!isGCSConfigured) return false;
 
   try {
     await bucket.file(destinationPath).download({ destination: localFilePath });
-    console.log(`⬁E��Eダウンロード完亁E ${destinationPath}`);
+    console.log(`ダウンロード: ダウンロード完了 ${destinationPath}`);
     return true;
   } catch (err) {
-    console.warn(`⚠�E�Eダウンロード失敗（存在しなぁE��能性あり�E�E ${destinationPath}`);
+    console.warn(`警告: ダウンロード失敗（存在しない可能性あり） ${destinationPath}`);
     return false;
   }
 }

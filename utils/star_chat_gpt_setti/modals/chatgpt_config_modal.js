@@ -11,26 +11,26 @@ module.exports = {
       const maxTokensField = interaction.fields.getTextInputValue('chatgpt_max_tokens');
       const temperatureField = interaction.fields.getTextInputValue('chatgpt_temperature');
 
-      // ここで設定を保存する�E琁E��追加
-      // 侁E チE�Eタベ�EスめE��ァイルに保孁E
+      // ここで設定を保存する処理を追加
+      // 例: データベースやファイルに保存
 
       const embed = createAdminEmbed(
-        '✁EChatGPT設定更新完亁E,
-        'ChatGPTの設定が正常に更新されました、E
+        'ChatGPT設定更新完了',
+        'ChatGPTの設定が正常に更新されました。'
       ).addFields(
         {
           name: 'APIキー',
-          value: apiKeyField ? '設定済み (****)' : '未設宁E,
+          value: apiKeyField ? '設定済み (****)' : '未設定',
           inline: true
         },
         {
-          name: '最大ト�Eクン数',
-          value: maxTokensField || '未設宁E,
+          name: '最大ト�Eクン数',
+          value: maxTokensField || '未設定',
           inline: true
         },
         {
-          name: '温度設宁E,
-          value: temperatureField || '未設宁E,
+          name: '温度設定',
+          value: temperatureField || '未設定',
           inline: true
         }
       );
@@ -41,11 +41,11 @@ module.exports = {
       });
 
     } catch (error) {
-      console.error('ChatGPT設定モーダル処琁E��ラー:', error);
+      console.error('ChatGPT設定モーダル処理エラー:', error);
       
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({
-          content: '❁E設定�E保存中にエラーが発生しました、E,
+          content: '設定の保存中にエラーが発生しました。',
           flags: MessageFlags.Ephemeral,
         });
       }

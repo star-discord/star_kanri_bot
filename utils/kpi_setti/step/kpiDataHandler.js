@@ -1,13 +1,13 @@
-// ファイル参�E: utils/kpi_setti/kpiDataHandler.js
+// ファイル参�E: utils/kpi_setti/kpiDataHandler.js
 
 const fs = require('fs/promises');
 const path = require('path');
 
-// KPI保存�Eのベ�EスチE��レクトリ
+// KPI保存�Eのベ�EスチE��レクトリ
 const baseDir = path.resolve(__dirname, '../../data');
 
 /**
- * KPI目標を保存すめE * @param {string} guildId
+ * KPI目標を保存する * @param {string} guildId
  * @param {object} data
  *  data: {
  *    startDate: 'YYYY/MM/DD',
@@ -27,7 +27,7 @@ async function saveKpiTarget(guildId, data) {
 
   await fs.mkdir(dir, { recursive: true });
 
-  // 目標�Eトップレベルに保孁E  const targetData = {
+  // 目標�Eトップレベルに保孁E  const targetData = {
     target: {
       startDate,
       endDate,
@@ -37,13 +37,14 @@ async function saveKpiTarget(guildId, data) {
       free_sales: data.free_sales,
       total_sales: data.total_sales,
     },
-    actual: {}, // 実績は空のオブジェクトとして初期匁E  };
+    actual: {}, // 実績は空のオブジェクトとして初期化
+  };
 
   await fs.writeFile(filePath, JSON.stringify(targetData, null, 2), 'utf8');
 }
 
 /**
- * KPI実績申請を保存し、E��捗ログを文字�Eで返す
+ * KPI実績申請を保存し、E��捗ログを文字�Eで返す
  * @param {string} guildId
  * @param {object} data
  *  data: {
@@ -54,16 +55,16 @@ async function saveKpiTarget(guildId, data) {
  *    free_sales: number,
  *    total_sales: number,
  *  }
- * @returns {Promise<string>} 進捗ログチE��スチE */
+ * @returns {Promise<string>} 進捗ログチE��スチE */
 async function saveKpiReport(guildId, data) {
   const { date } = data;
 
-  // チE��レクトリと対象ファイルの検索
+  // チE��レクトリと対象ファイルの検索
   const dir = path.join(baseDir, guildId);
   const files = await fs.readdir(dir);
 
   // ファイル名形弁E KPI_YYYYMMDD-YYYYMMDD.json の中から
-  // 申請日(date)が篁E��冁E��入るファイルを探ぁE  let targetFile = null;
+  // 申請日(date)が篁E��冁E��入るファイルを探ぁE  let targetFile = null;
   let targetRange = null;
 
   for (const file of files) {
@@ -83,7 +84,7 @@ async function saveKpiReport(guildId, data) {
   }
 
   if (!targetFile) {
-    throw new Error('申請日付が篁E��冁E��あるKPI目標ファイルが見つかりません、E);
+    throw new Error('申請日付が含まれているKPI目標ファイルが見つかりません。');
   }
 
   const filePath = path.join(dir, targetFile);
@@ -101,14 +102,14 @@ async function saveKpiReport(guildId, data) {
 
   await fs.writeFile(filePath, JSON.stringify(fileData, null, 2), 'utf8');
 
-  // 進捗ログの生�E
+  // 進捗ログの生�E
   const progressLog = generateProgressLog(fileData.target, fileData.actual);
 
   return progressLog;
 }
 
 /**
- * YYYYMMDD形式�E日付文字�EをDateオブジェクトに変換する
+ * YYYYMMDD形式�E日付文字�EをDateオブジェクトに変換する
  * @param {string} yyyymmdd
  * @returns {Date}
  */
@@ -129,7 +130,7 @@ function generateProgressLog(target, actual) {
   const endDate = parseDateString(target.endDate.replace(/\//g, ''));
   const totalDays = Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
 
-  // 実績の日付頁E��並べ替ぁE  const actualDates = Object.keys(actual).sort();
+  // 実績の日付頁E��並べ替ぁE  const actualDates = Object.keys(actual).sort();
 
   const logs = actualDates.map((dateStr) => {
     const actualDate = parseDateString(dateStr.replace(/\//g, ''));
@@ -142,14 +143,14 @@ function generateProgressLog(target, actual) {
 
     function formatRatio(actualVal, targetVal, unit = '') {
       const ratio = targetVal === 0 ? 0 : (actualVal / targetVal) * 100;
-      const mark = ratio >= 100 ? '✁E : '❁E;
+      const mark = ratio >= 100 ? '✅' : '❌';
       return `${actualVal}${unit} / ${targetVal}${unit} (${ratio.toFixed(1)}%) ${mark}`;
     }
 
     return `${dateStr}
-期間進捗！E{dayCount}日閁E/ ${totalDays}日間！E{progressPercent.toFixed(1)}%�E�E  ・来客数�E�E{formatRatio(act.visitors, tgt.visitors, '人')}
-  ・持E��本数�E�E{formatRatio(act.shimei_count, tgt.shimei_count, '本')}
-  ・持E��売上！E{formatRatio(act.shimei_sales, tgt.shimei_sales, '冁E)}
+期間進捗！E{dayCount}日閁E/ ${totalDays}日間！E{progressPercent.toFixed(1)}%�E�E  ・来客数�E�E{formatRatio(act.visitors, tgt.visitors, '人')}
+  ・持E��本数�E�E{formatRatio(act.shimei_count, tgt.shimei_count, '本')}
+  ・持E��売上！E{formatRatio(act.shimei_sales, tgt.shimei_sales, '冁E)}
   ・フリー売上！E{formatRatio(act.free_sales, tgt.free_sales, '冁E)}
   ・総売上！E{formatRatio(act.total_sales, tgt.total_sales, '冁E)}
 `;

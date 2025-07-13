@@ -12,36 +12,36 @@ module.exports = {
       const filePath = await ensureGuildJSON(guild.id);
       const data = await readJSON(filePath);
 
-      // 選択された凸スナ設定を取征E
+      // 選択された凸スナ設定を取得
       const totusuna = data.totusuna_list?.find(item => item.messageId === selectedValue);
       
       if (!totusuna) {
         await interaction.reply({
-          content: '❁E選択された凸スナデータが見つかりません、E,
+          content: '選択された凸スナデータが見つかりません。',
           ephemeral: true
         });
         return;
       }
 
-      // 設定編雁E��面を表示
+      // 設定編集画面を表示
       await interaction.reply({
-        content: `🔧 **${totusuna.body || '本斁E��設宁E}** の設定を編雁E��きます、En\n` +
+        content: `**${totusuna.body || '本文未設定'}** の設定を編集できます。\n` +
                  `**メインチャンネル:** <#${totusuna.mainChannelId}>\n` +
-                 `**褁E��チャンネル:** ${totusuna.replicateChannelIds?.length ? totusuna.replicateChannelIds.map(id => `<#${id}>`).join(', ') : '未設宁E}`,
+                 `**複製チャンネル:** ${totusuna.replicateChannelIds?.length ? totusuna.replicateChannelIds.map(id => `<#${id}>`).join(', ') : '未設定'}`,
         ephemeral: true
       });
 
     } catch (error) {
-      console.error('totusuna_config_select処琁E��ラー:', error);
+      console.error('totusuna_config_select処理エラー:', error);
       
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({
-          content: '❁E設定表示中にエラーが発生しました、E,
+          content: '設定表示中にエラーが発生しました。',
           ephemeral: true
         });
       } else {
         await interaction.followUp({
-          content: '❁E設定表示中にエラーが発生しました、E,
+          content: '設定表示中にエラーが発生しました。',
           ephemeral: true
         });
       }

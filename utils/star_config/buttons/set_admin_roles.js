@@ -7,11 +7,13 @@ module.exports = {
 
   /**
    * ボタン: star_config:set_admin_roles
-   * RoleSelect で選択されたロールめEJSON に保存！Etar_config.adminRoleIds�E�E   */
+   * RoleSelect で選択されたロールをJSON に保存（star_config.adminRoleIds）
+   */
   async handle(interaction) {
-    // RoleSelectMenu Interactionであることを想宁E    if (!interaction.isRoleSelectMenu()) {
+    // RoleSelectMenu Interactionであることを想定
+    if (!interaction.isRoleSelectMenu()) {
       return interaction.reply({
-        content: '❁Eこ�E操作�Eロール選択から�Eみ可能です、E,
+        content: 'エラー: この操作はロール選択からのみ可能です。',
         flags: MessageFlags.Ephemeral
       });
     }
@@ -21,7 +23,7 @@ module.exports = {
 
     if (!selectedRoles || selectedRoles.length === 0) {
       return interaction.reply({
-        content: '⚠�E�Eロールが選択されてぁE��せん、E,
+        content: '警告: ロールが選択されていません。',
         flags: MessageFlags.Ephemeral
       });
     }
@@ -38,14 +40,14 @@ module.exports = {
       const mentionText = selectedRoles.map(id => `<@&${id}>`).join(', ');
 
       await interaction.reply({
-        content: `✁E管琁E��E��ールを以下�E通り設定しました:\n${mentionText}`,
+        content: `完了: 管理者ロールを以下の通り設定しました:\n${mentionText}`,
         flags: MessageFlags.Ephemeral
       });
 
     } catch (err) {
-      console.error(`❁E管琁E��E��ール保存中にエラー (${guildId}):`, err);
+      console.error(`エラー: 管理者ロール保存中にエラー (${guildId}):`, err);
       await interaction.reply({
-        content: '❁E管琁E��E��ールの保存に失敗しました、E,
+        content: 'エラー: 管理者ロールの保存に失敗しました。',
         flags: MessageFlags.Ephemeral
       });
     }

@@ -3,7 +3,7 @@ const { MessageFlags } = require('discord.js');
 const tempState = require('../state/totsusunaTemp');
 
 /**
- * 褁E��投稿チャンネル選択ハンドラ
+ * 褁E��投稿チャンネル選択ハンドラ
  */
 module.exports = {
   customId: 'totsusuna_setti:select_replicate', // 実際のselectメニューのcustomIdに合わせる
@@ -17,7 +17,7 @@ module.exports = {
     const guildId = interaction.guildId;
     const userId = interaction.user.id;
 
-    // 選択されたチャンネルID一覧を取征E    const selectedChannelIds = interaction.values;
+    // 選択されたチャンネルID一覧を取得    const selectedChannelIds = interaction.values;
 
     // 一時データを取得し、更新
     const state = tempState.get(guildId, userId) || {};
@@ -25,7 +25,7 @@ module.exports = {
     tempState.set(guildId, userId, state);
 
     await interaction.reply({
-      content: `🌀 褁E��投稿チャンネルを設定しました: ${selectedChannelIds.join(', ')}`,
+      content: `🌀 褁E��投稿チャンネルを設定しました: ${selectedChannelIds.join(', ')}`,
       flags: MessageFlags.Ephemeral,
     });
   }

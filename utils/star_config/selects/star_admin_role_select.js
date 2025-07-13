@@ -11,7 +11,7 @@ async function actualHandler(interaction) {
     const filePath = await ensureGuildJSON(guild.id);
     const data = await readJSON(filePath);
 
-    // star_configの初期匁E    if (!data.star_config) {
+    // star_configの初期化    if (!data.star_config) {
       data.star_config = {};
     }
 
@@ -29,25 +29,25 @@ async function actualHandler(interaction) {
           const role = guild.roles.cache.get(id);
           return role ? `<@&${id}>` : `~~(削除済ロール: ${id})~~`;
         }).join('\n')
-      : '*未設宁E';
+      : '*未設定*';
 
     const embeds = [
       new EmbedBuilder()
-        .setTitle('🌟 STAR管琁Eot設宁E)
-        .setDescription(`📌 現在の管琁E��E��ール:\n${mentions}`)
+        .setTitle('STAR管理Bot設定')
+        .setDescription(`現在の管理者ロール:\n${mentions}`)
         .setColor(0x0099ff)
     ];
 
     if (added.length > 0) {
       embeds.push(new EmbedBuilder()
-        .setTitle('✁Eロール追加')
+        .setTitle('ロール追加')
         .setDescription(added.map(id => `<@&${id}>`).join('\n'))
         .setColor(0x00cc99));
     }
 
     if (removed.length > 0) {
       embeds.push(new EmbedBuilder()
-        .setTitle('⚠�E�Eロール解除')
+        .setTitle('ロール解除')
         .setDescription(removed.map(id => `<@&${id}>`).join('\n'))
         .setColor(0xff6600));
     }
@@ -55,7 +55,7 @@ async function actualHandler(interaction) {
     const row = new ActionRowBuilder().addComponents(
       new RoleSelectMenuBuilder()
         .setCustomId('admin_role_select')
-        .setPlaceholder('管琁E��E��して許可するロールを選抁E)
+        .setPlaceholder('管理者として許可するロールを選択')
         .setMinValues(0)
         .setMaxValues(25)
     );
@@ -67,16 +67,16 @@ async function actualHandler(interaction) {
     });
 
   } catch (error) {
-    console.error('admin_role_select処琁E��ラー:', error);
+    console.error('admin_role_select処理エラー:', error);
     
     if (!interaction.replied && !interaction.deferred) {
       await interaction.reply({
-        content: '❁Eロール設定�E琁E��にエラーが発生しました、E,
+        content: 'ロール設定処理中にエラーが発生しました。',
         ephemeral: true
       });
     } else {
       await interaction.followUp({
-        content: '❁Eロール設定�E琁E��にエラーが発生しました、E,
+        content: 'ロール設定処理中にエラーが発生しました。',
         ephemeral: true
       });
     }

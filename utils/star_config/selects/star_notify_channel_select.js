@@ -11,7 +11,7 @@ module.exports = {
       const filePath = await ensureGuildJSON(guild.id);
       const data = await readJSON(filePath);
 
-      // star_configの初期匁E      if (!data.star_config) {
+      // star_configの初期化      if (!data.star_config) {
         data.star_config = {};
       }
       
@@ -19,21 +19,21 @@ module.exports = {
       await writeJSON(filePath, data);
 
       await interaction.reply({
-        content: `✁E通知チャンネルめE<#${selected}> に設定しました。`,
+        content: `通知チャンネルを <#${selected}> に設定しました。`,
         ephemeral: true
       });
 
     } catch (error) {
-      console.error('notify_channel_select処琁E��ラー:', error);
+      console.error('notify_channel_select処理エラー:', error);
       
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({
-          content: '❁E通知チャンネル設定中にエラーが発生しました、E,
+          content: '通知チャンネル設定中にエラーが発生しました。',
           ephemeral: true
         });
       } else {
         await interaction.followUp({
-          content: '❁E通知チャンネル設定中にエラーが発生しました、E,
+          content: '通知チャンネル設定中にエラーが発生しました。',
           ephemeral: true
         });
       }

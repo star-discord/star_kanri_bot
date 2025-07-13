@@ -3,9 +3,9 @@ const { OpenAIApi, Configuration } = require('openai');
 const dotenv = require('dotenv');
 dotenv.config();
 
-// 環墁E��数の存在確認！EPIキー忁E��！E
+// 環境変数の存在確認（APIキー必須）
 if (!process.env.OPENAI_API_KEY) {
-  console.warn('⚠�E�EOPENAI_API_KEY が設定されてぁE��せん。OpenAI連携は無効になります、E);
+  console.warn('OPENAI_API_KEY が設定されていません。OpenAI連携は無効になります。');
 }
 
 const configuration = new Configuration({

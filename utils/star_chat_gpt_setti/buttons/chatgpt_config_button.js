@@ -21,14 +21,14 @@ module.exports = {
         .setCustomId('chatgpt_max_tokens')
         .setLabel('最大ト�Eクン数')
         .setStyle(TextInputStyle.Short)
-        .setPlaceholder('侁E 150')
+        .setPlaceholder('例: 150')
         .setRequired(false);
 
       const temperatureInput = new TextInputBuilder()
         .setCustomId('chatgpt_temperature')
         .setLabel('温度設定 (0.0-2.0)')
         .setStyle(TextInputStyle.Short)
-        .setPlaceholder('侁E 0.7')
+        .setPlaceholder('例: 0.7')
         .setRequired(false);
 
       const row1 = new ActionRowBuilder().addComponents(apiKeyInput);
