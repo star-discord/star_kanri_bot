@@ -117,7 +117,7 @@ else
     # dataフォルダをバックアップ
     if [ -d data ]; then
       cp -r data "$BACKUP_DIR/"
-      echo "� dataフォルダを一時保護中..."
+      echo "📦 dataフォルダを一時保護中..."
     fi
     
     # Google Cloud認証ファイルをバックアップ
@@ -140,7 +140,7 @@ else
     
     if [ -d "$BACKUP_DIR/data" ]; then
       mv "$BACKUP_DIR/data" data
-      echo "� dataフォルダを復元完了"
+      echo "✅ dataフォルダを復元完了"
     fi
     
     # Google Cloud認証ファイルを復元

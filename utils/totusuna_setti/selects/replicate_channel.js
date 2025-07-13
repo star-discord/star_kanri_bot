@@ -3,7 +3,7 @@ const { MessageFlags } = require('discord.js');
 const tempState = require('../state/totsusunaTemp');
 
 /**
- * 褁E��投稿チャンネル選択ハンドラ
+ * 複製投稿チャンネル選択ハンドラ
  */
 module.exports = {
   customId: 'totsusuna_setti:select_replicate', // 実際のselectメニューのcustomIdに合わせる
@@ -25,7 +25,7 @@ module.exports = {
     tempState.set(guildId, userId, state);
 
     await interaction.reply({
-      content: `🌀 褁E��投稿チャンネルを設定しました: ${selectedChannelIds.join(', ')}`,
+      content: `🌀 複製投稿チャンネルを設定しました: ${selectedChannelIds.join(', ')}`,
       flags: MessageFlags.Ephemeral,
     });
   }

@@ -1,7 +1,7 @@
 // utils/totusuna_setti/modals/editSetting.js
 const fs = require('fs');
 const path = require('path');
-const { MessageFlags } = require('discord.js'); // ↁE追加
+const { MessageFlags } = require('discord.js'); // 追加
 
 module.exports = {
   customId: 'edit_setting_modal',
