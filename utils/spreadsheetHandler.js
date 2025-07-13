@@ -16,7 +16,7 @@ function getGCSPath(guildId, suffix = '') {
 }
 
 /**
- * ローカル保存パスを取得（存在しなぁE��合�EチE��レクトリ作�E�E�E * @param {string} guildId
+ * ローカル保存パスを取得（存在しない場合はディレクトリ作成） * @param {string} guildId
  * @param {string} suffix
  * @returns {string}
  */
@@ -41,7 +41,7 @@ async function loadOrCreateWorkbook(guildId, suffix = '', sheetName = '報告') 
   const localPath = getLocalSpreadsheetPath(guildId, suffix);
   const gcsPath = getGCSPath(guildId, suffix);
 
-  // GCSから最新ファイルをダウンロード（存在しなぁE��合�EスキチE�E�E�E  await downloadFile(gcsPath, localPath);
+  // GCSから最新ファイルをダウンロード（存在しない場合はスキップ）  await downloadFile(gcsPath, localPath);
 
   const workbook = new ExcelJS.Workbook();
   if (fs.existsSync(localPath)) {

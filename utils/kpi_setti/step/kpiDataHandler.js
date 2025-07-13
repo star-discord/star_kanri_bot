@@ -64,7 +64,7 @@ async function saveKpiReport(guildId, data) {
   const files = await fs.readdir(dir);
 
   // ファイル名形弁E KPI_YYYYMMDD-YYYYMMDD.json の中から
-  // 申請日(date)が篁E��冁E��入るファイルを探ぁE  let targetFile = null;
+  // 申請日(date)が含まれるファイルを探す  let targetFile = null;
   let targetRange = null;
 
   for (const file of files) {
@@ -130,7 +130,7 @@ function generateProgressLog(target, actual) {
   const endDate = parseDateString(target.endDate.replace(/\//g, ''));
   const totalDays = Math.floor((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
 
-  // 実績の日付頁E��並べ替ぁE  const actualDates = Object.keys(actual).sort();
+  // 実績の日付順に並べ替え  const actualDates = Object.keys(actual).sort();
 
   const logs = actualDates.map((dateStr) => {
     const actualDate = parseDateString(dateStr.replace(/\//g, ''));
@@ -149,8 +149,8 @@ function generateProgressLog(target, actual) {
 
     return `${dateStr}
 期間進捗！E{dayCount}日閁E/ ${totalDays}日間！E{progressPercent.toFixed(1)}%�E�E  ・来客数�E�E{formatRatio(act.visitors, tgt.visitors, '人')}
-  ・持E��本数�E�E{formatRatio(act.shimei_count, tgt.shimei_count, '本')}
-  ・持E��売上！E{formatRatio(act.shimei_sales, tgt.shimei_sales, '冁E)}
+  ・指名本数: ${formatRatio(act.shimei_count, tgt.shimei_count, '本')}
+  ・指名売上: ${formatRatio(act.shimei_sales, tgt.shimei_sales, '円')}
   ・フリー売上！E{formatRatio(act.free_sales, tgt.free_sales, '冁E)}
   ・総売上！E{formatRatio(act.total_sales, tgt.total_sales, '冁E)}
 `;

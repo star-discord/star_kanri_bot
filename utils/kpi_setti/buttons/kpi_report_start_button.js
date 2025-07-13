@@ -1,4 +1,4 @@
-// ファイル参�E: utils/kpi_setti/buttons/kpi_report_start_button.js
+// ファイル参照: utils/kpi_setti/buttons/kpi_report_start_button.js
 
 const { activeReportSessions } = require('../stepChatHandler');
 

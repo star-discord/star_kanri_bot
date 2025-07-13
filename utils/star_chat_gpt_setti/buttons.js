@@ -32,7 +32,7 @@ for (const file of files) {
 }
 
 /**
- * customId に対応するChatGPTボタンハンドラを探す（完�E一致 ↁE前方一致�E�E
+ * customId に対応するChatGPTボタンハンドラを探す（完全一致 or 前方一致）
  * @param {string} customId
  * @returns {object|null}
  */

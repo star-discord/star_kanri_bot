@@ -1,5 +1,5 @@
 /**
- * 持E��されたメンバ�Eが、adminRoleIds のぁE��れかを持つか確誁E * @param {import('discord.js').GuildMember} member
+ * 指定されたメンバーが、adminRoleIds のいずれかを持つか確認 * @param {import('discord.js').GuildMember} member
  * @param {string[]} adminRoleIds
  * @returns {boolean}
  */

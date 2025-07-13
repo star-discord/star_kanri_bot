@@ -1,4 +1,4 @@
-// utils/�E�適刁E��チE��レクトリ�E�Emodals/edit_body_modal.js
+// utils/totusuna_config ディレクトリのmodals/edit_body_modal.js
 const fs = require('fs');
 const path = require('path');
 

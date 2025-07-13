@@ -1,4 +1,4 @@
-// ファイル参�E: utils/kpi_setti/stepChatHandler.js
+// ファイル参照: utils/kpi_setti/stepChatHandler.js
 
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { validateDate, isHalfWidthNumber } = require('./utils');

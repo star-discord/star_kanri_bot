@@ -1,12 +1,12 @@
 // utils/sendToMultipleChannels.js
 
 /**
- * 褁E��のチE��ストチャンネルに同一メチE��ージを送信しまぁE * @param {Client} client - DiscordクライアンチE * @param {string[]} channelIds - チャンネルIDの配�E
- * @param {string|MessagePayload|MessageCreateOptions} message - 送信するメチE��ージ冁E��
+ * 複数のテキストチャンネルに同一メッセージを送信します * @param {Client} client - DiscordクライアンチE * @param {string[]} channelIds - チャンネルIDの配�E
+ * @param {string|MessagePayload|MessageCreateOptions} message - 送信するメチE��ージ冁E��
  */
 module.exports.sendToMultipleChannels = async (client, channelIds, message) => {
   if (!Array.isArray(channelIds)) {
-    console.warn('[sendToMultipleChannels] channelIds が�E列ではありません');
+    console.warn('[sendToMultipleChannels] channelIds が�E列ではありません');
     return;
   }
 
@@ -19,13 +19,13 @@ module.exports.sendToMultipleChannels = async (client, channelIds, message) => {
       }
 
       if (!channel.isTextBased()) {
-        console.warn(`[sendToMultipleChannels] チE��ストチャンネルではありません: ${channelId}`);
+        console.warn(`[sendToMultipleChannels] チE��ストチャンネルではありません: ${channelId}`);
         continue;
       }
 
       await channel.send(message);
     } catch (err) {
-      console.error(`[sendToMultipleChannels] 送信失敗（チャンネルID: ${channelId}�E�`, err);
+      console.error(`[sendToMultipleChannels] 送信失敗（チャンネルID: ${channelId}�E�`, err);
     }
   }
 };
