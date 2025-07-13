@@ -513,3 +513,160 @@ collector.on('collect', async (componentInteraction) => {
   await componentInteraction.reply({ content: '...' }); // これは失敗する
 });
 ```
+
+## データ移行システム
+
+### 2025年7月13日: 自動データ移行システム実装
+
+#### 🎯 実装目的
+Bot起動時に既存のギルドデータを自動的に新しい形式に移行し、データ構造の互換性を保つ
+
+#### 🔧 実装内容
+
+##### 1. 自動移行システム（DataMigration クラス）
+**ファイル**: `utils/dataMigration.js`
+
+**主な機能**:
+- Bot起動時に全ギルドのデータ移行を自動実行
+- 旧式データ構造から新式への変換
+- 無効なロール/チャンネルIDの自動クリーンアップ
+- 移行前の自動バックアップ作成
+
+##### 2. 移行対象データ構造
+
+**旧式→新式の移行パターン**:
+
+```javascript
+// ❌ 旧式: トップレベルに管理者設定
+{
+  "adminRoleIds": ["role1", "role2"],
+  "notifyChannelId": "channel1",
+  "totsuna": [/* 配列形式 */]
+}
+
+// ✅ 新式: star_config構造化
+{
+  "star_config": {
+    "adminRoleIds": ["role1", "role2"],
+    "notifyChannelId": "channel1"
+  },
+  "totsuna": {
+    "instances": [/* オブジェクト形式 */]
+  },
+  "_migrationVersion": "1.0.0",
+  "_migratedAt": "2025-07-13T..."
+}
+```
+
+##### 3. 移行処理の詳細
+
+**star_config構造移行**:
+- 旧式`adminRoleIds`→`star_config.adminRoleIds`
+- 旧式`notifyChannelId`→`star_config.notifyChannelId`
+- 配列/文字列の正規化
+
+**totsunaデータ構造移行**:
+- 配列形式→`{ instances: [...] }`構造
+- オブジェクト形式の正規化
+
+**無効IDクリーンアップ**:
+- 削除されたロール/チャンネルIDの自動削除
+- 無効な凸スナインスタンスの除去
+
+##### 4. Bot起動時自動実行
+**ファイル**: `events/ready.js`
+
+```javascript
+async execute(client) {
+  console.log(`✅ Bot 起動完了、ログイン: ${client.user.tag}`);
+  
+  // データ移行処理を自動実行
+  const migration = new DataMigration();
+  await migration.migrateAllGuilds(client);
+  
+  console.log('🚀 Bot初期化処理完了 - 利用可能です！');
+}
+```
+
+##### 5. 手動移行コマンド
+**ファイル**: `commands/star_migration.js`  
+**コマンド**: `/star_migration`
+
+- 管理者専用コマンド
+- 現在のギルドのデータのみ手動移行
+- 移行状況の詳細レポート
+
+#### 📋 移行処理フロー
+
+1. **起動時チェック**
+   - 各ギルドの`data/<guildId>/<guildId>.json`を確認
+   - `_migrationVersion`で移行済みかチェック
+
+2. **バックアップ作成**
+   - `data/<guildId>/backup/`にタイムスタンプ付きバックアップ
+
+3. **データ構造変換**
+   - 旧式→新式の段階的変換
+   - データ型の正規化
+
+4. **無効ID除去**
+   - Discord APIでロール/チャンネル存在確認
+   - 無効なIDを自動削除
+
+5. **移行完了記録**
+   - `_migrationVersion`と`_migratedAt`を記録
+   - 変更内容のログ出力
+
+#### 🔍 移行ログ例
+
+```
+🔄 データ移行処理を開始します...
+📊 移行対象ギルド数: 3
+
+🔄 ギルドデータ移行中: 123456789
+📦 バックアップ作成: 123456789_backup_2025-07-13T...json
+  🔧 旧式管理者設定を移行中...
+  🔧 凸スナデータ構造を移行中...
+  🧹 無効な管理者ロールID 1件を削除しました
+  ✅ ギルドデータ移行完了: 123456789
+
+✅ データ移行処理完了
+📈 結果: 移行済み 2件 / スキップ 1件 / エラー 0件
+```
+
+#### 🧪 テスト機能
+**ファイル**: `utils/dataMigration.test.js`
+
+```bash
+# 移行ロジックのテスト実行
+node utils/dataMigration.test.js
+```
+
+- 旧式データのサンプル移行テスト
+- 混在データの移行動作確認
+- 移行前後の構造比較
+
+#### 🔄 今後の拡張性
+
+**バージョン管理**:
+- `_migrationVersion`による段階的移行対応
+- 将来的なデータ構造変更への対応
+
+**カスタム移行ルール**:
+- 機能別移行処理の追加
+- 条件付き移行ロジック
+
+**移行レポート**:
+- 詳細な移行統計
+- エラー分析とリカバリ
+
+#### 📊 実装結果
+
+- ✅ **自動移行**: Bot起動時に全ギルド自動処理
+- ✅ **データ保護**: 移行前自動バックアップ
+- ✅ **構造統一**: 旧式→新式の完全変換
+- ✅ **ID整合性**: 無効ロール/チャンネルの自動削除
+- ✅ **手動制御**: 管理者による移行コマンド
+- ✅ **テスト対応**: 移行ロジックの検証機能
+
+**実装コミット**: `ae66bf4` - Implement automatic data migration system
