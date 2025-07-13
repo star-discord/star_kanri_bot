@@ -11,7 +11,8 @@ module.exports = {
       const filePath = await ensureGuildJSON(guild.id);
       const data = await readJSON(filePath);
 
-      // star_configの初期化      if (!data.star_config) {
+      // star_configの初期化
+      if (!data.star_config) {
         data.star_config = {};
       }
       
