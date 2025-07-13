@@ -102,27 +102,23 @@ module.exports = {
     });
 
     const collector = interaction.channel?.createMessageComponentCollector({
-      componentType: ComponentType.RoleSelect || ComponentType.ChannelSelect,
+      componentType: [ComponentType.RoleSelect, ComponentType.ChannelSelect],
+      filter: i => i.user.id === interaction.user.id,
       time: 60_000
     });
 
     if (!collector) return;
 
     collector.on('collect', async selectInteraction => {
-      if (selectInteraction.user.id !== interaction.user.id) {
-        return await selectInteraction.reply({
-          content: '❌ この操作はコマンドを実行したユーザーのみが行えます。',
-          flags: 1 << 6
-        });
-      }
-
-      const customId = selectInteraction.customId;
+      try {
+        const customId = selectInteraction.customId;
 
       if (customId === 'admin_role_select') {
         const selectedRoleIds = selectInteraction.values;
         const validRoleIds = selectedRoleIds.filter(id => guild.roles.cache.has(id));
-        const added = validRoleIds.filter(id => !currentAdminRoleIds.includes(id));
-        const removed = currentAdminRoleIds.filter(id => !validRoleIds.includes(id));
+        const previousRoleIds = data.star_config.adminRoleIds || [];
+        const added = validRoleIds.filter(id => !previousRoleIds.includes(id));
+        const removed = previousRoleIds.filter(id => !validRoleIds.includes(id));
 
         data.star_config.adminRoleIds = validRoleIds;
 
@@ -190,6 +186,16 @@ module.exports = {
           components: [row1, row2],
           flags: 1 << 6
         });
+      }
+      } catch (error) {
+        console.error('❌ セレクト処理エラー:', error);
+        if (!selectInteraction.replied && !selectInteraction.deferred) {
+          await selectInteraction.reply({
+            content: '❌ 処理中にエラーが発生しました。もう一度お試しください。',
+            flags: 1 << 6,
+            ephemeral: true
+          });
+        }
       }
     });
 
