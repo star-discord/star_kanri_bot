@@ -6,6 +6,7 @@ const {
   ButtonBuilder,
   ButtonStyle,
 } = require('discord.js');
+const { MessageFlags } = require('discord.js');
 
 const requireAdmin = require('../utils/permissions/requireAdmin');
 
@@ -30,7 +31,7 @@ module.exports = {
     await interaction.reply({
       content: 'KPI報告　目標設定・申請ボタン',
       components: [row],
-      ephemeral: true,  // 必要に応じてtrue/falseを調整してください
+      flags: MessageFlags.Ephemeral, // Discord.js v14以降はこちらを推奨
     });
   }),
 };
