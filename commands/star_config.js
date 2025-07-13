@@ -142,8 +142,8 @@ module.exports = {
         if (removed.length > 0) {
           embeds.push(
             new EmbedBuilder()
-              .setTitle('⚠�E�E管琁E��E��ールが解除されました')
-              .setDescription(`解除されたロール�E�\n${removed.map(id => `<@&${id}>`).join('\n')}`)
+              .setTitle('⚠️ 管理者ロールが解除されました')
+              .setDescription(`解除されたロール:\n${removed.map(id => `<@&${id}>`).join('\n')}`)
               .setColor(0xff6600)
           );
         }

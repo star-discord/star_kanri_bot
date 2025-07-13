@@ -1,6 +1,6 @@
 const { MessageFlags } = require('discord.js');
 
-// カチE��リごとの findHandler を読み込み
+// カテゴリごとの findHandler を読み込み
 const findTotsusunaHandler = require('../../totusuna_setti/selects');
 const findStarHandler = require('../../star_config/selects');
 

@@ -7,7 +7,7 @@ module.exports = {
   once: false,
 
   /**
-   * 新しいギルド参加時に、data/<guildId>/ チE��レクトリと初期設定JSONを作�Eする
+   * 新しいギルド参加時に、data/<guildId>/ ディレクトリと初期設定JSONを作成する
    * @param {import('discord.js').Guild} guild
    */
   async execute(guild) {
@@ -15,9 +15,9 @@ module.exports = {
 
     try {
       const jsonPath = ensureGuildJSON(guildId);
-      console.log(`✁Eギルド�E期化完亁E ${guildId} ↁE${jsonPath}`);
+      console.log(`✅ ギルド初期化完了: ${guildId} → ${jsonPath}`);
     } catch (error) {
-      console.error(`❁Eギルド�E期化エラー�E�EuildID: ${guildId}�E�`, error);
+      console.error(`❌ ギルド初期化エラー (GuildID: ${guildId})`, error);
     }
   }
 };

@@ -6,10 +6,11 @@ module.exports = {
   once: true,
 
   /**
-   * Bot 起動完亁E��のイベンチE   * @param {import('discord.js').Client} client
+   * Bot 起動完了時のイベント
+   * @param {import('discord.js').Client} client
    */
   execute(client) {
-    console.log(`✁EBot 起動完亁E��ログイン: ${client.user.tag}`);
-    console.log(`📡 現在接続中のサーバ�E数: ${client.guilds.cache.size}`);
+    console.log(`✅ Bot 起動完了、ログイン: ${client.user.tag}`);
+    console.log(`📡 現在接続中のサーバー数: ${client.guilds.cache.size}`);
   },
 };
