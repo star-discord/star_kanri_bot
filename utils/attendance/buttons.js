@@ -1,33 +1,45 @@
-const { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } = require('discord.js');
-const { saveWorkStart, saveWorkEnd, getTodayAttendance, calculateWorkHours, generateTimeSlotStats } = require('../attendanceUtil');
-const { requireAdmin } = require('../permissions/requireAdmin');
+// attendance用ボタンローダー
+const fs = require('fs');
+const path = require('path');
 
-// ボタンハンドラー関数を定義
-function getAttendanceButtonHandler(customId) {
-  const handlers = {
-    'attendance_work_start_20': {
-      handle: async function(interaction) {
-        const now = new Date();
-        const workStartTime = new Date();
-        workStartTime.setHours(20, 0, 0, 0);
+const handlers = {};
+const startsWithHandlers = [];
 
-        const attendanceData = {
-          userId: interaction.user.id,
-          username: interaction.user.username,
-          workStartTime: workStartTime.toISOString(),
-          workStartDisplay: '20時',
-          actualStartTime: now.toISOString(),
-          workEndTime: null,
-          status: 'working'
-        };
+const buttonsDir = path.join(__dirname, 'buttons');
+if (fs.existsSync(buttonsDir)) {
+  const files = fs.readdirSync(buttonsDir).filter(file => file.endsWith('.js'));
+  for (const file of files) {
+    const modulePath = path.join(buttonsDir, file);
+    try {
+      delete require.cache[require.resolve(modulePath)];
+      const handler = require(modulePath);
+      if (typeof handler.handle !== 'function') {
+        console.warn(`⚠️ ボタンモジュールに handle 関数がありません: ${file}`);
+        continue;
+      }
+      if (typeof handler.customId === 'string') {
+        handlers[handler.customId] = handler;
+      } else if (typeof handler.customIdStart === 'string') {
+        startsWithHandlers.push({ key: handler.customIdStart, handler });
+      } else {
+        console.warn(`⚠️ ボタンモジュールに customId/customIdStart が未定義: ${file}`);
+      }
+    } catch (err) {
+      console.warn(`❌ ボタンファイルの読み込みに失敗 (${file}):`, err);
+    }
+  }
+}
 
-        const result = await saveWorkStart(interaction.guildId, attendanceData);
+function findHandler(customId) {
+  if (handlers[customId]) return handlers[customId];
+  for (const { key, handler } of startsWithHandlers) {
+    if (customId.startsWith(key)) return handler;
+  }
+  console.warn(`⚠️ 対応するボタンハンドラが見つかりません: ${customId}`);
+  return null;
+}
 
-        if (!result.success) {
-          if (result.reason === 'already_working') {
-            return interaction.reply({
-              content: '❌ **既に出勤中です**\n退勤処理を行ってから再度出勤してください。',
-              ephemeral: true
+module.exports = findHandler;
             });
           }
           return interaction.reply({
