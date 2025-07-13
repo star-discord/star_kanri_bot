@@ -14,7 +14,7 @@ module.exports = {
 
     const newShopInput = new TextInputBuilder()
       .setCustomId('newShop')
-      .setLabel('店�E名（カンマ区刁E��で褁E��追加可�E�E)
+      .setLabel('店舗名（カンマ区切りで複数追加可能）')
       .setStyle(TextInputStyle.Short)
       .setRequired(false);
 
@@ -30,7 +30,7 @@ module.exports = {
       .setStyle(TextInputStyle.Short)
       .setRequired(true);
 
-    // アクションロウにチE��スト�E力をセチE��
+    // アクションロウにテキスト入力をセット
     const row1 = new ActionRowBuilder().addComponents(newShopInput);
     const row2 = new ActionRowBuilder().addComponents(targetDateInput);
     const row3 = new ActionRowBuilder().addComponents(targetCountInput);
