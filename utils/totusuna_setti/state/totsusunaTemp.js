@@ -3,7 +3,8 @@
 const store = new Map();
 
 /**
- * guildId と userId の組み合わせでデータを取得 * @param {string} guildId 
+ * guildId と userId の組み合わせでデータを取得
+ * @param {string} guildId 
  * @param {string} userId 
  * @returns {any|null}
  */
@@ -12,7 +13,8 @@ function get(guildId, userId) {
 }
 
 /**
- * guildId と userId の組み合わせでデータを保存 * @param {string} guildId 
+ * guildId と userId の組み合わせでデータを保存
+ * @param {string} guildId 
  * @param {string} userId 
  * @param {any} data 
  */

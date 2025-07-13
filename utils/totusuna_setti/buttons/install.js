@@ -76,7 +76,8 @@ module.exports = {
         messageId: sentMessage.id,
       });
 
-      // JSON保存      await writeJSON(jsonPath, json);
+      // JSON保存
+      await writeJSON(jsonPath, json);
 
       // 一時データ削除
       tempState.delete(guildId, userId);

@@ -32,7 +32,8 @@ function getLocalSpreadsheetPath(guildId, suffix = '') {
 }
 
 /**
- * ワークブックを読み込み or 新規作成（GCS同期込み） * @param {string} guildId
+ * ワークブックを読み込み or 新規作成（GCS同期込み）
+ * @param {string} guildId
  * @param {string} suffix
  * @param {string} sheetName
  * @returns {Promise<{ workbook: ExcelJS.Workbook, sheet: ExcelJS.Worksheet, localPath: string, gcsPath: string }>}

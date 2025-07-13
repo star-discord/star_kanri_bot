@@ -1,7 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 
-const guildId = 'YOUR_GUILD_ID_HERE'; // ここを実際のギルドIDに置き換えconst filePath = path.join(__dirname, 'data', guildId, `${guildId}.json`);
+const guildId = 'YOUR_GUILD_ID_HERE'; // ここを実際のギルドIDに置き換え
+const filePath = path.join(__dirname, 'data', guildId, `${guildId}.json`);
 
 if (!fs.existsSync(filePath)) {
   console.log('⚠️ ファイルが存在しません:', filePath);

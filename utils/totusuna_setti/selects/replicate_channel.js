@@ -17,7 +17,8 @@ module.exports = {
     const guildId = interaction.guildId;
     const userId = interaction.user.id;
 
-    // 選択されたチャンネルID一覧を取得    const selectedChannelIds = interaction.values;
+    // 選択されたチャンネルID一覧を取得
+    const selectedChannelIds = interaction.values;
 
     // 一時データを取得し、更新
     const state = tempState.get(guildId, userId) || {};
