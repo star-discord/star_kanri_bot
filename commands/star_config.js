@@ -11,17 +11,25 @@ const {
 const { PermissionFlagsBits } = require('discord.js');
 const { readJSON, writeJSON, ensureGuildJSON } = require('../utils/fileHelper');
 
-const requireAdmin = require('../utils/permissions/requireAdmin');
-
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('star管理bot設定')
     .setDescription('管理者のロールと通知チャンネルを設定します')
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 
-  execute: requireAdmin(async (interaction) => {
+  async execute(interaction) {
     const guild = interaction.guild;
     const guildId = guild.id;
+    const member = interaction.member;
+
+    // star_config コマンドは Discord 標準の管理者権限が必要
+    if (!member.permissions.has('Administrator')) {
+      return await interaction.reply({
+        content: '❌ この設定コマンドには Discord の管理者権限が必要です。\n' +
+                'サーバー設定で管理者権限を付与してください。',
+        ephemeral: true
+      });
+    }
 
     let filePath;
     let data;
@@ -193,5 +201,5 @@ module.exports = {
         });
       }
     });
-  })
+  }
 };

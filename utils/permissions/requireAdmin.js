@@ -26,13 +26,18 @@ function requireAdmin(executeFunction) {
       }
 
       // 管理者権限チェック
+      const hasDiscordAdminPermission = member.permissions.has('Administrator');
       const hasAdminRole = adminRoleIds.some(roleId => 
         member.roles.cache.has(roleId)
       );
 
-      if (!hasAdminRole) {
+      // Discord標準の管理者権限または設定済みの管理者ロールをチェック
+      if (!hasDiscordAdminPermission && !hasAdminRole) {
         return await interaction.reply({
-          content: '❌ あなたには権限がありません。',
+          content: '❌ あなたには権限がありません。\n' +
+                  (adminRoleIds.length === 0 
+                    ? 'Discord の管理者権限を持つユーザーが `/star管理bot設定` で管理者ロールを設定してください。'
+                    : '設定された管理者ロールまたは Discord の管理者権限が必要です。'),
           flags: MessageFlags.Ephemeral
         });
       }
