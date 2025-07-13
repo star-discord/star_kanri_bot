@@ -26,7 +26,7 @@ module.exports = {
 
       const temperatureInput = new TextInputBuilder()
         .setCustomId('chatgpt_temperature')
-        .setLabel('温度設宁E(0.0-2.0)')
+        .setLabel('温度設定 (0.0-2.0)')
         .setStyle(TextInputStyle.Short)
         .setPlaceholder('侁E 0.7')
         .setRequired(false);

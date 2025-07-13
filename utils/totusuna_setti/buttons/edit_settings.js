@@ -12,7 +12,7 @@ module.exports = {
   customIdStart: 'totsusuna_setti:edit_settings:',
 
   /**
-   * 凸スナ設置の編雁E��ーダル表示
+   * 凸スナ設置の編集モーダル表示
    * @param {import('discord.js').ButtonInteraction} interaction
    */
   async handle(interaction) {

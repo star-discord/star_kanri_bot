@@ -6,7 +6,8 @@ module.exports = {
   customIdStart: 'totsusuna_setti:delete_body:', // 英語化
 
   /**
-   * 凸スナ本斁E��除ボタンの処琁E   * @param {import('discord.js').ButtonInteraction} interaction
+   * 凸スナ本文削除ボタンの処理
+   * @param {import('discord.js').ButtonInteraction} interaction
    */
   async handle(interaction) {
     const guildId = interaction.guildId;

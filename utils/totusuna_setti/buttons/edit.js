@@ -12,7 +12,8 @@ module.exports = {
   customIdStart: 'totsusuna_setti:edit:',
 
   /**
-   * 凸スナ本斁E��雁E��モーダルを表示する処琁E   * @param {import('discord.js').ButtonInteraction} interaction
+   * 凸スナ本文編集モーダルを表示する処理
+   * @param {import('discord.js').ButtonInteraction} interaction
    */
   async handle(interaction) {
     const guildId = interaction.guildId;

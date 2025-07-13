@@ -21,7 +21,8 @@ module.exports = {
     // UUIDを抽出
     const uuid = interaction.customId.replace(this.customIdStart, '');
 
-    // 入力値取征E    const group = interaction.fields.getTextInputValue('group');
+    // 入力値取得
+    const group = interaction.fields.getTextInputValue('group');
     const name = interaction.fields.getTextInputValue('name');
     const table1 = interaction.fields.getTextInputValue('table1') || '';
     const table2 = interaction.fields.getTextInputValue('table2') || '';

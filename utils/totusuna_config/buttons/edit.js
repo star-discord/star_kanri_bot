@@ -42,7 +42,7 @@ module.exports = {
 
     const bodyInput = new TextInputBuilder()
       .setCustomId('body')
-      .setLabel('本斁E�E容')
+      .setLabel('本文内容')
       .setStyle(TextInputStyle.Paragraph)
       .setValue(instance.body || '')
       .setRequired(true);

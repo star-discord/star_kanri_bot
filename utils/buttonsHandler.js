@@ -4,7 +4,8 @@ const { MessageFlags } = require('discord.js');
 const { loadHandlers } = require('./handlerLoader.js');
 const { logAndReplyError } = require('./errorHelper');
 
-// 吁E��チE��リのbuttons.jsを読み込み�E�Ejs付きでパス持E��！Econst starConfigHandler = require(path.join(__dirname, 'star_config', 'buttons.js'));
+// 各ディレクトリのbuttons.jsを読み込み、js付きでパス指定！
+const starConfigHandler = require(path.join(__dirname, 'star_config', 'buttons.js'));
 const starChatGptSettiHandler = require(path.join(__dirname, 'star_chat_gpt_setti', 'buttons.js'));
 const totusunaSettiHandler = loadHandlers(path.join(__dirname, 'totusuna_setti', 'buttons'));
 const totusunaConfigHandler = loadHandlers(path.join(__dirname, 'totusuna_config', 'buttons'));

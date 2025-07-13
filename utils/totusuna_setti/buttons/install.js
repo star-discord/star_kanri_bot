@@ -66,7 +66,7 @@ module.exports = {
       if (!json.totsuna) json.totsuna = {};
       if (!Array.isArray(json.totsuna.instances)) json.totsuna.instances = [];
 
-      // 新しい設置惁E��を追加
+      // 新しい設置情報を追加
       json.totsuna.instances.push({
         id: uuid,
         userId,
