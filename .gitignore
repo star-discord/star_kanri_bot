@@ -7,3 +7,4 @@ node_modules/
 # Google Cloud 認証ファイルを無視
 star-discord-bot-*.json
 data/star-discord-bot-*.json
+data/
