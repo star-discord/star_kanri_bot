@@ -22,8 +22,8 @@ module.exports = {
 - モーダルで本文を即入力→報告UIを設置する簡易版です
 
 📁 保存形式とファイル構造
-- `data/<guildId>/<guildId>.json` に全設定を保存
-- `data/<guildId>/<年月>-凸スナ報告.csv`に報告ログをCSVで保存
+- \`data/<guildId>/<guildId>.json\` に全設定を保存
+- \`data/<guildId>/<年月>-凸スナ報告.csv\`に報告ログをCSVで保存
 - 設定・報告の永続保存対応済み
 
 管理者権限はロールによって制御されます
