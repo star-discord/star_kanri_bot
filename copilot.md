@@ -422,144 +422,94 @@ collector.on('collect', async selectInteraction => {
 **検証済み環境**: Discord.js v14.x, Node.js v20.x  
 **修正コミット**: `3fb8454` - Fix star_config interaction failures
 
-### Discord.js v14 共通エラーパターンと対処法
+### 追加修正: 2025年7月13日 - チャンネル選択インタラクション失敗
 
-#### 🎯 よくあるエラーパターン
+#### 🚨 続発したエラー
+**症状**: 管理者ロール選択は修正されたが、通知チャンネル選択時にまだ「インタラクションに失敗しました」エラー
 
-##### 1. インタラクション関連エラー
+#### 🔍 根本原因分析
+**MessageComponentCollector内でのレスポンス方法の誤り**
 ```javascript
-// ❌ よくある間違い
-componentType: Type1 || Type2  // 論理演算子
-componentType: Type1          // 単一タイプのみ
-
-// ✅ 正しい書き方
-componentType: [Type1, Type2] // 配列形式
-```
-
-##### 2. 権限エラー
-```javascript
-// ❌ 権限チェック不足
-if (member.roles.cache.has(roleId)) // null可能性
-
-// ✅ 安全な権限チェック
-if (member?.permissions?.has('Administrator') || 
-    member?.roles?.cache?.some(role => adminRoleIds.includes(role.id)))
-```
-
-##### 3. ファイル操作エラー
-```javascript
-// ❌ エラーハンドリングなし
-const data = await readJSON(filePath);
-
-// ✅ 適切なエラーハンドリング
-try {
-  const data = await readJSON(filePath);
-} catch (error) {
-  console.error('ファイル読み込みエラー:', error);
-  return await interaction.reply({ content: 'エラーが発生しました', ephemeral: true });
-}
-```
-
-#### 🛠️ エラー対処テンプレート
-
-##### コマンド実装テンプレート
-```javascript
-module.exports = {
-  data: new SlashCommandBuilder()
-    .setName('コマンド名')
-    .setDescription('説明'),
-
-  async execute(interaction) {
-    try {
-      // 権限チェック
-      if (!hasPermission(interaction.member)) {
-        return await interaction.reply({
-          content: '❌ 権限がありません',
-          ephemeral: true
-        });
-      }
-
-      // メイン処理
-      await interaction.reply({ content: '処理完了' });
-
-    } catch (error) {
-      console.error('コマンドエラー:', error);
-      
-      if (!interaction.replied && !interaction.deferred) {
-        await interaction.reply({
-          content: '❌ エラーが発生しました',
-          ephemeral: true
-        });
-      }
-    }
-  }
-};
-```
-
-##### コレクター実装テンプレート
-```javascript
-const collector = interaction.channel?.createMessageComponentCollector({
-  componentType: [ComponentType.Button, ComponentType.StringSelect], // 配列形式
-  filter: i => i.user.id === interaction.user.id, // ユーザーフィルター必須
-  time: 60_000 // タイムアウト設定
+// ❌ 間違った方法（コレクター内でreply使用）
+return await selectInteraction.reply({
+  content: 'エラーメッセージ',
+  flags: 1 << 6
 });
 
+// ✅ 正しい方法（コレクター内ではupdate使用）
+return await selectInteraction.update({
+  content: 'エラーメッセージ',
+  embeds: [getSettingsEmbed(...)],
+  components: [row1, row2],
+  flags: 1 << 6
+});
+```
+
+#### 🛠️ 追加修正内容
+
+##### 1. エラー時のレスポンス修正
+- `selectInteraction.reply()` → `selectInteraction.update()`
+- エラー時にもUI要素（embeds, components）を維持
+
+##### 2. 成功時の確認メッセージ追加
+```javascript
+await selectInteraction.update({
+  embeds: [
+    getSettingsEmbed(data.star_config.adminRoleIds, selectedChannelId),
+    new EmbedBuilder()
+      .setTitle('📣 通知チャンネルを設定しました')
+      .setDescription(`設定されたチャンネル: <#${selectedChannelId}>`)
+      .setColor(0x00cc99)
+  ],
+  components: [row1, row2],
+  flags: 1 << 6
+});
+```
+
+#### 💡 重要な学習ポイント
+
+**MessageComponentCollectorの基本ルール**:
+- `collector.on('collect')` 内では必ず `interaction.update()` を使用
+- `interaction.reply()` はコレクター外での初回レスポンスのみ
+- エラー時でもUI状態を維持するため、embeds/componentsを含める
+
+#### 📊 最終的な修正結果
+- ✅ **管理者ロール選択**: 正常動作（前回修正）
+- ✅ **通知チャンネル選択**: 正常動作（今回修正）  
+- ✅ **ユーザーフィルタリング**: 実装済み
+- ✅ **エラーハンドリング**: 包括的実装
+- ✅ **UI/UX改善**: 成功時の確認メッセージ追加
+
+**追加修正コミット**: `f69de76` - Fix channel selection interaction failures
+
+---
+
+#### 🚨 MessageComponentCollectorの重要ルール
+
+**基本原則**: コレクター内では`interaction.update()`のみ使用し、`interaction.reply()`は禁止
+
+```javascript
+// ✅ 正しいコレクター使用法
 collector.on('collect', async (componentInteraction) => {
   try {
     // 処理ロジック
-    await componentInteraction.update({ content: '更新完了' });
+    await componentInteraction.update({
+      content: '処理完了',
+      embeds: [updatedEmbed],
+      components: [updatedComponents]
+    });
   } catch (error) {
-    console.error('コレクターエラー:', error);
-    if (!componentInteraction.replied && !componentInteraction.deferred) {
-      await componentInteraction.reply({
-        content: '❌ 処理エラー',
-        ephemeral: true
-      });
-    }
+    // エラー時でもupdateを使用してUI状態を維持
+    await componentInteraction.update({
+      content: '❌ エラーが発生しました',
+      embeds: [originalEmbed],
+      components: [originalComponents]
+    });
   }
 });
 
-collector.on('end', (collected) => {
-  if (collected.size === 0) {
-    // タイムアウト処理
-  }
+// ❌ 間違った使用法 - replyはインタラクション失敗エラーの原因
+collector.on('collect', async (componentInteraction) => {
+  await componentInteraction.reply({ content: '...' }); // これは失敗する
 });
 ```
-
-#### 📋 エラー診断チェックリスト
-
-##### インタラクション失敗時
-- [ ] componentTypeが配列形式か確認
-- [ ] filterが設定されているか確認  
-- [ ] try-catch構文が正しいか確認
-- [ ] interaction.replied/deferredチェックがあるか確認
-
-##### 権限エラー時
-- [ ] Discord標準権限とBot独自権限の区別
-- [ ] null/undefinedチェックの実装
-- [ ] エラーメッセージの適切性
-
-##### ファイル操作エラー時
-- [ ] ファイルパスの存在確認
-- [ ] JSON構造の妥当性
-- [ ] 非同期処理の適切なawait使用
-
-#### 🚀 予防的開発手法
-
-1. **段階的実装**
-   - 基本機能→エラーハンドリング→UI改善の順序
-   - 各段階での動作確認
-
-2. **ログ戦略**
-   ```javascript
-   console.log('🔍 デバッグ:', { userId, guildId, action });
-   console.error('❌ エラー:', error.message, error.stack);
-   ```
-
-3. **テスト環境活用**
-   - 開発用Discordサーバーでの検証
-   - PM2による本番監視
-
-**エラー対策更新**: 2025年7月13日  
-**対応Discord.jsバージョン**: v14.x  
-**実証済みパターン**: star_config, kpi_setting, totusuna_setti
