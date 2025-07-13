@@ -1,11 +1,11 @@
 const { MessageFlags } = require('discord.js');
 
-// カチE��リごとの findHandler を読み込み
+// カチE��リごとの findHandler を読み込み
 const findTotsusunaHandler = require('../../totusuna_setti/selects');
 const findStarHandler = require('../../star_config/selects');
 
 /**
- * セレクトメニューインタラクションを�E琁E��るメイン関数
+ * セレクトメニューインタラクションを処理するメイン関数
  * @param {import('discord.js').StringSelectMenuInteraction} interaction
  */
 async function handleSelect(interaction) {
@@ -14,7 +14,8 @@ async function handleSelect(interaction) {
   const customId = interaction.customId;
   let handler;
 
-  // customId に応じて適刁E��ハンドラを探ぁE  if (customId.startsWith('totsusuna_setti:')) {
+  // customId に応じて適切なハンドラを探す
+  if (customId.startsWith('totsusuna_setti:')) {
     handler = findTotsusunaHandler(customId);
   } else {
     handler = findStarHandler(customId);
@@ -22,7 +23,7 @@ async function handleSelect(interaction) {
 
   if (!handler) {
     await interaction.reply({
-      content: '❁Eセレクトメニューに対応する�E琁E��見つかりませんでした、E,
+      content: '❌ セレクトメニューに対応する処理が見つかりませんでした。',
       flags: MessageFlags.Ephemeral,
     });
     return;
@@ -31,10 +32,10 @@ async function handleSelect(interaction) {
   try {
     await handler.handle(interaction);
   } catch (error) {
-    console.error(`❁Eセレクトメニュー処琁E��ラー (${customId}):`, error);
+    console.error(`❌ セレクトメニュー処理エラー (${customId}):`, error);
 
     const errorMessage = {
-      content: '⚠�E�Eセレクトメニュー処琁E��にエラーが発生しました。管琁E��E��報告してください、E,
+      content: '⚠️ セレクトメニュー処理中にエラーが発生しました。管理者に報告してください。',
       flags: MessageFlags.Ephemeral,
     };
 

@@ -7,7 +7,8 @@ module.exports = {
   customIdStart: 'totsusuna_modal_body_input:',
 
   /**
-   * 本斁E��ーダルの送信後�E琁E   * @param {import('discord.js').ModalSubmitInteraction} interaction
+   * 本文モーダルの送信後処理
+   * @param {import('discord.js').ModalSubmitInteraction} interaction
    */
   async handle(interaction) {
     const guildId = interaction.guildId;
@@ -23,7 +24,7 @@ module.exports = {
     const userData = tempStore.get(guildId, userId);
     if (!userData?.installChannelId) {
       return await interaction.reply({
-        content: '⚠ 設置チャンネルが未設定です。�Eにチャンネルを選択してください、E,
+        content: '⚠️ 設置チャンネルが未設定です。先にチャンネルを選択してください。',
         flags: MessageFlags.Ephemeral,
       });
     }
@@ -45,7 +46,7 @@ module.exports = {
 
     const button = new ButtonBuilder()
       .setCustomId(`totusuna:report:${uuid}`)
-      .setLabel('凸スナ報呁E)
+      .setLabel('凸スナ報告')
       .setStyle(ButtonStyle.Primary);
 
     const row = new ActionRowBuilder().addComponents(button);
@@ -53,7 +54,7 @@ module.exports = {
     const targetChannel = await interaction.guild.channels.fetch(userData.installChannelId);
     if (!targetChannel?.isTextBased()) {
       return await interaction.reply({
-        content: '⚠ 持E��された設置チャンネルが見つかりません、E,
+        content: '⚠️ 指定された設置チャンネルが見つかりません。',
         flags: MessageFlags.Ephemeral,
       });
     }
@@ -69,7 +70,7 @@ module.exports = {
     writeJSON(jsonPath, json);
 
     await interaction.reply({
-      content: '✁E本斁E��保存し、�Eスナ�Eタンを設置しました、E,
+      content: '✅ 本文を保存し、凸スナボタンを設置しました。',
       flags: MessageFlags.Ephemeral,
     });
   }

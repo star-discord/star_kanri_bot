@@ -2,10 +2,12 @@
 const { loadOrCreateWorkbook, saveAndSyncWorkbook } = require('./spreadsheetHandler');
 
 /**
- * 凸スナ報告データをExcelファイルに追記し、GCSにもアチE�EロードすめE * @param {string} guildId - ギルドID
- * @param {Object} data - 追記するデータ�E�Eroup, name, tables[], detail, username�E�E */
+ * 凸スナ報告データをExcelファイルに追記し、GCSにもアップロードする
+ * @param {string} guildId - ギルドID
+ * @param {Object} data - 追記するデータ（group, name, tables[], detail, username）
+ */
 async function writeTotusunaReport(guildId, data) {
-  const suffix = '凸スナ報呁E;
+  const suffix = '凸スナ報告';
   const { workbook, sheet, localPath, gcsPath } = await loadOrCreateWorkbook(guildId, suffix);
 
   // 追記データ

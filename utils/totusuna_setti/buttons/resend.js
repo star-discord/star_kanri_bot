@@ -12,7 +12,8 @@ module.exports = {
   customIdStart: 'totsusuna_setti:resend:',
 
   /**
-   * 凸スナ�E再送信処琁E���E設置�E�E   * @param {import('discord.js').ButtonInteraction} interaction
+   * 凸スナ再送信処理（再設置）
+   * @param {import('discord.js').ButtonInteraction} interaction
    */
   async handle(interaction) {
     const guildId = interaction.guildId;
@@ -23,7 +24,7 @@ module.exports = {
       await fs.access(dataPath);
     } catch {
       return await interaction.reply({
-        content: '⚠�E�EチE�Eタファイルが見つかりません、E,
+        content: '⚠️ データファイルが見つかりません。',
         flags: MessageFlags.Ephemeral,
       });
     }
@@ -35,7 +36,7 @@ module.exports = {
     } catch (err) {
       console.error('[再送信] JSON 読み込みエラー:', err);
       return await interaction.reply({
-        content: '❁EチE�Eタファイルの読み込みに失敗しました、E,
+        content: '❌ データファイルの読み込みに失敗しました。',
         flags: MessageFlags.Ephemeral,
       });
     }
@@ -45,7 +46,7 @@ module.exports = {
 
     if (!instance) {
       return await interaction.reply({
-        content: '⚠�E�E対象の設置惁E��が見つかりません、E,
+        content: '⚠️ 対象の設置データが見つかりません。',
         flags: MessageFlags.Ephemeral,
       });
     }
@@ -55,14 +56,14 @@ module.exports = {
       channel = await interaction.guild.channels.fetch(instance.installChannelId);
       if (!channel?.isTextBased()) {
         return await interaction.reply({
-          content: '⚠�E�E対象チャンネルがテキストチャンネルではありません、E,
+          content: '⚠️ 対象チャンネルがテキストチャンネルではありません。',
           flags: MessageFlags.Ephemeral,
         });
       }
     } catch (err) {
-      console.warn(`[再送信] チャンネル取得失敁E ${instance.installChannelId}`, err);
+      console.warn(`[再送信] チャンネル取得失敗: ${instance.installChannelId}`, err);
       return await interaction.reply({
-        content: '⚠�E�E対象チャンネルが存在しなぁE��取得に失敗しました、E,
+        content: '⚠️ 対象チャンネルが存在しないか取得に失敗しました。',
         flags: MessageFlags.Ephemeral,
       });
     }
@@ -70,12 +71,12 @@ module.exports = {
     try {
       const embed = new EmbedBuilder()
         .setTitle('📣 凸スナ報告受付中')
-        .setDescription(instance.body || '(本斁E��ぁE')
+        .setDescription(instance.body || '(本文なし)')
         .setColor(0x00bfff);
 
       const button = new ButtonBuilder()
-        .setCustomId(`totsusuna:report:${uuid}`) // 允E�E命名規則に合わせる
-        .setLabel('凸スナ報呁E)
+        .setCustomId(`totsusuna:report:${uuid}`) // 統一命名規則に合わせる
+        .setLabel('凸スナ報告')
         .setStyle(ButtonStyle.Primary);
 
       const row = new ActionRowBuilder().addComponents(button);
@@ -87,7 +88,7 @@ module.exports = {
       await fs.writeFile(dataPath, JSON.stringify(json, null, 2));
 
       await interaction.reply({
-        content: '📤 再送信しました�E�設置チャンネルに投稿されました�E�、E,
+        content: '📤 再送信しました。設置チャンネルに投稿されました。',
         flags: MessageFlags.Ephemeral,
       });
 
@@ -95,7 +96,7 @@ module.exports = {
       console.error('[再送信エラー]', err);
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({
-          content: '❁EメチE��ージの再送信に失敗しました、E,
+          content: '❌ メッセージの再送信に失敗しました。',
           flags: MessageFlags.Ephemeral,
         });
       }

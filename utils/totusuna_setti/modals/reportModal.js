@@ -8,7 +8,8 @@ module.exports = {
   customIdStart: 'totusuna_modal:',
 
   /**
-   * 凸スナ報告モーダル送信後�E琁E   * @param {import('discord.js').ModalSubmitInteraction} interaction
+   * 凸スナ報告モーダル送信後処理
+   * @param {import('discord.js').ModalSubmitInteraction} interaction
    */
   async handle(interaction) {
     const guildId = interaction.guildId;
@@ -30,15 +31,15 @@ module.exports = {
 
     const tableText = [table1, table2, table3, table4]
       .filter(t => t)
-      .map((t, i) => `十E{i + 1}: ${t}`)
+      .map((t, i) => `卓${i + 1}: ${t}`)
       .join('\n');
 
-    const report = `📝 **凸スナ報呁E*\n絁E ${group}組\n吁E ${name}名\n${tableText ? `${tableText}\n` : ''}詳細: ${detail || 'なぁE}`;
+    const report = `📝 **凸スナ報告**\n組数: ${group}組\n名前: ${name}名\n${tableText ? `${tableText}\n` : ''}詳細: ${detail || 'なし'}`;
 
     const dataPath = path.join(__dirname, '../../../data', guildId, `${guildId}.json`);
     if (!fs.existsSync(dataPath)) {
       return await interaction.reply({
-        content: '⚠ 設定ファイルが見つかりません、E,
+        content: '⚠️ 設定ファイルが見つかりません。',
         flags: MessageFlags.Ephemeral,
       });
     }
@@ -48,7 +49,7 @@ module.exports = {
 
     if (!instance) {
       return await interaction.reply({
-        content: '⚠ 対応する�Eスナ設置惁E��が見つかりません、E,
+        content: '⚠️ 対応する凸スナ設置データが見つかりません。',
         flags: MessageFlags.Ephemeral,
       });
     }
@@ -58,13 +59,13 @@ module.exports = {
       if (targetChannel?.isTextBased()) {
         await targetChannel.send({ content: report });
       } else {
-        console.warn(`[reportModal] チE��ストチャンネルでなぁE ${instance.installChannelId}`);
+        console.warn(`[reportModal] テキストチャンネルではありません: ${instance.installChannelId}`);
       }
     } catch (err) {
-      console.error(`[reportModal] チャンネル送信失敁E`, err);
+      console.error(`[reportModal] チャンネル送信失敗:`, err);
     }
 
-    const csvPath = path.join(__dirname, '../../../data', guildId, `${guildId}-${ym}-凸スナ報呁Ecsv`);
+    const csvPath = path.join(__dirname, '../../../data', guildId, `${guildId}-${ym}-凸スナ報告.csv`);
     await writeCsvRow(csvPath, [
       timestamp,
       group,
@@ -78,7 +79,7 @@ module.exports = {
     ]);
 
     await interaction.reply({
-      content: '✁E報告を送信し、記録しました、E,
+      content: '✅ 報告を送信し、記録しました。',
       flags: MessageFlags.Ephemeral,
     });
   },

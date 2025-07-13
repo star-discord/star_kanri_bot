@@ -10,10 +10,11 @@ const {
 } = require('discord.js');
 
 module.exports = {
-  customIdStart: 'totusuna_edit_modal:', // UUID対応�Eためコロン形式に統一
+  customIdStart: 'totusuna_edit_modal:', // UUID対応のためコロン形式に統一
 
   /**
-   * 本斁E��雁E��ーダルの送信後�E琁E   * @param {import('discord.js').ModalSubmitInteraction} interaction
+   * 本文編集モーダルの送信後処理
+   * @param {import('discord.js').ModalSubmitInteraction} interaction
    */
   async handle(interaction) {
     const modalId = interaction.customId;
@@ -25,7 +26,7 @@ module.exports = {
 
     if (!fs.existsSync(dataPath)) {
       return await interaction.reply({
-        content: '⚠ 設定ファイルが見つかりません、E,
+        content: '⚠️ 設定ファイルが見つかりません。',
         flags: MessageFlags.Ephemeral
       });
     }
@@ -35,12 +36,13 @@ module.exports = {
 
     if (!target) {
       return await interaction.reply({
-        content: '⚠ 持E��された設置惁E��が存在しません、E,
+        content: '⚠️ 指定された設置データが存在しません。',
         flags: MessageFlags.Ephemeral
       });
     }
 
-    // 本斁E��新と保孁E    target.body = inputText;
+    // 本文更新と保存
+    target.body = inputText;
     fs.writeFileSync(dataPath, JSON.stringify(json, null, 2));
 
     try {
@@ -54,22 +56,22 @@ module.exports = {
 
       const button = new ButtonBuilder()
         .setCustomId(`totusuna:report:${uuid}`) // ボタンIDも統一
-        .setLabel('凸スナ報呁E)
+        .setLabel('凸スナ報告')
         .setStyle(ButtonStyle.Primary);
 
       const row = new ActionRowBuilder().addComponents(button);
 
       await message.edit({ embeds: [embed], components: [row] });
     } catch (err) {
-      console.error('[editBody] メチE��ージ編雁E��敁E', err);
+      console.error('[editBody] メッセージ編集失敗:', err);
       return await interaction.reply({
-        content: '⚠ メチE��ージの更新に失敗しました、E,
+        content: '⚠️ メッセージの更新に失敗しました。',
         flags: MessageFlags.Ephemeral
       });
     }
 
     await interaction.reply({
-      content: '✁E本斁E��更新し、表示も変更しました、E,
+      content: '✅ 本文を更新し、表示も変更しました。',
       flags: MessageFlags.Ephemeral
     });
   }
