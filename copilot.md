@@ -469,8 +469,8 @@ await selectInteraction.update({
 #### 💡 重要な学習ポイント
 
 **MessageComponentCollectorの基本ルール**:
-- `collector.on('collect')` 内では必ず `interaction.update()` を使用
-- `interaction.reply()` はコレクター外での初回レスポンスのみ
+- コレクター内では`interaction.update()`のみ使用
+- `interaction.reply()`は禁止
 - エラー時でもUI状態を維持するため、embeds/componentsを含める
 
 #### 📊 最終的な修正結果
@@ -670,3 +670,130 @@ node utils/dataMigration.test.js
 - ✅ **テスト対応**: 移行ロジックの検証機能
 
 **実装コミット**: `ae66bf4` - Implement automatic data migration system
+
+## 起動時診断システム
+
+### 2025年7月13日: Bot起動エラー診断・修正
+
+#### 🚨 検出された起動時問題
+
+**ログ分析結果**:
+```
+⚠️ 無効なコマンド形式: totsuna_csv.js, totusuna_config_fixed.js
+❌ OpenAI Configuration エラー: Configuration is not a constructor
+⚠️ ハンドラー関数の不備: star_chat_gpt_setti_button.js
+⚠️ OPENAI_API_KEY未設定
+⚠️ GCS設定不足
+```
+
+#### 🔧 実施した修正
+
+##### 1. 無効なコマンドファイルの削除
+**問題**: 空のコマンドファイルが「無効なコマンド形式」警告を発生
+**解決**: 不要なファイルを削除
+```bash
+rm commands/totsuna_csv.js
+rm commands/totusuna_config_fixed.js
+```
+
+##### 2. OpenAI API v4対応
+**問題**: OpenAI v3形式のコードがv4で動作しない
+**解決**: 新しいAPI形式に更新
+
+```javascript
+// ❌ 旧式 (v3)
+const { OpenAIApi, Configuration } = require('openai');
+const configuration = new Configuration({ apiKey: process.env.OPENAI_API_KEY });
+const openai = new OpenAIApi(configuration);
+
+// ✅ 新式 (v4)
+const OpenAI = require('openai');
+const openai = process.env.OPENAI_API_KEY ? new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+}) : null;
+
+// API呼び出しも変更
+// 旧: openai.createChatCompletion(options)
+// 新: openai.chat.completions.create(options)
+```
+
+##### 3. レスポンス形式の修正
+```javascript
+// ❌ 旧式レスポンス形式
+weatherInfo = weatherResponse.data?.choices?.[0]?.message?.content
+
+// ✅ 新式レスポンス形式
+weatherInfo = weatherResponse?.choices?.[0]?.message?.content
+```
+
+##### 4. 起動時診断システムの実装
+**ファイル**: `utils/startupDiagnostics.js`
+
+**機能**:
+- 環境変数の存在確認
+- ファイル構造の整合性チェック
+- コマンドファイルの構文検証
+- パッケージ依存関係の確認
+- 詳細な診断レポート出力
+
+**統合**: `index.js`に診断処理を追加
+```javascript
+const { StartupDiagnostics } = require('./utils/startupDiagnostics');
+
+async function runStartupDiagnostics() {
+  const diagnostics = new StartupDiagnostics();
+  const isHealthy = await diagnostics.runDiagnostics();
+  
+  if (!isHealthy) {
+    console.log('❌ 重要なエラーによりBot起動を中止します。');
+    process.exit(1);
+  }
+}
+```
+
+#### 📋 修正後の期待される結果
+
+**修正前のログ**:
+```
+⚠️ 無効なコマンド形式: /home/.../totsuna_csv.js
+⚠️ 無効なコマンド形式: /home/.../totusuna_config_fixed.js
+❌ ChatGPTボタンファイルの読み込みに失敗: Configuration is not a constructor
+⚠️ star_chat_gpt_setti_button.js は有効なハンドラではありません
+```
+
+**修正後の期待ログ**:
+```
+🔬 STAR管理Bot 起動時診断を開始します...
+✅ DISCORD_TOKEN: 設定済み
+⚠️ OPENAI_API_KEY: 未設定 (ChatGPT機能は無効)
+✅ コマンド統計: 有効 10件, 無効 0件
+✅ discord.js: インストール済み
+✨ 診断完了 - すべて正常です！
+```
+
+#### 🔄 今後の保守性向上
+
+##### 環境変数管理の改善
+- 必須/オプション環境変数の明確な分類
+- 機能別の設定チェック
+- 不足している設定の具体的な指示
+
+##### エラーハンドリングの統一
+- OpenAI APIエラーの適切なフォールバック
+- ユーザーフレンドリーなエラーメッセージ
+- 機能無効時の代替動作
+
+##### パッケージ管理の最適化
+- 依存関係のバージョン管理
+- オプション機能の条件付き読み込み
+- アップデート時の互換性チェック
+
+#### 📊 修正結果
+
+- ✅ **起動エラー解決**: 無効なファイル削除で警告除去
+- ✅ **OpenAI v4対応**: 最新API形式でエラー解決
+- ✅ **診断システム**: 起動時の包括的なヘルスチェック
+- ✅ **保守性向上**: 問題の早期発見と解決支援
+- ✅ **ログ改善**: 分かりやすい状況報告
+
+**修正コミット**: `1c36ab7` - Fix OpenAI API v4 compatibility and remove empty command files

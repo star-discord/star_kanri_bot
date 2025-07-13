@@ -4,6 +4,26 @@ const path = require('path');
 const { Client, GatewayIntentBits, Collection } = require('discord.js');
 require('dotenv').config();
 
+// ======== 起動時診断 ========
+const { StartupDiagnostics } = require('./utils/startupDiagnostics');
+
+async function runStartupDiagnostics() {
+  const diagnostics = new StartupDiagnostics();
+  const isHealthy = await diagnostics.runDiagnostics();
+  
+  if (!isHealthy) {
+    console.log('❌ 重要なエラーによりBot起動を中止します。');
+    process.exit(1);
+  }
+  
+  console.log('🚀 診断完了 - Bot初期化を継続します...\n');
+}
+
+// 診断実行
+runStartupDiagnostics().then(() => {
+  console.log('📡 Bot初期化プロセス開始');
+}).catch(console.error);
+
 // ======== .env チェック ========
 if (!process.env.DISCORD_TOKEN) {
   console.error('❌ DISCORD_TOKEN が .env に定義されていません。');
