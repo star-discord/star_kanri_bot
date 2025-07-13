@@ -163,8 +163,10 @@ module.exports = {
         const channel = guild.channels.cache.get(selectedChannelId);
 
         if (!channel || !channel.isTextBased()) {
-          return await selectInteraction.reply({
+          return await selectInteraction.update({
             content: '❌ 無効なチャンネルです。もう一度選択してください。',
+            embeds: [getSettingsEmbed(data.star_config.adminRoleIds, data.star_config.notifyChannelId)],
+            components: [row1, row2],
             flags: 1 << 6
           });
         }
@@ -175,14 +177,22 @@ module.exports = {
           await writeJSON(filePath, data);
         } catch (err) {
           console.error('❌ チャンネル保存失敗:', err);
-          return await selectInteraction.reply({
+          return await selectInteraction.update({
             content: '❌ 通知チャンネルの保存に失敗しました。',
+            embeds: [getSettingsEmbed(data.star_config.adminRoleIds, data.star_config.notifyChannelId)],
+            components: [row1, row2],
             flags: 1 << 6
           });
         }
 
         await selectInteraction.update({
-          embeds: [getSettingsEmbed(data.star_config.adminRoleIds, selectedChannelId)],
+          embeds: [
+            getSettingsEmbed(data.star_config.adminRoleIds, selectedChannelId),
+            new EmbedBuilder()
+              .setTitle('📣 通知チャンネルを設定しました')
+              .setDescription(`設定されたチャンネル: <#${selectedChannelId}>`)
+              .setColor(0x00cc99)
+          ],
           components: [row1, row2],
           flags: 1 << 6
         });
