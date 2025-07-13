@@ -20,7 +20,7 @@ module.exports = {
 
       const row = new ActionRowBuilder().addComponents(infoButton, configButton);
 
-      const content = `� **ChatGPT案内**\n以下のボタンを押すと、「天気」「ニュース」「豆知識」などの情報が届きます。`;
+      const content = `🤖 **ChatGPT案内**\n以下のボタンを押すと、「天気」「ニュース」「豆知識」などの情報が届きます。`;
 
       await interaction.reply({ content, components: [row], ephemeral: false });
     } catch (error) {

@@ -8,7 +8,7 @@ module.exports = {
     try {
       const modal = new ModalBuilder()
         .setCustomId('chatgpt_config_modal')
-        .setTitle('� ChatGPT設定');
+        .setTitle('⚙️ ChatGPT設定');
 
       const apiKeyInput = new TextInputBuilder()
         .setCustomId('chatgpt_api_key')
