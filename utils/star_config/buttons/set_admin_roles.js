@@ -2,7 +2,7 @@
 
 const path = require('path');
 const { ensureGuildJSON, readJSON, writeJSON } = require('../../fileHelper');
-const { MessageFlags } = require('discord.js');
+const { MessageFlagsBitField } = require('discord.js');
 
 module.exports = {
   customId: 'star_config:set_admin_roles',
@@ -16,7 +16,7 @@ module.exports = {
     if (!interaction.isRoleSelectMenu()) {
       return interaction.reply({
         content: 'エラー: この操作はロール選択からのみ可能です。',
-        flags: MessageFlags.Ephemeral
+        flags: MessageFlagsBitField.Flags.Ephemeral
       });
     }
 
@@ -26,7 +26,7 @@ module.exports = {
     if (!selectedRoles || selectedRoles.length === 0) {
       return interaction.reply({
         content: '⚠️ ロールが選択されていません。',
-        flags: MessageFlags.Ephemeral
+        flags: MessageFlagsBitField.Flags.Ephemeral
       });
     }
 
@@ -57,14 +57,14 @@ module.exports = {
 
       await interaction.reply({
         content: message,
-        flags: MessageFlags.Ephemeral
+        flags: MessageFlagsBitField.Flags.Ephemeral
       });
 
     } catch (err) {
       console.error(`❌ 管理者ロール保存中にエラー (${guildId}):`, err);
       await interaction.reply({
         content: '❌ 管理者ロールの保存に失敗しました。',
-        flags: MessageFlags.Ephemeral
+        flags: MessageFlagsBitField.Flags.Ephemeral
       });
     }
   }
