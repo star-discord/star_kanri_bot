@@ -58,14 +58,16 @@ async function testMigration() {
   console.log('\n📋 テスト1: 旧式データ移行');
   console.log('移行前:', JSON.stringify(sampleOldData, null, 2));
 
-  const migratedData1 = await migration.performMigration(sampleOldData, 'test-guild-1', null);
+  // ダミーclient（guilds参照エラー防止用）
+  const dummyClient = { guilds: { cache: new Map() } };
+  const migratedData1 = await migration.performMigration(sampleOldData, 'test-guild-1', dummyClient);
   console.log('移行後:', JSON.stringify(migratedData1, null, 2));
 
   // テスト2: 混在データの移行
   console.log('\n📋 テスト2: 混在データ移行');
   console.log('移行前:', JSON.stringify(sampleMixedData, null, 2));
 
-  const migratedData2 = await migration.performMigration(sampleMixedData, 'test-guild-2', null);
+  const migratedData2 = await migration.performMigration(sampleMixedData, 'test-guild-2', dummyClient);
   console.log('移行後:', JSON.stringify(migratedData2, null, 2));
 
   console.log('\n✅ テスト完了');
