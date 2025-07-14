@@ -1,6 +1,8 @@
+// utils/star_config/buttons/set_admin_roles.js
+
 const path = require('path');
 const { ensureGuildJSON, readJSON, writeJSON } = require('../../fileHelper');
-const { MessageFlags } = require('discord.js'); // 追加
+const { MessageFlags } = require('discord.js');
 
 module.exports = {
   customId: 'star_config:set_admin_roles',
@@ -23,7 +25,7 @@ module.exports = {
 
     if (!selectedRoles || selectedRoles.length === 0) {
       return interaction.reply({
-        content: '警告: ロールが選択されていません。',
+        content: '⚠️ ロールが選択されていません。',
         flags: MessageFlags.Ephemeral
       });
     }
@@ -33,21 +35,35 @@ module.exports = {
       const data = readJSON(jsonPath);
 
       if (!data.star_config) data.star_config = {};
-      data.star_config.adminRoleIds = selectedRoles;
 
+      const before = new Set(data.star_config.adminRoleIds || []);
+      const after = new Set(selectedRoles);
+
+      const added = selectedRoles.filter(id => !before.has(id));
+      const removed = [...before].filter(id => !after.has(id));
+
+      // 保存
+      data.star_config.adminRoleIds = selectedRoles;
       writeJSON(jsonPath, data);
 
-      const mentionText = selectedRoles.map(id => `<@&${id}>`).join(', ');
+      // メッセージ生成
+      let message = `✅ 管理者ロールを更新しました:\n${selectedRoles.map(id => `<@&${id}>`).join(', ')}`;
+      if (added.length > 0) {
+        message += `\n➕ **追加**: ${added.map(id => `<@&${id}>`).join(', ')}`;
+      }
+      if (removed.length > 0) {
+        message += `\n➖ **削除**: ${removed.map(id => `<@&${id}>`).join(', ')}`;
+      }
 
       await interaction.reply({
-        content: `完了: 管理者ロールを以下の通り設定しました:\n${mentionText}`,
+        content: message,
         flags: MessageFlags.Ephemeral
       });
 
     } catch (err) {
-      console.error(`エラー: 管理者ロール保存中にエラー (${guildId}):`, err);
+      console.error(`❌ 管理者ロール保存中にエラー (${guildId}):`, err);
       await interaction.reply({
-        content: 'エラー: 管理者ロールの保存に失敗しました。',
+        content: '❌ 管理者ロールの保存に失敗しました。',
         flags: MessageFlags.Ephemeral
       });
     }
