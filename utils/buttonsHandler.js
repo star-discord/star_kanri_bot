@@ -18,29 +18,42 @@ const handlerFinders = {
 };
 
 /**
- * 2. Map customId prefixes to the correct handler category.
+ * 2. Map customId prefixes and exact IDs to the correct handler category.
  *    This allows for efficient, direct routing.
  */
+const customIdMapping = {
+  'totusuna_install_button': 'totusuna_setti',
+  'totusuna_config_button': 'totusuna_setti',
+  'chatgpt_config_button': 'star_chat_gpt_setti',
+  'star_chat_gpt_setti_button': 'star_chat_gpt_setti',
+};
+
 const prefixMapping = {
   'star_config:': 'star_config',
-  'star_chat_gpt_': 'star_chat_gpt_setti',
-  'totsusuna_': 'totusuna_setti', // Handle common typo
   'totusuna_': 'totusuna_setti',
+  'totsusuna_report_button_': 'totusuna_setti',
   'totusuna_config:': 'totusuna_config',
   'kpi_': 'kpi_setti',
   'attendance_': 'attendance',
 };
 
 /**
- * Finds the correct handler function based on the customId prefix.
+ * Finds the correct handler function based on the customId.
  * @param {string} customId The customId from the interaction.
  * @returns {object|null} The handler object or null if not found.
  */
 function findButtonHandler(customId) {
+  // 1. Check for an exact match in the customIdMapping
+  const exactCategory = customIdMapping[customId];
+  if (exactCategory) {
+    const find = handlerFinders[exactCategory];
+    return find ? find(customId) : null;
+  }
+
+  // 2. Check for a prefix match
   for (const [prefix, category] of Object.entries(prefixMapping)) {
     if (customId.startsWith(prefix)) {
       const find = handlerFinders[category];
-      // The finder function itself will find the specific handler (e.g., for 'edit' or 'delete')
       return find ? find(customId) : null;
     }
   }
