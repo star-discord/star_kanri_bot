@@ -19,12 +19,18 @@ module.exports = {
         .setLabel('新規設置')
         .setStyle(ButtonStyle.Primary);
 
+      const quickInstallButton = new ButtonBuilder()
+        .setCustomId('totsusuna_quick_button')
+        .setLabel('クイック設置')
+        .setStyle(ButtonStyle.Success)
+        .setEmoji('⚡');
+
       const configButton = new ButtonBuilder()
         .setCustomId('totusuna_config_button')
         .setLabel('⚙️ 設定管理')
         .setStyle(ButtonStyle.Secondary);
 
-      const row = new ActionRowBuilder().addComponents(installButton, quickInstallButton, configButton);
+      const row = new ActionRowBuilder().addComponents(installButton, configButton);
 
       // 管理者向けの案内メッセージ
       const embed = createAdminEmbed(
@@ -34,6 +40,11 @@ module.exports = {
         {
           name: '📝 新規設置',
           value: 'モーダルから本文やタイトルを細かく設定して、新しい凸スナをチャンネルに設置します。',
+          inline: true
+        },
+        {
+          name: '⚡ クイック設置',
+          value: '定義済みのテンプレートを選択して、素早く凸スナを設置します。',
           inline: true
         },
         {
