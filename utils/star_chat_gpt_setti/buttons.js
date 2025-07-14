@@ -47,4 +47,7 @@ function findHandler(customId) {
   return null;
 }
 
-module.exports = findHandler;
+module.exports = {
+  findHandler,
+  handlers
+};
