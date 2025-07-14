@@ -7,7 +7,7 @@ const {
 } = require('discord.js');
 
 module.exports = {
-  customId: 'totsusuna_install_button', // 命名統一
+  customId: 'totusuna_install_button', // 命名統一
 
   /**
    * 凸スナ設置ボタンの処理
