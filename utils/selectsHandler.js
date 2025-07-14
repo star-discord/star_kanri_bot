@@ -1,94 +1,57 @@
 // commands/common/selectHandler.js
-const starSelectHandler = require('../utils/star_config/selects');
-const totusunaSelectHandler = require('../utils/totusuna_setti/selects');
-const totusunaConfigSelectHandler = require('../utils/totusuna_config/selects/totusuna_channel_selected');
+const path = require('path');
 const { MessageFlagsBitField } = require('discord.js');
+const { loadHandlers } = require('./handlerLoader.js');
 const { logAndReplyError } = require('./errorHelper');
 
-const PREFIX_STAR_CONFIG = 'star_config:';
-const PREFIX_TOTSUUNA_SETTI = 'totusuna_setti:';
-const PREFIX_TOTSUUNA_CONFIG = 'totusuna_channel_selected_';
-
-const DIRECT_STAR_HANDLERS = new Set(['admin_role_select', 'notify_channel_select']);
-const DIRECT_TOTSUUNA_HANDLERS = new Set([
-  'totusuna_select_main',
-  'totusuna_select_replicate',
-  'totusuna_config_select',
-  'totusuna_install_channel_select',
-]);
-
-function isHandlerObject(handler) {
-  return handler && typeof handler.handle === 'function';
-}
-
-function isHandlerFunction(handler) {
-  return typeof handler === 'function';
-}
+// 各カテゴリのハンドラローダーを作成
+const handlerFinders = [
+  loadHandlers(path.join(__dirname, 'star_config/selects')),
+  loadHandlers(path.join(__dirname, 'totusuna_setti/selects')),
+  // loadHandlers(path.join(__dirname, 'totusuna_config/selects')), // このディレクトリは存在しないため削除
+];
 
 /**
- * プレフィックス別にハンドラを取得・呼び出し
+ * customId に対応するハンドラを探す
  * @param {string} customId
- * @returns {object|function|null}
+ * @returns {object|null}
  */
-function getHandlerByPrefix(customId) {
-  if (customId.startsWith(PREFIX_STAR_CONFIG)) return starSelectHandler(customId);
-  if (customId.startsWith(PREFIX_TOTSUUNA_SETTI)) return totusunaSelectHandler(customId);
-  if (customId.startsWith(PREFIX_TOTSUUNA_CONFIG)) return totusunaConfigSelectHandler;
+function findSelectHandler(customId) {
+  for (const find of handlerFinders) {
+    const handler = find(customId);
+    if (handler) return handler;
+  }
   return null;
 }
 
 /**
  * セレクトメニューインタラクション共通ハンドラ
- * @param {import('discord.js').StringSelectMenuInteraction} interaction
+ * @param {import('discord.js').AnySelectMenuInteraction} interaction
  */
 async function handleSelect(interaction) {
-  if (!interaction.isStringSelectMenu()) return;
+  if (!interaction.isAnySelectMenu()) return;
 
-  const { customId, guildId, user } = interaction;
-  console.log(`[selectHandler] セレクト受信: customId=${customId}, guild=${guildId}, user=${user.id}`);
+  const { customId } = interaction;
+  console.log(`[selectsHandler] セレクト受信: customId=${customId}, user=${interaction.user?.tag}, guild=${interaction.guildId}`);
+
+  const handler = findSelectHandler(customId);
+
+  if (!handler) {
+    console.warn(`[selectsHandler] 未処理の customId: ${customId}`);
+    return interaction.reply({
+      content: '⚠️ このメニューは現在利用できません。',
+      flags: MessageFlagsBitField.Flags.Ephemeral,
+    });
+  }
 
   try {
-    // プレフィックスでハンドラ取得
-    let handler = getHandlerByPrefix(customId);
-
-    // プレフィックス無しの直接ハンドラ呼び出し
-    if (!handler) {
-      if (DIRECT_STAR_HANDLERS.has(customId)) {
-        await starSelectHandler(interaction);
-        return;
-      }
-      if (DIRECT_TOTSUUNA_HANDLERS.has(customId)) {
-        await totusunaSelectHandler(interaction);
-        return;
-      }
-      console.warn(`[selectHandler] 未対応 customId: ${customId}, guild=${guildId}, user=${user.id}`);
-      await interaction.reply({
-        content: '❌ 対応する処理が見つかりませんでした。',
-        flags: MessageFlagsBitField.Flags.Ephemeral,
-      });
-      return;
-    }
-
-    // 実行処理
-    await interaction.deferReply({ ephemeral: true });
-
-    if (isHandlerObject(handler)) {
-      await handler.handle(interaction);
-    } else if (isHandlerFunction(handler)) {
-      await handler(interaction);
-    } else {
-      throw new Error(`ハンドラーの形式が不正です。customId=${customId}`);
-    }
-
-    await interaction.editReply({ content: '✅ 処理が完了しました。' });
-
+    await handler.handle(interaction);
   } catch (error) {
-    console.error(`[selectHandler] エラー: ${error.stack || error}`);
-
+    console.error(`[selectsHandler] セレクトハンドラエラー: ${customId}`, error);
     await logAndReplyError(
       interaction,
-      `❌ セレクトエラー (${customId})\n${error.stack || error}`,
-      '❌ エラーが発生しました。詳細はコンソールを確認してください。',
+      `❌ セレクトメニュー処理エラー: ${customId}\n${error?.stack || error}`,
+      '❌ 処理中にエラーが発生しました。',
       { flags: MessageFlagsBitField.Flags.Ephemeral }
     );
   }
