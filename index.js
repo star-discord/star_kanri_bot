@@ -117,7 +117,9 @@ client.on('interactionCreate', async interaction => {
         return;
       }
 
-      const shouldDefer = ['凸スナ設置', 'star管理bot設定', 'kpi_設定'].includes(interaction.commandName);
+      // 'star管理bot設定' is intentionally excluded here because it handles its own deferral.
+      const commandsToPreemptivelyDefer = ['凸スナ設置', 'kpi_設定'];
+      const shouldDefer = commandsToPreemptivelyDefer.includes(interaction.commandName);
       if (shouldDefer && !interaction.deferred && !interaction.replied) {
         try {
           await interaction.deferReply({ flags: MessageFlagsBitField.Flags.Ephemeral });
@@ -131,7 +133,7 @@ client.on('interactionCreate', async interaction => {
 
     } else if (interaction.isButton()) {
       await handleButton(interaction);
-    } else if (interaction.isStringSelectMenu()) {
+    } else if (interaction.isAnySelectMenu()) { // isStringSelectMenu() から isAnySelectMenu() に変更
       await handleSelect(interaction);
     } else if (interaction.isModalSubmit()) {
       await handleModal(interaction);
