@@ -35,13 +35,13 @@ module.exports = {
       await interaction.reply({
         embeds: [embed],
         components: [row],
-        ephemeral: true
+        flags: 1 << 6
       });
     } catch (error) {
       console.error('ChatGPT設定コマンドエラー:', error);
       await interaction.reply({
         content: '❌ 設定コマンドの実行中にエラーが発生しました。',
-        ephemeral: true
+        flags: 1 << 6
       });
     }
   })

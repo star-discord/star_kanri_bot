@@ -17,7 +17,7 @@ module.exports = async function handleStarConfigSelect(interaction) {
     console.error(`[selects/${interaction.customId}] ハンドラー実行エラー:`, err);
     await interaction.reply({
       content: 'エラー: 設定処理でエラーが発生しました。',
-      ephemeral: true
+      flags: MessageFlags.Ephemeral
     });
   }
 };

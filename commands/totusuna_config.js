@@ -36,9 +36,9 @@ module.exports = {
       if (instances.length === 0) {
         return interaction.reply({
           embeds: [
-            createAdminEmbed('📭 凸スナ設定メニュー', '現在、設置されている凸スナはありません。')
+            createAdminEmbed('📭 凸スナ設定メニュー', '現在、設定されている凸スナはありません。')
           ],
-          flags: MessageFlags.Ephemeral,
+          flags: 1 << 6
         });
       }
 
@@ -55,7 +55,7 @@ module.exports = {
           embeds: [
             createAdminEmbed('⚠️ データエラー', '有効な凸スナデータが見つかりません。')
           ],
-          flags: MessageFlags.Ephemeral,
+          flags: 1 << 6
         });
       }
 
@@ -70,11 +70,11 @@ module.exports = {
         embeds: [
           createAdminEmbed(
             '📋 凸スナ設定管理',
-            `設置済み凸スナ一覧（${options.length}件）から選択してください。`
+            `設定済み凸スナ一覧（${options.length}件）から選択してください。`
           )
         ],
         components: [row],
-        flags: MessageFlags.Ephemeral,
+        flags: 1 << 6
       });
 
       const collector = response.createMessageComponentCollector({

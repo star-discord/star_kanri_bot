@@ -15,11 +15,11 @@ module.exports = {
     if (!member.permissions.has('Administrator')) {
       return await interaction.reply({
         content: '❌ この操作にはDiscordの管理者権限が必要です。',
-        ephemeral: true
+        flags: 1 << 6
       });
     }
 
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: 1 << 6 });
 
     try {
       const migration = new DataMigration();

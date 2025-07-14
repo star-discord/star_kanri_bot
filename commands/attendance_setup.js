@@ -79,9 +79,9 @@ module.exports = {
 
       await interaction.reply({
         embeds: [embed],
-        components: [row1, row2]
+        components: [row1, row2],
+        flags: 1 << 6
       });
-
     } catch (error) {
       console.error('退勤管理設置エラー:', error);
       await interaction.reply({

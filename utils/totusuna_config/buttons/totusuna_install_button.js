@@ -18,7 +18,7 @@ module.exports = {
         try {
             // 即座にデファー（タイムアウト防止）
             if (!interaction.deferred && !interaction.replied) {
-                await interaction.deferReply({ ephemeral: true });
+                await interaction.deferReply({ flags: MessageFlags.Ephemeral });
                 console.log('✅ [totusuna_install_button] インタラクションデファー完了');
             }
 
@@ -86,7 +86,7 @@ module.exports = {
             const response = {
                 embeds: [setupEmbed],
                 components: [channelSelectRow],
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             };
 
             if (interaction.deferred) {
@@ -110,9 +110,9 @@ module.exports = {
 
             try {
                 if (interaction.deferred) {
-                    await interaction.editReply({ content: errorMessage, ephemeral: true });
+                    await interaction.editReply({ content: errorMessage, flags: MessageFlags.Ephemeral });
                 } else if (!interaction.replied) {
-                    await interaction.reply({ content: errorMessage, ephemeral: true });
+                    await interaction.reply({ content: errorMessage, flags: MessageFlags.Ephemeral });
                 }
             } catch (replyError) {
                 console.error('❌ [totusuna_install_button] レスポンス送信エラー:', replyError.message);

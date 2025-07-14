@@ -15,7 +15,7 @@ async function logAndReplyError(interaction, logMsg, userMsg, opts = {}) {
   if (!interaction.replied && !interaction.deferred) {
     return interaction.reply({
       content: userMsg,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
       ...opts
     });
   }

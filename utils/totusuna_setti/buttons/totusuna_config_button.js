@@ -22,7 +22,7 @@ module.exports = {
           embeds: [
             createAdminEmbed('📭 設定管理', '現在、設置されている凸スナはありません。\n\n「📝 凸スナ設置」ボタンから新しい凸スナを作成してください。')
           ],
-          ephemeral: true
+          flags: MessageFlags.Ephemeral
         });
       }
 
@@ -50,14 +50,14 @@ module.exports = {
       await interaction.reply({
         embeds: [embed],
         components: [row],
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
 
     } catch (error) {
       console.error('凸スナ設定管理ボタンエラー:', error);
       await interaction.reply({
         content: '❌ 設定管理処理中にエラーが発生しました。',
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
     }
   }

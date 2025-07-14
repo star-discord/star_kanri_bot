@@ -27,7 +27,7 @@ module.exports = {
       return await interaction.reply({
         content: '❌ この設定コマンドには Discord の管理者権限が必要です。\n' +
                 'サーバー設定で管理者権限を付与してください。',
-        ephemeral: true
+        flags: 1 << 6
       });
     }
 
@@ -41,7 +41,7 @@ module.exports = {
       console.error('❌ ファイル読み込みエラー:', err);
       return await interaction.reply({
         content: '❌ 設定ファイルの読み込みに失敗しました。',
-        ephemeral: true
+        flags: 1 << 6
       });
     }
 

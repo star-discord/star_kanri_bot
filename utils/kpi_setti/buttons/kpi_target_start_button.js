@@ -10,7 +10,7 @@ module.exports = {
     if (activeReportSessions.has(userId)) {
       await interaction.reply({
         content: 'すでに申請入力中です。完了するまでお待ちください。',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
       return;
     }
@@ -20,7 +20,7 @@ module.exports = {
 
     await interaction.reply({
       content: 'KPI目標設定を開始します。期間の開始日を「YYYY/MM/DD」の形式で入力してください。',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   },
 };

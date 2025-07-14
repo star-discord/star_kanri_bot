@@ -42,7 +42,7 @@ module.exports = {
       console.error('凸スナ設置ボタンエラー:', error);
       await interaction.reply({
         content: '❌ 凸スナ設置処理中にエラーが発生しました。',
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
     }
   }

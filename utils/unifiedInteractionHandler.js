@@ -151,7 +151,7 @@ class UnifiedInteractionHandler {
     if (!handler) {
       return await interaction.reply({
         content: '❌ モーダルに対応する処理が見つかりませんでした。',
-        ephemeral: true,
+        flags: MessageFlags.Ephemeral,
       });
     }
 
@@ -162,7 +162,7 @@ class UnifiedInteractionHandler {
         interaction,
         `❌ モーダル処理エラー: ${customId}\n${err?.stack || err}`,
         '❌ モーダル処理中にエラーが発生しました。',
-        { ephemeral: true }
+        { flags: MessageFlags.Ephemeral }
       );
     }
   }

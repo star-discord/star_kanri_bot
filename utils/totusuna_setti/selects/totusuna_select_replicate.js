@@ -25,12 +25,12 @@ module.exports = {
         const channelMentions = selectedChannelIds.map(id => `<#${id}>`).join(', ');
         await interaction.reply({
           content: `✅ 複製チャンネルを ${channelMentions} に設定しました。`,
-          ephemeral: true
+          flags: MessageFlags.Ephemeral
         });
       } else {
         await interaction.reply({
           content: `✅ 複製チャンネルを未設定にしました。`,
-          ephemeral: true
+          flags: MessageFlags.Ephemeral
         });
       }
 
@@ -40,12 +40,12 @@ module.exports = {
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({
           content: '❌ 複製チャンネル設定中にエラーが発生しました。',
-          ephemeral: true
+          flags: MessageFlags.Ephemeral
         });
       } else {
         await interaction.followUp({
           content: '❌ 複製チャンネル設定中にエラーが発生しました。',
-          ephemeral: true
+          flags: MessageFlags.Ephemeral
         });
       }
     }
