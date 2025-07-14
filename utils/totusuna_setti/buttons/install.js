@@ -12,7 +12,7 @@ const tempState = require('../state/totusunaTemp');
 const { ensureGuildJSON, readJSON, writeJSON } = require('../../fileHelper');
 
 module.exports = {
-  customId: 'totsuna_setti:install',
+  customId: 'totusuna_setti:install',
 
   /**
    * 凸スナ設置の処理
