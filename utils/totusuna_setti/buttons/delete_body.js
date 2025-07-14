@@ -1,12 +1,12 @@
 const fs = require('fs');
 const path = require('path');
-const { MessageFlags } = require('discord.js'); // 追加
+const { MessageFlagsBitField } = require('discord.js');
 
 module.exports = {
-  customIdStart: 'totsusuna_setti:delete_body:', // 英語化
+  customIdStart: 'totsusuna_setti:delete_body:',
 
   /**
-   * 凸スナ本斁E��除ボタンの処琁E
+   * 凸スナ本文削除ボタンの処理
    * @param {import('discord.js').ButtonInteraction} interaction
    */
   async handle(interaction) {
@@ -14,7 +14,7 @@ module.exports = {
     const uuid = interaction.customId.replace(this.customIdStart, '');
     const dataPath = path.join(__dirname, '../../../data', guildId, `${guildId}.json`);
 
-    // チE�Eタファイル存在確誁E
+    // データファイルの存在確認
     if (!fs.existsSync(dataPath)) {
       return await interaction.reply({
         content: '⚠️ データファイルが見つかりません。',
@@ -52,7 +52,7 @@ module.exports = {
 
     const target = instances[targetIndex];
 
-    // メチE��ージ削除処琁E
+    // メッセージ削除処理
     try {
       const channel = await interaction.guild.channels.fetch(target.installChannelId);
       if (channel && target.messageId) {
@@ -65,11 +65,12 @@ module.exports = {
 
     // JSON から削除して保存
     instances.splice(targetIndex, 1);
-    fs.writeFileSync(dataPath, JSON.stringify(json, null, 2));
+    fs.writeFileSync(dataPath, JSON.stringify(json, null, 2), 'utf8');
 
     await interaction.reply({
-      content: '🗑 本文を削除しました。',
+      content: '🗑️ 本文を削除しました。',
       flags: MessageFlagsBitField.Ephemeral,
     });
   },
 };
+

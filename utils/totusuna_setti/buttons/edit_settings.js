@@ -5,14 +5,14 @@ const {
   TextInputBuilder,
   TextInputStyle,
   ActionRowBuilder,
-  MessageFlags,
+  MessageFlagsBitField,
 } = require('discord.js');
 
 module.exports = {
   customIdStart: 'totsusuna_setti:edit_settings:',
 
   /**
-   * 凸スナ設置の編雁E��ーダル表示
+   * 凸スナ設置の編集モーダル表示
    * @param {import('discord.js').ButtonInteraction} interaction
    */
   async handle(interaction) {
@@ -34,7 +34,7 @@ module.exports = {
       const fileContent = await fs.readFile(dataPath, 'utf-8');
       json = JSON.parse(fileContent);
     } catch (err) {
-      console.error('[edit_settings] JSON読み込み失敁E', err);
+      console.error('[edit_settings] JSON読み込み失敗:', err);
       return await interaction.reply({
         content: '❌ データファイルの読み込みに失敗しました。',
         flags: MessageFlagsBitField.Ephemeral,
@@ -58,7 +58,7 @@ module.exports = {
     }
 
     const modal = new ModalBuilder()
-      .setCustomId(this.customIdStart + uuid)
+      .setCustomId(`totsusuna_edit_settings_modal:${uuid}`) // ✅ モーダルIDは変更後の処理に合わせて明示
       .setTitle('📘 凸スナ本文の編集');
 
     const bodyInput = new TextInputBuilder()
