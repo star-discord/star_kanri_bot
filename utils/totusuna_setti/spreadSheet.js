@@ -1,45 +1,82 @@
-// utils/totusuna_setti/spreadSheet.js
-const path = require('path');
-const fs = require('fs');
+// utils/dataMigration.test.js
+const { DataMigration } = require('./dataMigration');
 
 /**
- * 凸スナ報告をCSVファイルに追記します
- * @param {string} guildId ギルドID
- * @param {string} yearMonth 年月 (例: "2025-07")
- * @param {object} entry 報告内容
+ * データ移行のテスト用サンプルデータ
  */
-async function writeTotusunaReport(guildId, yearMonth, entry) {
-  const dir = path.join(__dirname, `../../../data/${guildId}`);
-  const csvPath = path.join(dir, `${guildId}-${yearMonth}-凸スナ報告.csv`);
+const sampleOldData = {
+  // 旧式形式: トップレベルに管理者設定
+  adminRoleIds: ["123456789", "987654321"],
+  notifyChannelId: "555666777",
 
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
+  // 旧式形式: totsunaが配列
+  totsuna: [
+    {
+      id: "uuid-1",
+      userId: "user123",
+      body: "報告内容1",
+      installChannelId: "channel123",
+      replicateChannelIds: ["channel456", "channel789"]
+    }
+  ],
+
+  // 他のデータ
+  someOtherData: {
+    value: "preserved"
   }
+};
 
-  // 日付が未定義なら現在時刻で補完
-  const dateStr = entry.date || new Date().toISOString();
+const sampleMixedData = {
+  // 新旧混在
+  adminRoleIds: ["old-role-1"],
+  star_config: {
+    adminRoleIds: ["new-role-1", "new-role-2"]
+  },
+  notifyChannelId: "old-channel",
 
-  const headers = ['報告者', '日時', '組数', '名前', '卓1', '卓2', '卓3', '卓4', '詳細'];
-  const values = [
-    entry.username,
-    dateStr,
-    entry.group,
-    entry.name,
-    entry.table1 || '',
-    entry.table2 || '',
-    entry.table3 || '',
-    entry.table4 || '',
-    entry.detail || ''
-  ];
-
-  const csvLine = `${values.map(v => `"${v}"`).join(',')}` + '\n';
-
-  if (!fs.existsSync(csvPath)) {
-    fs.writeFileSync(csvPath, `${headers.join(',')}` + '\n', 'utf8');
+  totsuna: {
+    // 新しい形式だが、一部データが古い
+    instances: [
+      {
+        id: "uuid-new",
+        userId: "user456"
+      }
+    ]
   }
+};
 
-  fs.appendFileSync(csvPath, csvLine, 'utf8');
+/**
+ * テスト実行関数
+ */
+async function testMigration() {
+  console.log('🧪 データ移行テスト開始');
+
+  const migration = new DataMigration();
+
+  // テスト1: 旧式データの移行
+  console.log('\n📋 テスト1: 旧式データ移行');
+  console.log('移行前:', JSON.stringify(sampleOldData, null, 2));
+
+  const migratedData1 = await migration.performMigration(sampleOldData, 'test-guild-1', null);
+  console.log('移行後:', JSON.stringify(migratedData1, null, 2));
+
+  // テスト2: 混在データの移行
+  console.log('\n📋 テスト2: 混在データ移行');
+  console.log('移行前:', JSON.stringify(sampleMixedData, null, 2));
+
+  const migratedData2 = await migration.performMigration(sampleMixedData, 'test-guild-2', null);
+  console.log('移行後:', JSON.stringify(migratedData2, null, 2));
+
+  console.log('\n✅ テスト完了');
+}
+
+// テスト実行（node utils/dataMigration.test.js で実行可能）
+if (require.main === module) {
+  testMigration().catch(console.error);
+}
 
 module.exports = {
-  writeTotusunaReport, // 関数名を統一
+  testMigration,
+  sampleOldData,
+  sampleMixedData
 };

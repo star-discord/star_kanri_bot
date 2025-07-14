@@ -1,4 +1,4 @@
-const fs = require('fs');
+const fs = require('fs').promises;
 const path = require('path');
 const { MessageFlagsBitField } = require('discord.js');
 
@@ -10,67 +10,108 @@ module.exports = {
    * @param {import('discord.js').ButtonInteraction} interaction
    */
   async handle(interaction) {
-    const guildId = interaction.guildId;
-    const uuid = interaction.customId.replace(this.customIdStart, '');
-    const dataPath = path.join(__dirname, '../../../data', guildId, `${guildId}.json`);
+    try {
+      await interaction.deferReply({ ephemeral: true });
+    } catch (err) {
+      console.error(`[${new Date().toISOString()}] deferReply失敗:`, err);
+      if (!interaction.replied && !interaction.deferred) {
+        await interaction.reply({
+          content: '❌ 応答準備中にエラーが発生しました。',
+          flags: MessageFlagsBitField.Ephemeral,
+        }).catch(() => {});
+      }
+      return;
+    }
 
-    // データファイルの存在確認
-    if (!fs.existsSync(dataPath)) {
-      return await interaction.reply({
-        content: '⚠️ データファイルが見つかりません。',
-        flags: MessageFlagsBitField.Ephemeral,
+    const guildId = interaction.guildId;
+    if (!guildId) {
+      return interaction.editReply({
+        content: '⚠️ ギルドIDが取得できません。'
       });
     }
 
-    // JSON 読み込み
+    if (!interaction.guild) {
+      return interaction.editReply({
+        content: '⚠️ ギルド情報が取得できません。'
+      });
+    }
+
+    // UUIDの抽出を substring に変更（安全な切り出し）
+    const uuid = interaction.customId.substring(this.customIdStart.length);
+
+    // dataディレクトリの絶対パス
+    const dataPath = path.resolve(__dirname, '..', '..', '..', 'data', guildId, `${guildId}.json`);
+
+    // ファイルの存在確認
+    try {
+      await fs.access(dataPath);
+    } catch {
+      return interaction.editReply({
+        content: '⚠️ データファイルが存在しません。'
+      });
+    }
+
     let json;
     try {
-      json = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
+      const fileContent = await fs.readFile(dataPath, 'utf8');
+      json = JSON.parse(fileContent);
     } catch (err) {
-      console.error('[delete_body] JSON読み込みエラー:', err);
-      return await interaction.reply({
-        content: '❌ データの読み込みに失敗しました。',
-        flags: MessageFlagsBitField.Ephemeral,
+      console.error(`[${new Date().toISOString()}] JSON読み込みエラー:`, err);
+      return interaction.editReply({
+        content: `❌ データの読み込みに失敗しました。エラー内容: ${err.message}`
       });
     }
 
     const instances = json.totsusuna?.instances;
     if (!Array.isArray(instances)) {
-      return await interaction.reply({
-        content: '⚠️ 凸スナ情報が不正です。',
-        flags: MessageFlagsBitField.Ephemeral,
+      return interaction.editReply({
+        content: '⚠️ 凸スナ情報が不正な形式です。'
       });
     }
 
     const targetIndex = instances.findIndex(i => i.id === uuid);
     if (targetIndex === -1) {
-      return await interaction.reply({
-        content: '⚠️ 指定された設置は存在しません。',
-        flags: MessageFlagsBitField.Ephemeral,
+      return interaction.editReply({
+        content: '⚠️ 指定された設置が見つかりません。'
       });
     }
 
     const target = instances[targetIndex];
 
-    // メッセージ削除処理
     try {
       const channel = await interaction.guild.channels.fetch(target.installChannelId);
       if (channel && target.messageId) {
         const message = await channel.messages.fetch(target.messageId).catch(() => null);
-        if (message) await message.delete();
+        if (message) {
+          await message.delete();
+        } else {
+          console.warn(`[${new Date().toISOString()}] メッセージが見つかりません: チャンネルID=${target.installChannelId}, メッセージID=${target.messageId}`);
+        }
+      } else {
+        console.warn(`[${new Date().toISOString()}] チャンネルまたはメッセージIDが不正: チャンネル=${target.installChannelId}, メッセージID=${target.messageId}`);
       }
     } catch (err) {
-      console.warn(`[delete_body] メッセージ削除に失敗: ${err.message}`);
+      console.warn(`[${new Date().toISOString()}] メッセージ削除失敗:`, err);
     }
 
-    // JSON から削除して保存
+    // 配列から削除
     instances.splice(targetIndex, 1);
-    fs.writeFileSync(dataPath, JSON.stringify(json, null, 2), 'utf8');
 
-    await interaction.reply({
-      content: '🗑️ 本文を削除しました。',
-      flags: MessageFlagsBitField.Ephemeral,
-    });
+    try {
+      await fs.writeFile(dataPath, JSON.stringify(json, null, 2), 'utf8');
+    } catch (err) {
+      console.error(`[${new Date().toISOString()}] JSON書き込み失敗:`, err);
+      return interaction.editReply({
+        content: '❌ データの保存に失敗しました。'
+      });
+    }
+
+    try {
+      await interaction.editReply({
+        content: '🗑️ 凸スナ本文を削除しました。'
+      });
+    } catch (err) {
+      console.error(`[${new Date().toISOString()}] reply送信失敗:`, err);
+    }
   },
 };
-

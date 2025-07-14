@@ -1,16 +1,13 @@
 const {
-  EmbedBuilder,
-  ActionRowBuilder,
-  StringSelectMenuBuilder,
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
+  ActionRowBuilder,
   MessageFlagsBitField
 } = require('discord.js');
-const { createAdminEmbed } = require('../../embedHelper');
 
 module.exports = {
-  customId: 'totusuna_install_button',
+  customId: 'totsusuna_install_button', // 命名統一
 
   /**
    * 凸スナ設置ボタンの処理
@@ -18,51 +15,52 @@ module.exports = {
    */
   async handle(interaction) {
     try {
-      // 凸スナ本文入力用のモーダルを表示
       const modal = new ModalBuilder()
         .setCustomId('totsusuna_modal_body_input:install')
         .setTitle('📝 凸スナ本文入力');
 
+      // 本文入力（ParagraphのみsetMaxLength未対応）
       const bodyInput = new TextInputBuilder()
         .setCustomId('body')
         .setLabel('凸スナの本文を入力してください')
         .setStyle(TextInputStyle.Paragraph)
-        .setPlaceholder('例）今日の凸スナを報告してください。\n・来店時刻\n・退店時刻\n・売上目標など')
-        .setRequired(true)
-        .setMaxLength(1000);
+        .setPlaceholder(
+          '例）今日の凸スナを報告してください。\n・来店時刻\n・退店時刻\n・売上目標など'
+        )
+        .setRequired(true);
 
+      // タイトル入力（ShortはsetMaxLength対応しているが、念のため除去し検証は送信後に）
       const titleInput = new TextInputBuilder()
         .setCustomId('title')
         .setLabel('タイトル（省略可能）')
         .setStyle(TextInputStyle.Short)
         .setPlaceholder('例）本日の凸スナ報告')
-        .setRequired(false)
-        .setMaxLength(100);
+        .setRequired(false);
 
-      const firstActionRow = new ActionRowBuilder().addComponents(titleInput);
-      const secondActionRow = new ActionRowBuilder().addComponents(bodyInput);
-
-      modal.addComponents(firstActionRow, secondActionRow);
+      modal.addComponents(
+        new ActionRowBuilder().addComponents(titleInput),
+        new ActionRowBuilder().addComponents(bodyInput),
+      );
 
       await interaction.showModal(modal);
-
     } catch (error) {
       console.error('凸スナ設置ボタンエラー:', error);
+
       const errorReply = {
         content: '❌ 凸スナ設置処理中にエラーが発生しました。',
-        flags: MessageFlagsBitField.Ephemeral
+        flags: MessageFlagsBitField.Ephemeral,
       };
+
       try {
-        if (!interaction.replied && !interaction.deferred) {
-          await interaction.reply(errorReply);
-        } else if (interaction.deferred && !interaction.replied) {
+        if (interaction.deferred && !interaction.replied) {
           await interaction.editReply(errorReply);
-        } else {
-          await interaction.followUp(errorReply);
+        } else if (!interaction.replied) {
+          await interaction.reply(errorReply);
         }
-      } catch (followUpError) {
-        console.error('エラーメッセージの送信にも失敗しました:', followUpError);
+        // それ以外は無視（reply済みなど）
+      } catch (sendError) {
+        console.error('エラーメッセージ送信失敗:', sendError);
       }
     }
-  }
+  },
 };

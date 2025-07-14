@@ -2,11 +2,18 @@ const fs = require('fs');
 const path = require('path');
 
 /**
+ * @typedef {Object} Handler
+ * @property {string} [customId]
+ * @property {string} [customIdStart]
+ * @property {(interaction: any) => Promise<void>} handle
+ */
+
+/**
  * 指定ディレクトリからハンドラを読み込み、customId/customIdStart によるルーティング関数を返す
  * 各ハンドラは { customId, handle } または { customIdStart, handle } をエクスポートする必要がある
  * 
  * @param {string} dirPath - 読み込むディレクトリの絶対パス
- * @returns {(customId: string) => object|null} - 対応するハンドラを返す関数
+ * @returns {(customId: string) => Handler|null} - 対応するハンドラを返す関数
  */
 function loadHandlers(dirPath) {
   const handlers = {};              // 完全一致用ハンドラ格納
@@ -26,7 +33,7 @@ function loadHandlers(dirPath) {
   for (const file of files) {
     const modulePath = path.join(dirPath, file);
     try {
-      // キャッシュクリア（開発中のみ有効）
+      // 開発中のキャッシュクリア
       delete require.cache[require.resolve(modulePath)];
 
       const mod = require(modulePath);
@@ -38,8 +45,10 @@ function loadHandlers(dirPath) {
           }
           handlers[mod.customId] = mod;
         } else if (typeof mod.customIdStart === 'string') {
+          // 重複チェックし、重複ならスキップ
           if (startsWithHandlers.some(h => h.key === mod.customIdStart)) {
-            console.warn(`⚠️ [handlerLoader] ${file} の customIdStart "${mod.customIdStart}" は既に登録されています。上書きされます。`);
+            console.warn(`⚠️ [handlerLoader] 重複する customIdStart "${mod.customIdStart}" があるためスキップ: ${file}`);
+            continue;
           }
           startsWithHandlers.push({ key: mod.customIdStart, handler: mod });
         } else {
@@ -48,7 +57,6 @@ function loadHandlers(dirPath) {
       } else {
         console.warn(`⚠️ [handlerLoader] ${file} は有効なハンドラではありません（handle 関数が未定義）`);
       }
-
     } catch (err) {
       console.error(`❌ [handlerLoader] ハンドラの読み込み失敗 (${file}):`, err);
     }
@@ -60,13 +68,13 @@ function loadHandlers(dirPath) {
   /**
    * customId に対応するハンドラを返す（完全一致優先→前方一致）
    * @param {string} customId
-   * @returns {object|null}
+   * @returns {Handler|null}
    */
   return function findHandler(customId) {
     console.log(`🔍 [handlerLoader] ハンドラー検索: ${customId}`);
     console.log(`   完全一致ハンドラー: ${Object.keys(handlers).join(', ')}`);
     console.log(`   前方一致ハンドラー: ${startsWithHandlers.map(h => h.key).join(', ')}`);
-    
+
     if (handlers[customId]) {
       console.log(`   ✅ 完全一致ハンドラー見つかりました: ${customId}`);
       return handlers[customId];

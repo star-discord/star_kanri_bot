@@ -1,5 +1,5 @@
-const { EmbedBuilder, ActionRowBuilder, ChannelSelectMenuBuilder, ChannelType, MessageFlags } = require('discord.js');
-const tempStore = require('../state/totsusunaTemp');
+const { EmbedBuilder, ActionRowBuilder, ChannelSelectMenuBuilder, ChannelType, MessageFlagsBitField } = require('discord.js');
+const tempStore = require('../state/totusunaTemp');
 
 module.exports = {
   /**
@@ -61,18 +61,20 @@ module.exports = {
         components: [row],
         flags: MessageFlagsBitField.Ephemeral
       });
-      
+
       console.log('✅ [installModal] 処理完了');
 
     } catch (error) {
       console.error('💥 [installModal] エラー:', error);
       console.error('   エラースタック:', error.stack);
-      
+
       try {
-        await interaction.reply({
-          content: '❌ 凸スナ設置処理中にエラーが発生しました。詳細はコンソールを確認してください。',
-          flags: MessageFlagsBitField.Ephemeral
-        });
+        if (!interaction.replied && !interaction.deferred) {
+          await interaction.reply({
+            content: '❌ 凸スナ設置処理中にエラーが発生しました。詳細はコンソールを確認してください。',
+            flags: MessageFlagsBitField.Ephemeral
+          });
+        }
       } catch (replyError) {
         console.error('💥 [installModal] レスポンス送信でもエラー:', replyError);
       }

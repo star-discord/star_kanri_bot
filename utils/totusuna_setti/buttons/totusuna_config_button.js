@@ -8,7 +8,7 @@ const { ensureGuildJSON, readJSON } = require('../../fileHelper');
 const { createAdminEmbed } = require('../../embedHelper');
 
 module.exports = {
-  customId: 'totusuna_config_button',
+  customId: 'totsusuna_config_button', // "totusuna" → "totsusuna" に修正（名前揺れ防止）
 
   /**
    * 凸スナ設定管理ボタンの処理
@@ -20,7 +20,7 @@ module.exports = {
     try {
       const filePath = await ensureGuildJSON(guildId);
       const data = await readJSON(filePath);
-      const instances = data.totusuna?.instances || [];
+      const instances = data.totsusuna?.instances ?? [];
 
       if (instances.length === 0) {
         return await interaction.reply({
@@ -30,23 +30,31 @@ module.exports = {
               '現在、設置されている凸スナはありません。\n「📁 凸スナ設置」ボタンから新しい凸スナを作成してください。'
             )
           ],
-          flags: MessageFlagsBitField.Ephemeral
+          flags: MessageFlagsBitField.Ephemeral,
         });
       }
 
       const options = instances
-        .filter(i => i.messageId || i.id)
-        .slice(0, 25) // Discordの最大数
-        .map(i => ({
-          label: (i.title || i.body?.slice(0, 50) || '（無題）').substring(0, 100),
-          value: i.messageId || i.id,
-          description: i.mainChannelId
-            ? `設置チャンネル: #${interaction.guild.channels.cache.get(i.mainChannelId)?.name || '不明'}`
-            : '設置チャンネル不明',
-        }));
+        .filter(i => i.id) // messageIdは動的なのでidで統一したほうが安全
+        .slice(0, 25) // Discordのメニュー選択肢は最大25個まで
+        .map(i => {
+          const labelRaw = i.title ?? i.body?.slice(0, 50) ?? '（無題）';
+          const label = labelRaw.length > 100 ? labelRaw.slice(0, 97) + '...' : labelRaw;
+
+          // チャンネル名はキャッシュにない場合もあるのでnullチェック
+          const channelName = i.installChannelId
+            ? interaction.guild.channels.cache.get(i.installChannelId)?.name ?? '不明'
+            : '設置チャンネル不明';
+
+          return {
+            label,
+            value: i.id,
+            description: `設置チャンネル: #${channelName}`,
+          };
+        });
 
       const selectMenu = new StringSelectMenuBuilder()
-        .setCustomId('totusuna_config_select')
+        .setCustomId('totsusuna_config_select')
         .setPlaceholder('編集・削除する凸スナを選択してください')
         .addOptions(options);
 
@@ -60,15 +68,17 @@ module.exports = {
       await interaction.reply({
         embeds: [embed],
         components: [row],
-        flags: MessageFlagsBitField.Ephemeral
+        flags: MessageFlagsBitField.Ephemeral,
       });
 
     } catch (error) {
       console.error('凸スナ設定管理ボタンエラー:', error);
-      await interaction.reply({
-        content: '❌ 凸スナ設定管理中にエラーが発生しました。',
-        flags: MessageFlagsBitField.Ephemeral
-      });
+      if (!interaction.replied && !interaction.deferred) {
+        await interaction.reply({
+          content: '❌ 凸スナ設定管理中にエラーが発生しました。',
+          flags: MessageFlagsBitField.Ephemeral,
+        });
+      }
     }
-  }
+  },
 };

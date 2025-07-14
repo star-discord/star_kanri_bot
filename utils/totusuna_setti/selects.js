@@ -1,57 +1,47 @@
-// utils/totusuna_setti/selects.js
 const { MessageFlags } = require('discord.js');
 const path = require('path');
-const { loadHandlers } = require('../handlerLoader');
-
-// totusuna_setti専用のハンドラを読み込み
-const totusunaHandlers = loadHandlers(path.join(__dirname, 'selects'));
-
+const findHandler = require('../handlerLoader');
 
 /**
- * セレクトメニューインタラクションを処理するメイン関数
+ * セレクトメニューインタラクション処理のメイン関数
  * @param {import('discord.js').StringSelectMenuInteraction} interaction
  */
 async function handleSelect(interaction) {
   if (!interaction.isStringSelectMenu()) return;
 
-  const customId = interaction.customId;
+  const { customId, values, guildId, user } = interaction;
 
-  console.log('🔽 [totusuna_setti/selects] セレクトメニュー受信');
-  console.log('   customId:', customId);
-  console.log('   values:', interaction.values);
-  console.log('   guildId:', interaction.guildId);
-  console.log('   userId:', interaction.user.id);
+  console.log(new Date().toISOString(), '[totusuna_setti/selects]', `customId=${customId} guildId=${guildId} userId=${user.id}`);
 
-  let handler;
+  if (!Array.isArray(values) || values.length === 0) {
+    await interaction.reply({
+      content: '⚠️ 選択された値がありません。',
+      flags: MessageFlags.Ephemeral,
+    });
+    return;
+  }
 
-  // totusuna関連のハンドラを探す
-  console.log('🔍 [totusuna_setti/selects] ハンドラー検索中...');
-  handler = totusunaHandlers(customId);
-  console.log('   見つかったハンドラー:', handler ? 'あり' : 'なし');
+  // 最新のハンドラを取得（ホットリロードなど対応）
+  const selectsHandler = findHandler(path.join(__dirname, 'selects'));
+  const handler = selectsHandler(customId);
 
   if (!handler) {
-    console.warn('⚠️ [totusuna_setti/selects] 対応するハンドラーが見つかりません:', customId);
-    console.log('   利用可能なハンドラー一覧:', Object.keys(totusunaHandlers));
-
+    console.warn(new Date().toISOString(), `[totusuna_setti/selects] ハンドラ未発見: ${customId}`);
     await interaction.reply({
-      content: '❌ セレクトメニューに対応する処理が見つかりませんでした。',
-      flags: MessageFlagsBitField.Ephemeral,
+      content: '❌ このセレクトメニューに対応する処理がありません。',
+      flags: MessageFlags.Ephemeral,
     });
     return;
   }
 
   try {
-    console.log('🔄 [totusuna_setti/selects] ハンドラー実行開始');
     await handler.handle(interaction);
-    console.log('✅ [totusuna_setti/selects] ハンドラー実行完了');
   } catch (error) {
-    console.error('💥 [totusuna_setti/selects] ハンドラー実行エラー:', error);
-    console.error('   エラースタック:', error.stack);
-    console.error(`   customId: ${customId}`);
+    console.error(new Date().toISOString(), `[totusuna_setti/selects] 処理中エラー: customId=${customId}`, error);
 
     const errorMessage = {
-      content: '⚠️ セレクトメニュー処理中にエラーが発生しました。詳細はコンソールを確認してください。',
-      flags: MessageFlagsBitField.Ephemeral,
+      content: '⚠️ セレクトメニュー処理中にエラーが発生しました。管理者に連絡してください。',
+      flags: MessageFlags.Ephemeral,
     };
 
     try {
@@ -61,7 +51,7 @@ async function handleSelect(interaction) {
         await interaction.reply(errorMessage);
       }
     } catch (replyError) {
-      console.error('💥 [totusuna_setti/selects] エラーレスポンス送信失敗', replyError);
+      console.error(new Date().toISOString(), `[totusuna_setti/selects] エラーレスポンス送信失敗:`, replyError);
     }
   }
 }

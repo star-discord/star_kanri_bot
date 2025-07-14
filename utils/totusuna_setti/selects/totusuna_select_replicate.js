@@ -8,7 +8,7 @@ module.exports = {
   handle: requireAdmin(async (interaction) => {
     try {
       const guild = interaction.guild;
-      const selectedChannelIds = interaction.values;
+      const selectedChannelIds = interaction.values || [];
 
       const filePath = await ensureGuildJSON(guild.id);
       const data = await readJSON(filePath);
@@ -18,7 +18,7 @@ module.exports = {
         data.totusuna_setti = {};
       }
 
-      // 複製チャンネルを設定
+      // 複製チャンネルを設定（空配列でもOK）
       data.totusuna_setti.replicateChannelIds = selectedChannelIds;
       await writeJSON(filePath, data);
 
@@ -26,12 +26,12 @@ module.exports = {
         const channelMentions = selectedChannelIds.map(id => `<#${id}>`).join(', ');
         await interaction.reply({
           content: `✅ 複製チャンネルを ${channelMentions} に設定しました。`,
-          flags: MessageFlagsBitField.Ephemeral
+          flags: MessageFlagsBitField.Ephemeral,
         });
       } else {
         await interaction.reply({
           content: `✅ 複製チャンネルを未設定にしました。`,
-          flags: MessageFlagsBitField.Ephemeral
+          flags: MessageFlagsBitField.Ephemeral,
         });
       }
 
@@ -40,7 +40,7 @@ module.exports = {
 
       const errorMessage = {
         content: '❌ 複製チャンネル設定中にエラーが発生しました。',
-        flags: MessageFlagsBitField.Ephemeral
+        flags: MessageFlagsBitField.Ephemeral,
       };
 
       if (!interaction.replied && !interaction.deferred) {
@@ -49,5 +49,5 @@ module.exports = {
         await interaction.followUp(errorMessage);
       }
     }
-  })
+  }),
 };

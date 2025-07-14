@@ -1,3 +1,4 @@
+const { MessageFlagsBitField } = require('discord.js'); // 追加: これが必要です
 const requireAdmin = require('../../permissions/requireAdmin');
 const { ensureGuildJSON, readJSON, writeJSON } = require('../../fileHelper');
 
@@ -7,7 +8,13 @@ module.exports = {
   handle: requireAdmin(async (interaction) => {
     try {
       const guild = interaction.guild;
-      const selectedChannelId = interaction.values[0];
+      const selectedChannelId = interaction.values?.[0];
+      if (!selectedChannelId) {
+        return await interaction.reply({
+          content: '⚠️ チャンネルが正しく選択されていません。',
+          flags: MessageFlagsBitField.Ephemeral,
+        });
+      }
 
       const filePath = await ensureGuildJSON(guild.id);
       const data = await readJSON(filePath);
@@ -23,23 +30,23 @@ module.exports = {
 
       await interaction.reply({
         content: `✅ メインチャンネルを <#${selectedChannelId}> に設定しました。`,
-        flags: MessageFlagsBitField.Ephemeral
+        flags: MessageFlagsBitField.Ephemeral,
       });
 
     } catch (error) {
       console.error('totusuna_select_main処理エラー:', error);
-      
+
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({
           content: '❌ チャンネル設定中にエラーが発生しました。',
-          flags: MessageFlagsBitField.Ephemeral
+          flags: MessageFlagsBitField.Ephemeral,
         });
       } else {
         await interaction.followUp({
           content: '❌ チャンネル設定中にエラーが発生しました。',
-          flags: MessageFlagsBitField.Ephemeral
+          flags: MessageFlagsBitField.Ephemeral,
         });
       }
     }
-  })
+  }),
 };

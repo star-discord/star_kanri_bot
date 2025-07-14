@@ -1,5 +1,5 @@
 // utils/totusuna_setti/buttons/delete.js
-const fs = require('fs');
+const fs = require('fs').promises;
 const path = require('path');
 const { MessageFlagsBitField } = require('discord.js');
 
@@ -11,33 +11,55 @@ module.exports = {
    * @param {import('discord.js').ButtonInteraction} interaction
    */
   async handle(interaction) {
-    const guildId = interaction.guildId;
-    const uuid = interaction.customId.replace(this.customIdStart, '');
-    const filePath = path.join(__dirname, '../../../data', guildId, `${guildId}.json`);
-
-    if (!fs.existsSync(filePath)) {
-      return await interaction.reply({
-        content: '⚠️ データファイルが見つかりません。',
-        flags: MessageFlagsBitField.Ephemeral,
-      });
+    try {
+      await interaction.deferReply({ ephemeral: true });
+    } catch (err) {
+      console.error(`[${new Date().toISOString()}] deferReply失敗:`, err);
+      if (!interaction.replied && !interaction.deferred) {
+        await interaction.reply({
+          content: '❌ 応答準備中にエラーが発生しました。',
+          flags: MessageFlagsBitField.Ephemeral,
+        }).catch(() => {});
+      }
+      return;
     }
 
-    const json = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-    const list = json.totsusuna?.instances;
+    const guildId = interaction.guildId;
+    if (!guildId) {
+      return interaction.editReply({ content: '⚠️ ギルドIDが取得できません。' });
+    }
 
+    if (!interaction.guild) {
+      return interaction.editReply({ content: '⚠️ ギルド情報が取得できません。' });
+    }
+
+    const uuid = interaction.customId.substring(this.customIdStart.length);
+    const filePath = path.resolve(__dirname, '..', '..', '..', 'data', guildId, `${guildId}.json`);
+
+    // ファイル存在チェック
+    try {
+      await fs.access(filePath);
+    } catch {
+      return interaction.editReply({ content: '⚠️ データファイルが見つかりません。' });
+    }
+
+    let json;
+    try {
+      const fileData = await fs.readFile(filePath, 'utf8');
+      json = JSON.parse(fileData);
+    } catch (err) {
+      console.error(`[${new Date().toISOString()}] JSON読み込みエラー:`, err);
+      return interaction.editReply({ content: '❌ データの読み込みに失敗しました。' });
+    }
+
+    const list = json.totsusuna?.instances;
     if (!Array.isArray(list)) {
-      return await interaction.reply({
-        content: '⚠️ インスタンスデータが存在しません。',
-        flags: MessageFlagsBitField.Ephemeral,
-      });
+      return interaction.editReply({ content: '⚠️ インスタンスデータが存在しません。' });
     }
 
     const targetIndex = list.findIndex(i => i.id === uuid);
     if (targetIndex === -1) {
-      return await interaction.reply({
-        content: '⚠️ 指定された設置データが見つかりません。',
-        flags: MessageFlagsBitField.Ephemeral,
-      });
+      return interaction.editReply({ content: '⚠️ 指定された設置データが見つかりません。' });
     }
 
     const instance = list[targetIndex];
@@ -46,21 +68,37 @@ module.exports = {
     if (instance.messageId && instance.installChannelId) {
       try {
         const channel = await interaction.guild.channels.fetch(instance.installChannelId);
-        const message = await channel.messages.fetch(instance.messageId);
-        if (message) await message.delete();
+        if (channel) {
+          const message = await channel.messages.fetch(instance.messageId).catch(() => null);
+          if (message) {
+            await message.delete();
+          } else {
+            console.warn(`[${new Date().toISOString()}] メッセージが見つかりません: チャンネルID=${instance.installChannelId}, メッセージID=${instance.messageId}`);
+          }
+        } else {
+          console.warn(`[${new Date().toISOString()}] チャンネルが見つかりません: ${instance.installChannelId}`);
+        }
       } catch (err) {
-        console.warn(`[totsusuna_setti:delete] メッセージ削除失敗: ${err.message}`);
-        // エラーは無視して続行
+        console.warn(`[${new Date().toISOString()}] メッセージ削除失敗:`, err);
+        // 削除失敗は致命的ではないため無視
       }
     }
 
     // 配列から削除して保存
     list.splice(targetIndex, 1);
-    fs.writeFileSync(filePath, JSON.stringify(json, null, 2), 'utf-8');
+    try {
+      await fs.writeFile(filePath, JSON.stringify(json, null, 2), 'utf8');
+    } catch (err) {
+      console.error(`[${new Date().toISOString()}] JSON書き込み失敗:`, err);
+      return interaction.editReply({ content: '❌ データの保存に失敗しました。' });
+    }
 
-    await interaction.reply({
-      content: '🗑️ 凸スナ設置データを削除しました。',
-      flags: MessageFlagsBitField.Ephemeral,
-    });
+    try {
+      await interaction.editReply({
+        content: '🗑️ 凸スナ設置データを削除しました。',
+      });
+    } catch (err) {
+      console.error(`[${new Date().toISOString()}] 応答送信失敗:`, err);
+    }
   },
 };

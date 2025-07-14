@@ -6,61 +6,98 @@ const {
   MessageFlagsBitField,
 } = require('discord.js');
 
+const CUSTOM_ID_START = 'totsusuna_report_button_';
+
 module.exports = {
-  customIdStart: 'totsusuna_report_button_', // 命名規則に従って統一
+  customIdStart: CUSTOM_ID_START,
 
   /**
    * 凸スナ報告ボタン押下時の処理：モーダルを表示
    * @param {import('discord.js').ButtonInteraction} interaction
    */
   async handle(interaction) {
-    const customId = interaction.customId;
+    try {
+      const { customId } = interaction;
 
-    // ボタンIDからUUIDを抽出（例: totsusuna_report_button_<UUID>）
-    const uuid = customId.split('_').slice(-1)[0];
+      // customIdが期待した形式かチェック
+      if (!customId.startsWith(CUSTOM_ID_START)) {
+        console.warn(`[totsusuna_report_button] 不正なcustomId: ${customId}`);
+        return await interaction.reply({
+          content: '❌ 不正なボタン操作です。',
+          flags: MessageFlagsBitField.Ephemeral,
+        });
+      }
 
-    const modal = new ModalBuilder()
-      .setCustomId(`totsusuna_modal_${uuid}`) // uuidを付与して特定
-      .setTitle('📝 凸スナ報告フォーム');
+      // UUID部分を切り出す
+      const uuid = customId.substring(CUSTOM_ID_START.length);
+      if (!uuid) {
+        console.warn('[totsusuna_report_button] UUIDが抽出できません');
+        return await interaction.reply({
+          content: '❌ 凸スナ識別子が不正です。',
+          flags: MessageFlagsBitField.Ephemeral,
+        });
+      }
 
-    const groupInput = new TextInputBuilder()
-      .setCustomId('group')
-      .setLabel('組数（何組）')
-      .setStyle(TextInputStyle.Short)
-      .setRequired(true);
+      // モーダル作成
+      const modal = new ModalBuilder()
+        .setCustomId(`totsusuna_modal_${uuid}`)
+        .setTitle('📝 凸スナ報告フォーム');
 
-    const nameInput = new TextInputBuilder()
-      .setCustomId('name')
-      .setLabel('人数（何名）')
-      .setStyle(TextInputStyle.Short)
-      .setRequired(true);
+      // 各入力欄の作成。最大文字数も設定（必要に応じて調整）
+      const groupInput = new TextInputBuilder()
+        .setCustomId('group')
+        .setLabel('組数（何組）')
+        .setStyle(TextInputStyle.Short)
+        .setMaxLength(10)
+        .setRequired(true);
 
-    const table1 = new TextInputBuilder()
-      .setCustomId('table1')
-      .setLabel('卓1（任意）')
-      .setStyle(TextInputStyle.Short)
-      .setRequired(false);
+      const nameInput = new TextInputBuilder()
+        .setCustomId('name')
+        .setLabel('人数（何名）')
+        .setStyle(TextInputStyle.Short)
+        .setMaxLength(10)
+        .setRequired(true);
 
-    const table2 = new TextInputBuilder()
-      .setCustomId('table2')
-      .setLabel('卓2（任意）')
-      .setStyle(TextInputStyle.Short)
-      .setRequired(false);
+      const table1 = new TextInputBuilder()
+        .setCustomId('table1')
+        .setLabel('卓1（任意）')
+        .setStyle(TextInputStyle.Short)
+        .setMaxLength(20)
+        .setRequired(false);
 
-    const detail = new TextInputBuilder()
-      .setCustomId('detail')
-      .setLabel('補足・詳細（任意）')
-      .setStyle(TextInputStyle.Paragraph)
-      .setRequired(false);
+      const table2 = new TextInputBuilder()
+        .setCustomId('table2')
+        .setLabel('卓2（任意）')
+        .setStyle(TextInputStyle.Short)
+        .setMaxLength(20)
+        .setRequired(false);
 
-    modal.addComponents(
-      new ActionRowBuilder().addComponents(groupInput),
-      new ActionRowBuilder().addComponents(nameInput),
-      new ActionRowBuilder().addComponents(table1),
-      new ActionRowBuilder().addComponents(table2),
-      new ActionRowBuilder().addComponents(detail),
-    );
+      const detail = new TextInputBuilder()
+        .setCustomId('detail')
+        .setLabel('補足・詳細（任意）')
+        .setStyle(TextInputStyle.Paragraph)
+        .setMaxLength(4000) // Discordのテキスト入力最大値
+        .setRequired(false);
 
-    await interaction.showModal(modal);
+      modal.addComponents(
+        new ActionRowBuilder().addComponents(groupInput),
+        new ActionRowBuilder().addComponents(nameInput),
+        new ActionRowBuilder().addComponents(table1),
+        new ActionRowBuilder().addComponents(table2),
+        new ActionRowBuilder().addComponents(detail),
+      );
+
+      // モーダルを表示
+      await interaction.showModal(modal);
+    } catch (error) {
+      console.error('[totsusuna_report_button] モーダル表示エラー:', error);
+
+      if (!interaction.replied && !interaction.deferred) {
+        await interaction.reply({
+          content: '❌ モーダルの表示に失敗しました。再度お試しください。',
+          flags: MessageFlagsBitField.Ephemeral,
+        });
+      }
+    }
   },
 };

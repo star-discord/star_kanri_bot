@@ -1,9 +1,9 @@
 // utils/star_chat_gpt_setti/buttons/chatgpt_config_button.js
-const { MessageFlags, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
+const { MessageFlagsBitField, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
 
 module.exports = {
   customId: 'chatgpt_config_button',
-  
+
   async handle(interaction) {
     try {
       const modal = new ModalBuilder()
@@ -41,7 +41,7 @@ module.exports = {
 
     } catch (error) {
       console.error('ChatGPT設定ボタン処理エラー:', error);
-      
+
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({
           content: '❌ 設定画面の表示中にエラーが発生しました。',

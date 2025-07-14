@@ -1,4 +1,4 @@
-const { MessageFlags } = require('discord.js');
+const { MessageFlagsBitField } = require('discord.js');
 const findHandler = require('../selects');
 
 /**
@@ -11,7 +11,7 @@ async function handleSelect(interaction) {
   const customId = interaction.customId;
   const handler = findHandler(customId);
 
-  if (!handler) {
+  if (!handler || typeof handler.handle !== 'function') {
     await interaction.reply({
       content: '❌ セレクトメニューに対応する処理が見つかりませんでした。',
       flags: MessageFlagsBitField.Ephemeral,
@@ -24,20 +24,22 @@ async function handleSelect(interaction) {
   } catch (error) {
     console.error(`❌ セレクトメニュー処理エラー (${customId}):`, error);
 
-    if (interaction.replied || interaction.deferred) {
-      await interaction.followUp({
-        content: '⚠️ セレクトメニュー処理中にエラーが発生しました。管理者に報告してください。',
-        flags: MessageFlagsBitField.Ephemeral,
-      });
+    const errorMessage = {
+      content: '⚠️ セレクトメニュー処理中にエラーが発生しました。管理者に報告してください。',
+      flags: MessageFlagsBitField.Ephemeral,
+    };
+
+    if (interaction.deferred && !interaction.replied) {
+      await interaction.editReply(errorMessage);
+    } else if (interaction.replied) {
+      await interaction.followUp(errorMessage);
     } else {
-      await interaction.reply({
-        content: '⚠️ セレクトメニュー処理中にエラーが発生しました。管理者に報告してください。',
-        flags: MessageFlagsBitField.Ephemeral,
-      });
+      await interaction.reply(errorMessage);
     }
   }
 }
 
 module.exports = { handleSelect };
+
 
 

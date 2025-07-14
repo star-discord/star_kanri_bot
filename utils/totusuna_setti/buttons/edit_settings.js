@@ -17,16 +17,37 @@ module.exports = {
    */
   async handle(interaction) {
     const guildId = interaction.guildId;
-    const uuid = interaction.customId.replace(this.customIdStart, '');
-    const dataPath = path.join(__dirname, '../../../data', guildId, `${guildId}.json`);
+    if (!guildId) {
+      if (!interaction.replied && !interaction.deferred) {
+        await interaction.reply({
+          content: '⚠️ ギルド情報が取得できません。',
+          flags: MessageFlagsBitField.Ephemeral,
+        });
+      }
+      return;
+    }
 
+    // ※必要に応じて先に deferUpdate() を呼ぶ場合は以下コメントアウトを外す
+    // try {
+    //   await interaction.deferUpdate();
+    // } catch (err) {
+    //   console.error(new Date().toISOString(), '[edit_settings] deferUpdate失敗:', err);
+    // }
+
+    const uuid = interaction.customId.substring(this.customIdStart.length);
+    const dataPath = path.resolve(__dirname, '../../../data', guildId, `${guildId}.json`);
+
+    // ファイル存在チェック
     try {
       await fs.access(dataPath);
     } catch {
-      return await interaction.reply({
-        content: '⚠️ データファイルが見つかりません。',
-        flags: MessageFlagsBitField.Ephemeral,
-      });
+      if (!interaction.replied && !interaction.deferred) {
+        await interaction.reply({
+          content: '⚠️ データファイルが見つかりません。',
+          flags: MessageFlagsBitField.Ephemeral,
+        });
+      }
+      return;
     }
 
     let json;
@@ -34,31 +55,40 @@ module.exports = {
       const fileContent = await fs.readFile(dataPath, 'utf-8');
       json = JSON.parse(fileContent);
     } catch (err) {
-      console.error('[edit_settings] JSON読み込み失敗:', err);
-      return await interaction.reply({
-        content: '❌ データファイルの読み込みに失敗しました。',
-        flags: MessageFlagsBitField.Ephemeral,
-      });
+      console.error(new Date().toISOString(), '[edit_settings] JSON読み込み失敗:', err);
+      if (!interaction.replied && !interaction.deferred) {
+        await interaction.reply({
+          content: '❌ データファイルの読み込みに失敗しました。',
+          flags: MessageFlagsBitField.Ephemeral,
+        });
+      }
+      return;
     }
 
     const instances = json.totsusuna?.instances;
     if (!Array.isArray(instances)) {
-      return await interaction.reply({
-        content: '⚠️ インスタンスデータが見つかりません。',
-        flags: MessageFlagsBitField.Ephemeral,
-      });
+      if (!interaction.replied && !interaction.deferred) {
+        await interaction.reply({
+          content: '⚠️ インスタンスデータが見つかりません。',
+          flags: MessageFlagsBitField.Ephemeral,
+        });
+      }
+      return;
     }
 
     const instance = instances.find(i => i.id === uuid);
     if (!instance) {
-      return await interaction.reply({
-        content: '⚠️ 指定された設定情報が存在しません。',
-        flags: MessageFlagsBitField.Ephemeral,
-      });
+      if (!interaction.replied && !interaction.deferred) {
+        await interaction.reply({
+          content: '⚠️ 指定された設定情報が存在しません。',
+          flags: MessageFlagsBitField.Ephemeral,
+        });
+      }
+      return;
     }
 
     const modal = new ModalBuilder()
-      .setCustomId(`totsusuna_edit_settings_modal:${uuid}`) // ✅ モーダルIDは変更後の処理に合わせて明示
+      .setCustomId(`totsusuna_edit_settings_modal:${uuid}`)
       .setTitle('📘 凸スナ本文の編集');
 
     const bodyInput = new TextInputBuilder()
@@ -70,6 +100,16 @@ module.exports = {
 
     modal.addComponents(new ActionRowBuilder().addComponents(bodyInput));
 
-    await interaction.showModal(modal);
+    try {
+      await interaction.showModal(modal);
+    } catch (err) {
+      console.error(new Date().toISOString(), '[edit_settings] モーダル表示失敗:', err);
+      if (!interaction.replied && !interaction.deferred) {
+        await interaction.reply({
+          content: '❌ モーダルの表示に失敗しました。',
+          flags: MessageFlagsBitField.Ephemeral,
+        });
+      }
+    }
   },
 };
