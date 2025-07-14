@@ -46,7 +46,7 @@ module.exports = {
    * ChatGPT情報ボタンのインタラクションを処理します。
    * @param {import('discord.js').ButtonInteraction} interaction
    */
-  async handle(interaction) {
+  handle: async function(interaction) {
     // タイムアウトを防ぐために、すぐに応答を遅延させます。
     await interaction.deferReply();
 
