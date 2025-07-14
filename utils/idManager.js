@@ -122,34 +122,29 @@ class IdManager {
    */
   parseCustomId(customId) {
     // 各パターンをチェック
+    // Specific patterns (with fewer wildcards or more segments) should come first.
     const patterns = [
-      // STAR設定
-      { regex: /^star_config:(.+)$/, category: 'star_config', type: 'button' },
-      { regex: /^star_config_modal_(.+)$/, category: 'star_config', type: 'modal' },
-      
-      // ChatGPT設定
-      { regex: /^star_chat_gpt_(.+)$/, category: 'star_chat_gpt', type: 'button' },
-      { regex: /^chatgpt_config_modal$/, category: 'star_chat_gpt', type: 'modal', action: 'config' },
-      
-      // totusuna設定
-      { regex: /^totusuna_setti:([^:]+):?(.*)$/, category: 'totusuna_setti', type: 'button' },
-      { regex: /^totusuna_modal_([^:]+):?(.*)$/, category: 'totusuna_setti', type: 'modal' },
-      { regex: /^totusuna_setti:(.+)$/, category: 'totusuna_setti', type: 'select' },
-      
-      // totusuna設定（config）
-      { regex: /^totusuna_config:([^:]+):?(.*)$/, category: 'totusuna_config', type: 'button' },
+      // --- Most specific patterns first ---
       { regex: /^totusuna_config_edit_modal_(.+)$/, category: 'totusuna_config', type: 'modal' },
-      { regex: /^totusuna_config_select$/, category: 'totusuna_config', type: 'select', action: 'select' },
-      
-      // totusuna報告
-      { regex: /^totusuna:report:(.+)$/, category: 'totusuna_report', type: 'button' },
       { regex: /^totusuna_modal:(.+)$/, category: 'totusuna_report', type: 'modal' },
-      
-      // KPI
-      { regex: /^kpi_(.+)$/, category: 'kpi', type: 'button' },
+      { regex: /^totusuna:report:(.+)$/, category: 'totusuna_report', type: 'button' },
+      { regex: /^chatgpt_config_modal$/, category: 'star_chat_gpt', type: 'modal', action: 'config' },
+
+      // --- Patterns with optional UUIDs (Corrected Regex) ---
+      // The regex `([^:]+)(?::(.*))?` correctly captures the action and an optional UUID without capturing the separator colon.
+      { regex: /^totusuna_setti:([^:]+)(?::(.*))?$/, category: 'totusuna_setti', type: 'button' },
+      { regex: /^totusuna_modal_([^:]+)(?::(.*))?$/, category: 'totusuna_setti', type: 'modal' },
+      { regex: /^totusuna_config:([^:]+)(?::(.*))?$/, category: 'totusuna_config', type: 'button' },
+
+      // --- General category patterns ---
+      { regex: /^star_config_modal_(.+)$/, category: 'star_config', type: 'modal' },
+      { regex: /^star_config:(.+)$/, category: 'star_config', type: 'select' }, // This is likely a select menu
+      { regex: /^star_chat_gpt_(.+)$/, category: 'star_chat_gpt', type: 'button' },
       { regex: /^kpi_modal_(.+)$/, category: 'kpi', type: 'modal' },
-      
-      // レガシー対応
+      { regex: /^kpi_(.+)$/, category: 'kpi', type: 'button' },
+
+      // --- Legacy / Hardcoded ID patterns ---
+      { regex: /^totusuna_config_select$/, category: 'totusuna_config', type: 'select', action: 'select' },
       { regex: /^admin_role_select$/, category: 'star_config', type: 'select', action: 'admin_role' },
       { regex: /^notify_channel_select$/, category: 'star_config', type: 'select', action: 'notify_channel' },
       { regex: /^totusuna_select_(main|replicate)$/, category: 'totusuna_setti', type: 'select' },
@@ -206,8 +201,7 @@ class IdManager {
    */
   normalizeName(name) {
     const normalizations = {
-      'totusuna': 'totusuna',
-      'totusuna': 'totusuna',
+      'totsuna': 'totusuna', // Corrected duplicate key
       'toutsuna': 'totusuna',
     };
     
