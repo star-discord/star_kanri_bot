@@ -106,7 +106,7 @@ client.on('interactionCreate', async interaction => {
     type: interaction.type,
     commandName: interaction.commandName || interaction.customId || 'unknown',
     user: interaction.user.tag,
-    guildId: interaction.guild?.id || 'DM',
+    guild: interaction.guild?.name || 'DM',
     timestamp: new Date().toISOString()
   });
 

@@ -75,6 +75,7 @@ function createErrorEmbed(title, description) {
 
 module.exports = {
   COLORS,
+  createBaseEmbed,
   createAdminEmbed,
   createAdminRejectEmbed,
   createSuccessEmbed,

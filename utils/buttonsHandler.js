@@ -18,43 +18,19 @@ const handlerFinders = {
 };
 
 /**
- * 2. Map customId prefixes and exact IDs to the correct handler category.
- *    This allows for efficient, direct routing.
- */
-const customIdMapping = {
-  'totusuna_install_button': 'totusuna_setti',
-  'totusuna_config_button': 'totusuna_setti',
-  'chatgpt_config_button': 'star_chat_gpt_setti',
-  'star_chat_gpt_setti_button': 'star_chat_gpt_setti',
-};
-
-const prefixMapping = {
-  'star_config:': 'star_config',
-  'totusuna_': 'totusuna_setti',
-  'totsusuna_report_button_': 'totusuna_setti',
-  'totusuna_config:': 'totusuna_config',
-  'kpi_': 'kpi_setti',
-  'attendance_': 'attendance',
-};
-
-/**
  * Finds the correct handler function based on the customId.
  * @param {string} customId The customId from the interaction.
  * @returns {object|null} The handler object or null if not found.
  */
 function findButtonHandler(customId) {
-  // 1. Check for an exact match in the customIdMapping
-  const exactCategory = customIdMapping[customId];
-  if (exactCategory) {
-    const find = handlerFinders[exactCategory];
-    return find ? find(customId) : null;
-  }
-
-  // 2. Check for a prefix match
-  for (const [prefix, category] of Object.entries(prefixMapping)) {
-    if (customId.startsWith(prefix)) {
-      const find = handlerFinders[category];
-      return find ? find(customId) : null;
+  // Iterate through all handler categories and try to find a match.
+  for (const category in handlerFinders) {
+    const find = handlerFinders[category];
+    // The `find` function is the `findHandler` returned by `loadHandlers`.
+    // It will return the handler if found, or null otherwise.
+    const handler = find(customId);
+    if (handler) {
+      return handler; // Return the first handler found.
     }
   }
   return null;
@@ -73,7 +49,7 @@ async function handleButton(interaction) {
     console.warn('[buttonsHandler] Invalid customId received:', customId);
     return interaction.reply({
       content: '⚠️ 不正なボタンが押されました。',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 
@@ -83,7 +59,7 @@ async function handleButton(interaction) {
     console.warn(`[buttonsHandler] Unhandled button customId: ${customId}`);
     return interaction.reply({
       content: '⚠️ このボタンは現在利用できません。',
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 

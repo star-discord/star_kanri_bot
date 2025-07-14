@@ -22,7 +22,7 @@ module.exports = {
 
       const content = `🤖 **ChatGPT案内**\n以下のボタンを押すと、「天気」「ニュース」「豆知識」などの情報が届きます。`;
 
-      await interaction.reply({ content, components: [row], ephemeral: false });
+      await interaction.reply({ content, components: [row] });
     } catch (error) {
       console.error('star_chat_gpt_setti コマンド実行エラー:', error);
       if (!interaction.replied && !interaction.deferred) {
