@@ -71,23 +71,16 @@ function loadHandlers(dirPath) {
    * @returns {Handler|null}
    */
   return function findHandler(customId) {
-    console.log(`🔍 [handlerLoader] ハンドラー検索: ${customId}`);
-    console.log(`   完全一致ハンドラー: ${Object.keys(handlers).join(', ')}`);
-    console.log(`   前方一致ハンドラー: ${startsWithHandlers.map(h => h.key).join(', ')}`);
-
     if (handlers[customId]) {
-      console.log(`   ✅ 完全一致ハンドラー見つかりました: ${customId}`);
       return handlers[customId];
     }
 
     for (const { key, handler } of startsWithHandlers) {
       if (customId.startsWith(key)) {
-        console.log(`   ✅ 前方一致ハンドラー見つかりました: ${key}`);
         return handler;
       }
     }
 
-    console.warn(`⚠️ [handlerLoader] 対応するハンドラが見つかりません: ${customId}`);
     return null;
   };
 }
