@@ -65,6 +65,12 @@ function loadHandlers(dirPath) {
   // 前方一致ハンドラはキー長の降順でソートし、より長いプレフィックスを優先
   startsWithHandlers.sort((a, b) => b.key.length - a.key.length);
 
+  // [追加] 読み込んだハンドラの総数をログに出力
+  const totalLoaded = Object.keys(handlers).length + startsWithHandlers.length;
+  if (totalLoaded > 0) {
+    console.log(`[handlerLoader] ✅ ${path.basename(dirPath)}: ${totalLoaded}個のハンドラを読み込みました。`);
+  }
+
   /**
    * customId に対応するハンドラを返す（完全一致優先→前方一致）
    * @param {string} customId
