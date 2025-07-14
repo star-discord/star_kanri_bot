@@ -24,7 +24,7 @@ module.exports = {
         console.error('❌ [installChannelSelect] チャンネルが選択されていません');
         return await interaction.reply({
           content: '❌ チャンネルが選択されていません。再度お試しください。',
-          flags: MessageFlags.Ephemeral
+          flags: MessageFlagsBitField.Ephemeral
         });
       }
       
@@ -41,11 +41,11 @@ module.exports = {
         console.error('❌ [installChannelSelect] tempStoreにデータが見つかりません');
         return await interaction.reply({
           content: '❌ 設置データが見つかりません。最初からやり直してください。',
-          flags: MessageFlags.Ephemeral
+          flags: MessageFlagsBitField.Ephemeral
         });
       }
 
-      // データファイル準備
+      // チャンネルファイル準備
       console.log('📁 [installChannelSelect] ファイル処理開始...');
       const jsonPath = ensureGuildJSON(guildId);
       console.log('   jsonPath:', jsonPath);
@@ -80,7 +80,7 @@ module.exports = {
         console.error('❌ [installChannelSelect] チャンネルが無効またはテキストチャンネルではありません');
         return await interaction.reply({
           content: '❌ 指定されたチャンネルは無効です。',
-          flags: MessageFlags.Ephemeral
+          flags: MessageFlagsBitField.Ephemeral
         });
       }
 
@@ -165,7 +165,7 @@ module.exports = {
         if (!interaction.replied && !interaction.deferred) {
           await interaction.reply({
             content: '❌ 凸スナ設置中にエラーが発生しました。詳細はコンソールを確認してください。',
-            flags: MessageFlags.Ephemeral
+            flags: MessageFlagsBitField.Ephemeral
           });
         } else if (interaction.deferred) {
           await interaction.editReply({
@@ -174,7 +174,7 @@ module.exports = {
         } else {
           await interaction.followUp({
             content: '❌ 凸スナ設置中にエラーが発生しました。詳細はコンソールを確認してください。',
-            flags: MessageFlags.Ephemeral
+            flags: MessageFlagsBitField.Ephemeral
           });
         }
       } catch (replyError) {

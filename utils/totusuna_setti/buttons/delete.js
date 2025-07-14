@@ -17,8 +17,8 @@ module.exports = {
 
     if (!fs.existsSync(filePath)) {
       return await interaction.reply({
-        content: 'âš EEData file not found.',
-        flags: MessageFlags.Ephemeral,
+        content: 'âš ï¿½Eï¿½EData file not found.',
+        flags: MessageFlagsBitField.Ephemeral,
       });
     }
 
@@ -27,16 +27,16 @@ module.exports = {
 
     if (!Array.isArray(list)) {
       return await interaction.reply({
-        content: 'âš EENo instance data available.',
-        flags: MessageFlags.Ephemeral,
+        content: 'âš ï¿½Eï¿½ENo instance data available.',
+        flags: MessageFlagsBitField.Ephemeral,
       });
     }
 
     const targetIndex = list.findIndex(i => i.id === uuid);
     if (targetIndex === -1) {
       return await interaction.reply({
-        content: 'âš EETarget instance not found.',
-        flags: MessageFlags.Ephemeral,
+        content: 'âš ï¿½Eï¿½ETarget instance not found.',
+        flags: MessageFlagsBitField.Ephemeral,
       });
     }
 
@@ -58,8 +58,8 @@ module.exports = {
     fs.writeFileSync(filePath, JSON.stringify(json, null, 2));
 
     await interaction.reply({
-      content: 'ğŸ—‘EETotsusuna instance deleted successfully.',
-      flags: MessageFlags.Ephemeral,
+      content: 'ğŸ—‘ï¸ Totsusuna instance deleted successfully.',
+      flags: MessageFlagsBitField.Ephemeral,
     });
   },
 };

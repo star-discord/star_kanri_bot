@@ -6,6 +6,7 @@
  * @param {string} userMsg - ユーザー向けエラーメッセージ
  * @param {object} [opts] - interaction.reply追加オプション
  */
+const { MessageFlagsBitField } = require('discord.js');
 async function logAndReplyError(interaction, logMsg, userMsg, opts = {}) {
   if (logMsg instanceof Error) {
     console.error(logMsg.stack || logMsg);
@@ -15,7 +16,7 @@ async function logAndReplyError(interaction, logMsg, userMsg, opts = {}) {
   if (!interaction.replied && !interaction.deferred) {
     return interaction.reply({
       content: userMsg,
-      ephemeral: true,
+      flags: MessageFlagsBitField.Ephemeral,
       ...opts
     });
   }

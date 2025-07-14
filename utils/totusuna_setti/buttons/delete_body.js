@@ -6,7 +6,7 @@ module.exports = {
   customIdStart: 'totsusuna_setti:delete_body:', // 英語化
 
   /**
-   * 凸スナ本文削除ボタンの処理
+   * 凸スナ本斁E��除ボタンの処琁E
    * @param {import('discord.js').ButtonInteraction} interaction
    */
   async handle(interaction) {
@@ -14,11 +14,11 @@ module.exports = {
     const uuid = interaction.customId.replace(this.customIdStart, '');
     const dataPath = path.join(__dirname, '../../../data', guildId, `${guildId}.json`);
 
-    // データファイル存在確認
+    // チE�Eタファイル存在確誁E
     if (!fs.existsSync(dataPath)) {
       return await interaction.reply({
         content: '⚠️ データファイルが見つかりません。',
-        flags: MessageFlags.Ephemeral,
+        flags: MessageFlagsBitField.Ephemeral,
       });
     }
 
@@ -30,7 +30,7 @@ module.exports = {
       console.error('[delete_body] JSON読み込みエラー:', err);
       return await interaction.reply({
         content: '❌ データの読み込みに失敗しました。',
-        flags: MessageFlags.Ephemeral,
+        flags: MessageFlagsBitField.Ephemeral,
       });
     }
 
@@ -38,7 +38,7 @@ module.exports = {
     if (!Array.isArray(instances)) {
       return await interaction.reply({
         content: '⚠️ 凸スナ情報が不正です。',
-        flags: MessageFlags.Ephemeral,
+        flags: MessageFlagsBitField.Ephemeral,
       });
     }
 
@@ -46,13 +46,13 @@ module.exports = {
     if (targetIndex === -1) {
       return await interaction.reply({
         content: '⚠️ 指定された設置は存在しません。',
-        flags: MessageFlags.Ephemeral,
+        flags: MessageFlagsBitField.Ephemeral,
       });
     }
 
     const target = instances[targetIndex];
 
-    // メッセージ削除処理
+    // メチE��ージ削除処琁E
     try {
       const channel = await interaction.guild.channels.fetch(target.installChannelId);
       if (channel && target.messageId) {
@@ -69,7 +69,7 @@ module.exports = {
 
     await interaction.reply({
       content: '🗑 本文を削除しました。',
-      flags: MessageFlags.Ephemeral,
+      flags: MessageFlagsBitField.Ephemeral,
     });
   },
 };

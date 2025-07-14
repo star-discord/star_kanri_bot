@@ -76,7 +76,7 @@ module.exports = {
 
       await interaction.reply({
         embeds: [embed],
-        ephemeral: true,
+        flags: MessageFlagsBitField.Ephemeral,
       });
     } catch (error) {
       console.error('ChatGPTボタン処理エラー:', error);
@@ -84,7 +84,7 @@ module.exports = {
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({
           content: '❌ ChatGPT機能は現在利用できません。API制限またはネットワークエラーが発生しています。',
-          ephemeral: true,
+          flags: MessageFlagsBitField.Ephemeral,
         });
       }
     }

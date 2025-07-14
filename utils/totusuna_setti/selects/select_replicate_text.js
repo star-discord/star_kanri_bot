@@ -5,7 +5,7 @@ module.exports = {
   customId: 'totsusuna_setti:select_replicate_text',
 
   /**
-   * 複製チャンネルの選択を処理
+   * 褁E��チャンネルの選択を処琁E
    * @param {import('discord.js').StringSelectMenuInteraction} interaction
    */
   async handle(interaction) {
@@ -16,11 +16,11 @@ module.exports = {
     if (!Array.isArray(selected) || selected.length === 0) {
       return await interaction.reply({
         content: '⚠️ 複製チャンネルが選択されていません。',
-        flags: MessageFlags.Ephemeral,
+        flags: MessageFlagsBitField.Ephemeral,
       });
     }
 
-    // 既存の一時データと統合
+    // 既存�E一時データと統吁E
     const prev = tempState.get(guildId, userId) || {};
     tempState.set(guildId, userId, {
       ...prev,
@@ -29,7 +29,7 @@ module.exports = {
 
     await interaction.reply({
       content: `✅ 複製チャンネルとして ${selected.map(id => `<#${id}>`).join(', ')} を設定しました。`,
-      flags: MessageFlags.Ephemeral,
+      flags: MessageFlagsBitField.Ephemeral,
     });
   },
 };

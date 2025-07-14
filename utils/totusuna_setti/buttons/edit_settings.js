@@ -12,7 +12,7 @@ module.exports = {
   customIdStart: 'totsusuna_setti:edit_settings:',
 
   /**
-   * 凸スナ設置の編集モーダル表示
+   * 凸スナ設置の編雁E��ーダル表示
    * @param {import('discord.js').ButtonInteraction} interaction
    */
   async handle(interaction) {
@@ -25,7 +25,7 @@ module.exports = {
     } catch {
       return await interaction.reply({
         content: '⚠️ データファイルが見つかりません。',
-        flags: MessageFlags.Ephemeral,
+        flags: MessageFlagsBitField.Ephemeral,
       });
     }
 
@@ -34,10 +34,10 @@ module.exports = {
       const fileContent = await fs.readFile(dataPath, 'utf-8');
       json = JSON.parse(fileContent);
     } catch (err) {
-      console.error('[edit_settings] JSON読み込み失敗:', err);
+      console.error('[edit_settings] JSON読み込み失敁E', err);
       return await interaction.reply({
         content: '❌ データファイルの読み込みに失敗しました。',
-        flags: MessageFlags.Ephemeral,
+        flags: MessageFlagsBitField.Ephemeral,
       });
     }
 
@@ -45,15 +45,15 @@ module.exports = {
     if (!Array.isArray(instances)) {
       return await interaction.reply({
         content: '⚠️ インスタンスデータが見つかりません。',
-        flags: MessageFlags.Ephemeral,
+        flags: MessageFlagsBitField.Ephemeral,
       });
     }
 
     const instance = instances.find(i => i.id === uuid);
     if (!instance) {
       return await interaction.reply({
-        content: '⚠️ 指定された設置情報が存在しません。',
-        flags: MessageFlags.Ephemeral,
+        content: '⚠️ 指定された設定情報が存在しません。',
+        flags: MessageFlagsBitField.Ephemeral,
       });
     }
 

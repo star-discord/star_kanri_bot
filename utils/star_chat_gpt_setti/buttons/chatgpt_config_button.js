@@ -45,7 +45,7 @@ module.exports = {
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({
           content: '❌ 設定画面の表示中にエラーが発生しました。',
-          ephemeral: true,
+          flags: MessageFlagsBitField.Ephemeral,
         });
       }
     }

@@ -26,18 +26,18 @@ module.exports = {
         if (!interaction.replied && !interaction.deferred) {
           return interaction.reply({
             content: '❌ **既に出勤中です**\n退勤処理を行ってから再度出勤してください。',
-            flags: MessageFlags.Ephemeral
+            flags: MessageFlagsBitField.Ephemeral
           });
         }
         return;
       }
       if (!interaction.replied && !interaction.deferred) {
-        return interaction.reply({ content: '出勤処理に失敗しました。', flags: MessageFlags.Ephemeral });
+        return interaction.reply({ content: '出勤処理に失敗しました。', flags: MessageFlagsBitField.Ephemeral });
       }
       return;
     }
     if (!interaction.replied && !interaction.deferred) {
-      await interaction.reply({ content: '20時出勤を記録しました。', flags: MessageFlags.Ephemeral });
+      await interaction.reply({ content: '20時出勤を記録しました。', flags: MessageFlagsBitField.Ephemeral });
     }
   }
 };

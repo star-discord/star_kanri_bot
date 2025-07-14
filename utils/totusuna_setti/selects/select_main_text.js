@@ -5,7 +5,7 @@ module.exports = {
   customId: 'totsusuna_setti:select_main_text',
 
   /**
-   * 投稿先チャンネルの選択を処理
+   * 投稿先チャンネルの選択を処琁E
    * @param {import('discord.js').StringSelectMenuInteraction} interaction
    */
   async handle(interaction) {
@@ -16,11 +16,11 @@ module.exports = {
     if (!selectedChannelId) {
       return await interaction.reply({
         content: '⚠️ チャンネルが正しく選択されていません。',
-        flags: MessageFlags.Ephemeral,
+        flags: MessageFlagsBitField.Ephemeral,
       });
     }
 
-    // 一時状態に保存（既存があれば統合）
+    // 一時状態に保存（既存があれば統合！E
     const prev = tempState.get(guildId, userId) || {};
     tempState.set(guildId, userId, {
       ...prev,
@@ -29,7 +29,7 @@ module.exports = {
 
     await interaction.reply({
       content: `✅ チャンネル <#${selectedChannelId}> が選択されました。`,
-      flags: MessageFlags.Ephemeral,
+      flags: MessageFlagsBitField.Ephemeral,
     });
   },
 };

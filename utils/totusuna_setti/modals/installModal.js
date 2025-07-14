@@ -2,17 +2,15 @@ const { EmbedBuilder, ActionRowBuilder, ChannelSelectMenuBuilder, ChannelType, M
 const tempStore = require('../state/totsusunaTemp');
 
 module.exports = {
-  customIdStart: 'totsusuna_modal_body_input:install',
-
   /**
-   * 凸スナ設置モーダルの送信後処理（チャンネル選択へ）
+   * 凸スナ設定モーダルの送信後処理（チャンネル選択へ）
    * @param {import('discord.js').ModalSubmitInteraction} interaction
    */
   async handle(interaction) {
     console.log('📝 [installModal] 処理開始');
     console.log('   guildId:', interaction.guildId);
     console.log('   userId:', interaction.user.id);
-    
+
     try {
       const guildId = interaction.guildId;
       const userId = interaction.user.id;
@@ -61,7 +59,7 @@ module.exports = {
       await interaction.reply({
         embeds: [embed],
         components: [row],
-        ephemeral: true
+        flags: MessageFlagsBitField.Ephemeral
       });
       
       console.log('✅ [installModal] 処理完了');
@@ -73,7 +71,7 @@ module.exports = {
       try {
         await interaction.reply({
           content: '❌ 凸スナ設置処理中にエラーが発生しました。詳細はコンソールを確認してください。',
-          ephemeral: true
+          flags: MessageFlagsBitField.Ephemeral
         });
       } catch (replyError) {
         console.error('💥 [installModal] レスポンス送信でもエラー:', replyError);

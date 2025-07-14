@@ -27,7 +27,7 @@ module.exports = {
 
     await interaction.reply({
       content: `🌀 複製投稿チャンネルを設定しました: ${selectedChannelIds.join(', ')}`,
-      flags: MessageFlags.Ephemeral,
+      flags: MessageFlagsBitField.Ephemeral,
     });
   }
 };

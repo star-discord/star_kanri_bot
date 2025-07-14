@@ -1,3 +1,4 @@
+const { MessageFlagsBitField } = require('discord.js');
 const requireAdmin = require('../../permissions/requireAdmin');
 const { ensureGuildJSON, readJSON, writeJSON } = require('../../fileHelper');
 
@@ -25,28 +26,27 @@ module.exports = {
         const channelMentions = selectedChannelIds.map(id => `<#${id}>`).join(', ');
         await interaction.reply({
           content: `✅ 複製チャンネルを ${channelMentions} に設定しました。`,
-          ephemeral: true
+          flags: MessageFlagsBitField.Ephemeral
         });
       } else {
         await interaction.reply({
           content: `✅ 複製チャンネルを未設定にしました。`,
-          ephemeral: true
+          flags: MessageFlagsBitField.Ephemeral
         });
       }
 
     } catch (error) {
       console.error('totusuna_select_replicate処理エラー:', error);
-      
+
+      const errorMessage = {
+        content: '❌ 複製チャンネル設定中にエラーが発生しました。',
+        flags: MessageFlagsBitField.Ephemeral
+      };
+
       if (!interaction.replied && !interaction.deferred) {
-        await interaction.reply({
-          content: '❌ 複製チャンネル設定中にエラーが発生しました。',
-          ephemeral: true
-        });
+        await interaction.reply(errorMessage);
       } else {
-        await interaction.followUp({
-          content: '❌ 複製チャンネル設定中にエラーが発生しました。',
-          ephemeral: true
-        });
+        await interaction.followUp(errorMessage);
       }
     }
   })

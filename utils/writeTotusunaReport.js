@@ -1,4 +1,3 @@
-// utils/totusuna_setti/spreadSheet.js
 const path = require('path');
 const fs = require('fs');
 
@@ -32,13 +31,17 @@ async function writeTotusunaReport(guildId, yearMonth, entry) {
     entry.detail || ''
   ];
 
-  const csvLine = `${values.map(v => `"${v}"`).join(',')}` + '\n';
+  const csvLine = `${values.map(v => `"${v}"`).join(',')}
+`;
 
+  // ファイルがなければヘッダー行を追加して作成
   if (!fs.existsSync(csvPath)) {
-    fs.writeFileSync(csvPath, `${headers.join(',')}` + '\n', 'utf8');
+    fs.writeFileSync(csvPath, `${headers.join(',')}
+`, 'utf8');
   }
 
   fs.appendFileSync(csvPath, csvLine, 'utf8');
+}
 
 module.exports = {
   writeTotusunaReport, // 関数名を統一

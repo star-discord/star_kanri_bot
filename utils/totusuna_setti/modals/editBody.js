@@ -10,10 +10,10 @@ const {
 } = require('discord.js');
 
 module.exports = {
-  customIdStart: 'totusuna_edit_modal:', // UUID対応のためコロン形式に統一
+  customIdStart: 'totusuna_edit_modal:', // UUID対応�Eためコロン形式に統一
 
   /**
-   * 本文編集モーダルの送信後処理
+   * 本斁E��雁E��ーダルの送信後�E琁E
    * @param {import('discord.js').ModalSubmitInteraction} interaction
    */
   async handle(interaction) {
@@ -27,7 +27,7 @@ module.exports = {
     if (!fs.existsSync(dataPath)) {
       return await interaction.reply({
         content: '⚠️ 設定ファイルが見つかりません。',
-        ephemeral: true
+        flags: MessageFlagsBitField.Ephemeral
       });
     }
 
@@ -37,7 +37,7 @@ module.exports = {
     if (!target) {
       return await interaction.reply({
         content: '⚠️ 指定された設置データが存在しません。',
-        ephemeral: true
+        flags: MessageFlagsBitField.Ephemeral
       });
     }
 
@@ -66,13 +66,13 @@ module.exports = {
       console.error('[editBody] メッセージ編集失敗:', err);
       return await interaction.reply({
         content: '⚠️ メッセージの更新に失敗しました。',
-        ephemeral: true
+        flags: MessageFlagsBitField.Ephemeral
       });
     }
 
     await interaction.reply({
       content: '✅ 本文を更新し、表示も変更しました。',
-      ephemeral: true
+      flags: MessageFlagsBitField.Ephemeral
     });
   }
 };

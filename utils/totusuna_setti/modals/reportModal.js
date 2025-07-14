@@ -2,13 +2,14 @@ const fs = require('fs');
 const path = require('path');
 const dayjs = require('dayjs');
 const { writeCsvRow } = require('../../spreadsheetHandler');
-const { MessageFlags } = require('discord.js');
+const { MessageFlagsBitField } = require('discord.js');
 
 module.exports = {
   customIdStart: 'totusuna_modal:',
 
+
   /**
-   * 凸スナ報告モーダル送信後処理
+   * 凸スナ報告モーダル送信後の処理
    * @param {import('discord.js').ModalSubmitInteraction} interaction
    */
   async handle(interaction) {
@@ -32,16 +33,17 @@ module.exports = {
 
     const tableText = [table1, table2, table3, table4]
       .filter(t => t)
-      .map((t, i) => `卓${i + 1}: ${t}`)
+      .map((t, i) => `・項目${i + 1}: ${t}`)
       .join('\n');
 
     const report = `📝 **凸スナ報告**\n組数: ${group}組\n名前: ${name}名\n${tableText ? `${tableText}\n` : ''}詳細: ${detail || 'なし'}`;
+
 
     const dataPath = path.join(__dirname, '../../../data', guildId, `${guildId}.json`);
     if (!fs.existsSync(dataPath)) {
       return await interaction.reply({
         content: '⚠️ 設定ファイルが見つかりません。',
-        ephemeral: true,
+        flags: MessageFlagsBitField.Ephemeral,
       });
     }
 
@@ -51,7 +53,7 @@ module.exports = {
     if (!instance) {
       return await interaction.reply({
         content: '⚠️ 対応する凸スナ設置データが見つかりません。',
-        ephemeral: true,
+        flags: MessageFlagsBitField.Ephemeral,
       });
     }
 
@@ -81,7 +83,7 @@ module.exports = {
 
     await interaction.reply({
       content: '✅ 報告を送信し、記録しました。',
-      ephemeral: true,
+      flags: MessageFlagsBitField.Ephemeral,
     });
   },
 };

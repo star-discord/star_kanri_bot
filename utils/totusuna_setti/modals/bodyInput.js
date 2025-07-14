@@ -7,7 +7,7 @@ module.exports = {
   customIdStart: 'totsusuna_modal_body_input:',
 
   /**
-   * 本文モーダルの送信後処理
+   * 本斁E��ーダルの送信後�E琁E
    * @param {import('discord.js').ModalSubmitInteraction} interaction
    */
   async handle(interaction) {
@@ -25,7 +25,7 @@ module.exports = {
     if (!userData?.installChannelId) {
       return await interaction.reply({
         content: '⚠️ 設置チャンネルが未設定です。先にチャンネルを選択してください。',
-        ephemeral: true,
+        flags: MessageFlagsBitField.Ephemeral,
       });
     }
 
@@ -55,7 +55,7 @@ module.exports = {
     if (!targetChannel?.isTextBased()) {
       return await interaction.reply({
         content: '⚠️ 指定された設置チャンネルが見つかりません。',
-        ephemeral: true,
+        flags: MessageFlagsBitField.Ephemeral,
       });
     }
 
@@ -71,7 +71,7 @@ module.exports = {
 
     await interaction.reply({
       content: '✅ 本文を保存し、凸スナボタンを設置しました。',
-      ephemeral: true,
+      flags: MessageFlagsBitField.Ephemeral,
     });
   }
 };

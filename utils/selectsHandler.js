@@ -2,7 +2,7 @@
 const starSelectHandler = require('../utils/star_config/selects');
 const totsusunaSelectHandler = require('../utils/totusuna_setti/selects');
 const totusunaConfigSelectHandler = require('../utils/totusuna_config/selects/totusuna_channel_selected');
-const { MessageFlags } = require('discord.js');
+const { MessageFlagsBitField } = require('discord.js');
 const { logAndReplyError } = require('./errorHelper');
 
 /**
@@ -56,7 +56,7 @@ async function handleSelect(interaction) {
       console.warn('⚠️ [selectsHandler] 対応するハンドラーが見つかりません:', customId);
       return await interaction.reply({
         content: '❌ セレクトメニューに対応する処理が見つかりませんでした。',
-        flags: MessageFlags.Ephemeral,
+        flags: MessageFlagsBitField.Ephemeral,
       });
     }
 

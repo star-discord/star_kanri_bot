@@ -1,3 +1,4 @@
+
 // utils/dataMigration.test.js
 const { DataMigration } = require('./dataMigration');
 
@@ -8,7 +9,7 @@ const sampleOldData = {
   // 旧式形式: トップレベルに管理者設定
   adminRoleIds: ["123456789", "987654321"],
   notifyChannelId: "555666777",
-  
+
   // 旧式形式: totsunaが配列
   totsuna: [
     {
@@ -56,14 +57,14 @@ async function testMigration() {
   // テスト1: 旧式データの移行
   console.log('\n📋 テスト1: 旧式データ移行');
   console.log('移行前:', JSON.stringify(sampleOldData, null, 2));
-  
+
   const migratedData1 = await migration.performMigration(sampleOldData, 'test-guild-1', null);
   console.log('移行後:', JSON.stringify(migratedData1, null, 2));
 
   // テスト2: 混在データの移行
   console.log('\n📋 テスト2: 混在データ移行');
   console.log('移行前:', JSON.stringify(sampleMixedData, null, 2));
-  
+
   const migratedData2 = await migration.performMigration(sampleMixedData, 'test-guild-2', null);
   console.log('移行後:', JSON.stringify(migratedData2, null, 2));
 

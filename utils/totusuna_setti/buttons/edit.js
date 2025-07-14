@@ -12,24 +12,24 @@ module.exports = {
   customIdStart: 'totsusuna_setti:edit:',
 
   /**
-   * 凸スナ本文編集モーダルを表示する処理
+   * 凸スナ本斁E��雁E��ーダルを表示する処琁E
    * @param {import('discord.js').ButtonInteraction} interaction
    */
   async handle(interaction) {
     const guildId = interaction.guildId;
     const customId = interaction.customId;
-    // customIdからUUID部分を取り出し
+    // customIdからUUID部刁E��取り出ぁE
     const uuid = customId.replace(this.customIdStart, '');
 
     const filePath = path.join(__dirname, '../../../data', guildId, `${guildId}.json`);
 
-    // データファイルが存在するか確認
+    // チE�Eタファイルが存在するか確誁E
     try {
       await fs.access(filePath);
     } catch {
       return await interaction.reply({
         content: '⚠️ データファイルが見つかりません。',
-        flags: MessageFlags.Ephemeral,
+        flags: MessageFlagsBitField.Ephemeral,
       });
     }
 
@@ -39,10 +39,10 @@ module.exports = {
       const content = await fs.readFile(filePath, 'utf8');
       json = JSON.parse(content);
     } catch (err) {
-      console.error('JSONファイルの読み込みまたは解析に失敗しました:', err);
+      console.error('JSONファイルの読み込みまた�E解析に失敗しました:', err);
       return await interaction.reply({
         content: '❌ データファイルの読み込みに失敗しました。',
-        flags: MessageFlags.Ephemeral,
+        flags: MessageFlagsBitField.Ephemeral,
       });
     }
 
@@ -50,16 +50,16 @@ module.exports = {
     if (!Array.isArray(instances)) {
       return await interaction.reply({
         content: '⚠️ 凸スナ設置データが存在しません。',
-        flags: MessageFlags.Ephemeral,
+        flags: MessageFlagsBitField.Ephemeral,
       });
     }
 
-    // UUIDに対応する設置データを探す
+    // UUIDに対応する設置チE�Eタを探ぁE
     const target = instances.find(i => i.id === uuid);
     if (!target) {
       return await interaction.reply({
         content: '⚠️ 指定された凸スナ設置情報が見つかりません。',
-        flags: MessageFlags.Ephemeral,
+        flags: MessageFlagsBitField.Ephemeral,
       });
     }
 
