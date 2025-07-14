@@ -16,6 +16,7 @@ async function actualHandler(interaction) {
   try {
     // 設定マネージャーを使用して設定を更新
     await configManager.updateSectionConfig(guildId, 'star', { notifyChannelId: selectedChannelId });
+    console.log(`[configManager] ✅ 通知チャンネル更新完了 Guild: ${guildId}, Channel: ${selectedChannelId}`);
 
     // UIを再構築するために、更新後の全設定を取得
     const updatedConfig = await configManager.getSectionConfig(guildId, 'star');
