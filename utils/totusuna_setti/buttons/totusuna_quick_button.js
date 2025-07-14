@@ -65,14 +65,14 @@ module.exports = {
       await interaction.reply({
         embeds: [embed],
         components: [row],
-        flags: MessageFlags.Ephemeral
+        ephemeral: true
       });
 
     } catch (error) {
       console.error('凸スナクイック設置ボタンエラー:', error);
       await interaction.reply({
         content: '❌ クイック設置処理中にエラーが発生しました。',
-        flags: MessageFlags.Ephemeral
+        ephemeral: true
       });
     }
   }

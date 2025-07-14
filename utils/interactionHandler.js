@@ -72,10 +72,10 @@ class InteractionHandler {
                 // 未発見でも適切に応答
                 if (!interaction.deferred && !interaction.replied) {
                     try {
-                        await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+                        await interaction.deferReply({ ephemeral: true });
                         await interaction.editReply({ 
                             content: `⚠️ このボタン/メニュー (${customId}) のハンドラーが見つかりません。\n開発者に報告してください。`,
-                            flags: MessageFlags.Ephemeral
+                            ephemeral: true
                         });
                     } catch (deferError) {
                         console.error('❌ [InteractionHandler] 未発見時デファー失敗:', deferError.message);
@@ -88,7 +88,7 @@ class InteractionHandler {
             const shouldDefer = this.shouldDeferInteraction(customId);
             if (shouldDefer && !interaction.deferred && !interaction.replied) {
                 try {
-                    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+                    await interaction.deferReply({ ephemeral: true });
                     console.log(`✅ [InteractionHandler] 予防的デファー完了: ${customId}`);
                 } catch (deferError) {
                     console.error('❌ [InteractionHandler] 予防的デファー失敗:', deferError.message);
@@ -125,9 +125,9 @@ class InteractionHandler {
                 const errorMessage = '⚠️ 処理中にエラーが発生しました。しばらく時間をおいて再試行してください。';
                 
                 if (interaction.deferred) {
-                    await interaction.editReply({ content: errorMessage, flags: MessageFlags.Ephemeral });
+                    await interaction.editReply({ content: errorMessage, ephemeral: true });
                 } else if (!interaction.replied) {
-                    await interaction.reply({ content: errorMessage, flags: MessageFlags.Ephemeral });
+                    await interaction.reply({ content: errorMessage, ephemeral: true });
                 }
             } catch (replyError) {
                 console.error('❌ [InteractionHandler] エラーレスポンス送信失敗:', replyError.message);

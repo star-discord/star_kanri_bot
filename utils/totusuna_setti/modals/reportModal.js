@@ -41,7 +41,7 @@ module.exports = {
     if (!fs.existsSync(dataPath)) {
       return await interaction.reply({
         content: '⚠️ 設定ファイルが見つかりません。',
-        flags: MessageFlags.Ephemeral,
+        ephemeral: true,
       });
     }
 
@@ -51,7 +51,7 @@ module.exports = {
     if (!instance) {
       return await interaction.reply({
         content: '⚠️ 対応する凸スナ設置データが見つかりません。',
-        flags: MessageFlags.Ephemeral,
+        ephemeral: true,
       });
     }
 
@@ -81,7 +81,7 @@ module.exports = {
 
     await interaction.reply({
       content: '✅ 報告を送信し、記録しました。',
-      flags: MessageFlags.Ephemeral,
+      ephemeral: true,
     });
   },
 };

@@ -14,7 +14,7 @@ async function handleSelect(interaction) {
   if (!handler) {
     await interaction.reply({
       content: '❌ セレクトメニューに対応する処理が見つかりませんでした。',
-      flags: MessageFlags.Ephemeral,
+      ephemeral: true,
     });
     return;
   }
@@ -27,12 +27,12 @@ async function handleSelect(interaction) {
     if (interaction.replied || interaction.deferred) {
       await interaction.followUp({
         content: '⚠️ セレクトメニュー処理中にエラーが発生しました。管理者に報告してください。',
-        flags: MessageFlags.Ephemeral,
+        ephemeral: true,
       });
     } else {
       await interaction.reply({
         content: '⚠️ セレクトメニュー処理中にエラーが発生しました。管理者に報告してください。',
-        flags: MessageFlags.Ephemeral,
+        ephemeral: true,
       });
     }
   }

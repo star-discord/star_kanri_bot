@@ -1,7 +1,7 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
 const { v4: uuidv4 } = require('uuid');
 const { ensureGuildJSON, readJSON, writeJSON } = require('../../fileHelper');
-const tempStore = require('../tempStore');
+const tempStore = require('../state/totsusunaTemp');
 
 module.exports = {
   customId: 'totusuna_install_channel_select',

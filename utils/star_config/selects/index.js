@@ -38,7 +38,7 @@ async function handleSelect(interaction) {
       // 対応ハンドラなし。ユーザーへ通知
       await interaction.reply({
         content: 'エラー: セレクトメニューに対応する処理が見つかりませんでした。',
-        flags: MessageFlags.Ephemeral,
+        ephemeral: true,
       });
       return;
     }
@@ -55,7 +55,7 @@ async function handleSelect(interaction) {
       try {
         await interaction.followUp({
           content: '警告: セレクトメニュー処理中にエラーが発生しました。管理者に報告してください。',
-          flags: MessageFlags.Ephemeral,
+          ephemeral: true,
         });
       } catch (followUpError) {
         console.error('エラー: フォローアップ送信中にエラー:', followUpError);
@@ -64,7 +64,7 @@ async function handleSelect(interaction) {
       try {
         await interaction.reply({
           content: '警告: セレクトメニュー処理中にエラーが発生しました。管理者に報告してください。',
-          flags: MessageFlags.Ephemeral,
+          ephemeral: true,
         });
       } catch (replyError) {
         console.error('エラー: リプライ送信中にエラー:', replyError);

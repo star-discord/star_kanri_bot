@@ -34,7 +34,7 @@ async function handleModal(interaction) {
     if (!handler) {
       return await interaction.reply({
         content: '❌ モーダルに対応する処理が見つかりませんでした。',
-        flags: MessageFlags.Ephemeral,
+        ephemeral: true,
       });
     }
 
@@ -45,7 +45,7 @@ async function handleModal(interaction) {
       interaction,
       `❌ モーダル処理エラー: ${customId}\n${err?.stack || err}`,
       '❌ モーダル処理中にエラーが発生しました。',
-      { flags: MessageFlags.Ephemeral }
+      { ephemeral: true }
     );
   }
 }

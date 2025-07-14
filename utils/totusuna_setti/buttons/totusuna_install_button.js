@@ -40,10 +40,22 @@ module.exports = {
 
     } catch (error) {
       console.error('凸スナ設置ボタンエラー:', error);
-      await interaction.reply({
-        content: '❌ 凸スナ設置処理中にエラーが発生しました。',
-        flags: MessageFlags.Ephemeral
-      });
+      if (!interaction.replied && !interaction.deferred) {
+        await interaction.reply({
+          content: '❌ 凸スナ設置処理中にエラーが発生しました。',
+          ephemeral: true
+        });
+      } else if (interaction.deferred && !interaction.replied) {
+        await interaction.editReply({
+          content: '❌ 凸スナ設置処理中にエラーが発生しました。',
+          ephemeral: true
+        });
+      } else {
+        await interaction.followUp({
+          content: '❌ 凸スナ設置処理中にエラーが発生しました。',
+          ephemeral: true
+        });
+      }
     }
   }
 };

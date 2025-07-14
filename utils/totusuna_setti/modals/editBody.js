@@ -27,7 +27,7 @@ module.exports = {
     if (!fs.existsSync(dataPath)) {
       return await interaction.reply({
         content: '⚠️ 設定ファイルが見つかりません。',
-        flags: MessageFlags.Ephemeral
+        ephemeral: true
       });
     }
 
@@ -37,7 +37,7 @@ module.exports = {
     if (!target) {
       return await interaction.reply({
         content: '⚠️ 指定された設置データが存在しません。',
-        flags: MessageFlags.Ephemeral
+        ephemeral: true
       });
     }
 
@@ -66,13 +66,13 @@ module.exports = {
       console.error('[editBody] メッセージ編集失敗:', err);
       return await interaction.reply({
         content: '⚠️ メッセージの更新に失敗しました。',
-        flags: MessageFlags.Ephemeral
+        ephemeral: true
       });
     }
 
     await interaction.reply({
       content: '✅ 本文を更新し、表示も変更しました。',
-      flags: MessageFlags.Ephemeral
+      ephemeral: true
     });
   }
 };

@@ -73,12 +73,12 @@ async function actualHandler(interaction) {
     if (!interaction.replied && !interaction.deferred) {
       await interaction.reply({
         content: 'ロール設定処理中にエラーが発生しました。',
-        flags: MessageFlags.Ephemeral
+        ephemeral: true
       });
     } else {
       await interaction.followUp({
         content: 'ロール設定処理中にエラーが発生しました。',
-        flags: MessageFlags.Ephemeral
+        ephemeral: true
       });
     }
   }

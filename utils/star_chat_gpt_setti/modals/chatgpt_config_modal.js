@@ -37,7 +37,7 @@ module.exports = {
 
       await interaction.reply({
         embeds: [embed],
-        flags: MessageFlags.Ephemeral,
+        ephemeral: true,
       });
 
     } catch (error) {
@@ -46,7 +46,7 @@ module.exports = {
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({
           content: '設定の保存中にエラーが発生しました。',
-          flags: MessageFlags.Ephemeral,
+          ephemeral: true,
         });
       }
     }

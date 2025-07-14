@@ -40,7 +40,7 @@ async function handleButton(interaction) {
     console.warn(`⚠️ 未対応のボタン: ${customId}`);
     return await interaction.reply({
       content: '⚠️ このボタンは現在利用できません。',
-      flags: MessageFlags.Ephemeral,
+      ephemeral: true,
     });
   }
 
@@ -51,7 +51,7 @@ async function handleButton(interaction) {
       interaction,
       `❌ ボタン処理エラー: ${customId}\n${err?.stack || err}`,
       '❌ ボタン処理中にエラーが発生しました。',
-      { flags: MessageFlags.Ephemeral }
+      { ephemeral: true }
     );
   }
 }

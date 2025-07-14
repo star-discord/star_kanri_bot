@@ -12,7 +12,7 @@ module.exports = {
     if (!fs.existsSync(dataPath)) {
       return await interaction.reply({
         content: '⚠️ 設定ファイルが見つかりません。',
-        flags: MessageFlags.Ephemeral,
+        ephemeral: true,
       });
     }
 
@@ -22,7 +22,7 @@ module.exports = {
     if (!instance) {
       return await interaction.reply({
         content: '⚠️ 該当の凸スナ情報が見つかりません。',
-        flags: MessageFlags.Ephemeral,
+        ephemeral: true,
       });
     }
 
@@ -30,7 +30,7 @@ module.exports = {
     if (!newBody || newBody.length === 0) {
       return await interaction.reply({
         content: '❌ 本文が空です。',
-        flags: MessageFlags.Ephemeral,
+        ephemeral: true,
       });
     }
 
@@ -41,7 +41,7 @@ module.exports = {
 
     await interaction.reply({
       content: '✅ 本文を更新しました。\n※設置チャンネルのメッセージを再送信したい場合は `/凸スナ設定` から「再送信ボタン」を使用してください。',
-      flags: MessageFlags.Ephemeral,
+      ephemeral: true,
     });
   }
 };

@@ -1,4 +1,4 @@
-const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
+const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const requireAdmin = require('../utils/permissions/requireAdmin');
 const { createAdminEmbed } = require('../utils/embedHelper');
 
@@ -9,6 +9,11 @@ module.exports = {
 
   execute: requireAdmin(async (interaction) => {
     try {
+      // 3秒ルール対策: 最初にdeferReply（flagsではなく ephemeral を使用）
+      if (!interaction.deferred && !interaction.replied) {
+        await interaction.deferReply({ ephemeral: true });
+      }
+
       // 凸スナ設置用のボタンを作成
       const installButton = new ButtonBuilder()
         .setCustomId('totusuna_install_button')
@@ -49,28 +54,29 @@ module.exports = {
         }
       );
 
-      await interaction.reply({
+      // editReplyで応答
+      await interaction.editReply({
         embeds: [embed],
-        components: [row],
-        flags: MessageFlags.Ephemeral
+        components: [row]
       });
 
     } catch (error) {
       console.error('凸スナ設置コマンドエラー:', error);
+      // 二重応答防止
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({
           content: '❌ 凸スナ設置コマンドの実行中にエラーが発生しました。',
-          flags: MessageFlags.Ephemeral
+          ephemeral: true
         });
       } else if (interaction.deferred && !interaction.replied) {
         await interaction.editReply({
           content: '❌ 凸スナ設置コマンドの実行中にエラーが発生しました。',
-          flags: MessageFlags.Ephemeral
+          ephemeral: true
         });
       } else {
         await interaction.followUp({
           content: '❌ 凸スナ設置コマンドの実行中にエラーが発生しました。',
-          flags: MessageFlags.Ephemeral
+          ephemeral: true
         });
       }
     }

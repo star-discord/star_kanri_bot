@@ -38,7 +38,7 @@ function requireAdmin(executeFunction) {
                   (adminRoleIds.length === 0 
                     ? 'Discord の管理者権限を持つユーザーが `/star管理bot設定` で管理者ロールを設定してください。'
                     : '設定された管理者ロールまたは Discord の管理者権限が必要です。'),
-          flags: MessageFlags.Ephemeral
+          ephemeral: true
         });
       }
 
@@ -49,7 +49,7 @@ function requireAdmin(executeFunction) {
       console.error('requireAdmin エラー:', error);
       return await interaction.reply({
         content: '❌ 権限チェック中にエラーが発生しました。',
-        flags: MessageFlags.Ephemeral
+        ephemeral: true
       });
     }
   };

@@ -1,5 +1,5 @@
 const { EmbedBuilder, ActionRowBuilder, ChannelSelectMenuBuilder, ChannelType, MessageFlags } = require('discord.js');
-const tempStore = require('../tempStore');
+const tempStore = require('../state/totsusunaTemp');
 
 module.exports = {
   customIdStart: 'totsusuna_modal_body_input:install',
@@ -61,7 +61,7 @@ module.exports = {
       await interaction.reply({
         embeds: [embed],
         components: [row],
-        flags: MessageFlags.Ephemeral
+        ephemeral: true
       });
       
       console.log('✅ [installModal] 処理完了');
@@ -73,7 +73,7 @@ module.exports = {
       try {
         await interaction.reply({
           content: '❌ 凸スナ設置処理中にエラーが発生しました。詳細はコンソールを確認してください。',
-          flags: MessageFlags.Ephemeral
+          ephemeral: true
         });
       } catch (replyError) {
         console.error('💥 [installModal] レスポンス送信でもエラー:', replyError);
