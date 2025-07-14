@@ -9,20 +9,15 @@ module.exports = {
 
   execute: requireAdmin(async (interaction) => {
     try {
-      // Ensure the reply is deferred to prevent timeouts
-      await interaction.deferReply({ ephemeral: true });
+      // Deferral is now handled centrally in index.js for this command.
+      // This avoids "already replied" errors and deprecation warnings.
+      // await interaction.deferReply({ ephemeral: true });
 
       // 凸スナ設置用のボタンを作成
       const installButton = new ButtonBuilder()
         .setCustomId('totusuna_install_button')
         .setLabel('新規設置')
         .setStyle(ButtonStyle.Primary);
-
-      const quickInstallButton = new ButtonBuilder()
-        .setCustomId('totsusuna_quick_button')
-        .setLabel('クイック設置')
-        .setStyle(ButtonStyle.Success)
-        .setEmoji('⚡');
 
       const configButton = new ButtonBuilder()
         .setCustomId('totusuna_config_button')
@@ -42,15 +37,10 @@ module.exports = {
           inline: true
         },
         {
-          name: '⚡ クイック設置',
-          value: '定義済みのテンプレートを選択して、素早く凸スナを設置します。',
-          inline: true
-        },
-        {
           name: '⚙️ 設定管理',
           value: '既存の凸スナの確認、本文の編集、または削除を行います。',
           inline: false
-        }
+        },
       );
 
       // editReplyで応答
