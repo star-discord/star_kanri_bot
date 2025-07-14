@@ -19,7 +19,7 @@ module.exports = {
       data.star_config.notifyChannelId = selected;
       await writeJSON(filePath, data);
 
-      await interaction.reply({
+      await interaction.update({
         content: `通知チャンネルを <#${selected}> に設定しました。`,
         ephemeral: true
       });
@@ -28,10 +28,17 @@ module.exports = {
       console.error('notify_channel_select処理エラー:', error);
       
       if (!interaction.replied && !interaction.deferred) {
-        await interaction.reply({
-          content: '通知チャンネル設定中にエラーが発生しました。',
-          ephemeral: true
-        });
+        try {
+          await interaction.update({
+            content: '通知チャンネル設定中にエラーが発生しました。',
+            ephemeral: true
+          });
+        } catch {
+          await interaction.reply({
+            content: '通知チャンネル設定中にエラーが発生しました。',
+            ephemeral: true
+          });
+        }
       } else {
         await interaction.followUp({
           content: '通知チャンネル設定中にエラーが発生しました。',
