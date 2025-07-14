@@ -1,64 +1,73 @@
 const { EmbedBuilder } = require('discord.js');
 const { getChatCompletion } = require('../../openai');
-const { createErrorEmbed } = require('../../embedHelper');
+const { createErrorEmbed, createBaseEmbed, COLORS } = require('../../embedHelper');
+
+// プロンプトとエラーメッセージを集中管理
+const INFO_CONFIG = {
+  weather: {
+    prompt: '今日の東京の天気は？',
+    error: '天気情報の取得に失敗しました。',
+  },
+  news: {
+    prompt: '今日の主要なニュースを3つ教えて',
+    error: 'ニュースの取得に失敗しました。',
+  },
+  trivia: {
+    prompt: '面白い豆知識を一つ教えて',
+    error: '豆知識の取得に失敗しました。',
+  },
+};
 
 /**
- * Fetches weather information from OpenAI.
+ * OpenAIから指定された情報を取得する汎用関数
+ * @param {'weather' | 'news' | 'trivia'} type - 取得する情報の種類
  * @returns {Promise<string>}
  */
-async function getWeather() {
-  const res = await getChatCompletion('今日の東京の天気は？');
-  if (res.error) throw new Error(res.message);
-  return res.choices[0].message.content;
-}
+async function fetchInfo(type) {
+  const config = INFO_CONFIG[type];
+  if (!config) return '不明な情報タイプです。';
 
-/**
- * Fetches news from OpenAI.
- * @returns {Promise<string>}
- */
-async function getNews() {
-  const res = await getChatCompletion('今日の主要なニュースを3つ教えて');
-  if (res.error) throw new Error(res.message);
-  return res.choices[0].message.content;
-}
-
-/**
- * Fetches trivia from OpenAI.
- * @returns {Promise<string>}
- */
-async function getTrivia() {
-  const res = await getChatCompletion('面白い豆知識を一つ教えて');
-  if (res.error) throw new Error(res.message);
-  return res.choices[0].message.content;
+  try {
+    const res = await getChatCompletion(config.prompt);
+    if (res.error) {
+      // openai.jsからの構造化されたエラーメッセージを利用
+      return `❌ ${res.message}`;
+    }
+    return res.choices[0]?.message?.content || '有効な応答がありませんでした。';
+  } catch (error) {
+    console.error(`[fetchInfo:${type}] Error:`, error);
+    return `❌ ${config.error}`;
+  }
 }
 
 module.exports = {
   customId: 'star_chat_gpt_setti_button',
   /**
-   * Handles the ChatGPT info button interaction.
+   * ChatGPT情報ボタンのインタラクションを処理します。
    * @param {import('discord.js').ButtonInteraction} interaction
    */
   async handle(interaction) {
-    // Defer the reply immediately to prevent timeout.
+    // タイムアウトを防ぐために、すぐに応答を遅延させます。
     await interaction.deferReply();
 
     try {
-      // Fetch all data in parallel.
+      // 全てのデータを並行して取得します。
       const [weather, news, trivia] = await Promise.all([
-        getWeather().catch(e => `天気情報取得エラー: ${e.message}`),
-        getNews().catch(e => `ニュース取得エラー: ${e.message}`),
-        getTrivia().catch(e => `豆知識取得エラー: ${e.message}`)
+        fetchInfo('weather'),
+        fetchInfo('news'),
+        fetchInfo('trivia'),
       ]);
 
-      const embed = new EmbedBuilder()
-        .setTitle('🤖 今日のChatGPT情報')
+      const embed = createBaseEmbed({
+        title: '🤖 今日のChatGPT情報',
+        color: COLORS.SUCCESS,
+      })
         .addFields(
           { name: '☀️ 天気', value: weather.slice(0, 1024) },
           { name: '📰 ニュース', value: news.slice(0, 1024) },
           { name: '💡 豆知識', value: trivia.slice(0, 1024) }
         )
-        .setColor(0x00ff00)
-        .setFooter({ text: 'Powered by OpenAI' });
+        .setFooter({ text: 'Powered by OpenAI' }); // フッターを上書き
 
       await interaction.editReply({ embeds: [embed] });
     } catch (error) {
