@@ -1,5 +1,28 @@
 // utils/configManager.js
 const { ensureGuildJSON, readJSON, writeJSON } = require('./fileHelper');
+const { v4: uuidv4 } = require('uuid');
+
+// A simple in-memory lock to prevent race conditions on file writes
+const fileLocks = new Map();
+
+/**
+ * Acquires a lock for a specific file path.
+ * @param {string} filePath The path to the file to lock.
+ */
+async function acquireLock(filePath) {
+  while (fileLocks.has(filePath)) {
+    await new Promise(resolve => setTimeout(resolve, 50));
+  }
+  fileLocks.set(filePath, true);
+}
+
+/**
+ * Releases the lock for a specific file path.
+ * @param {string} filePath The path to the file to unlock.
+ */
+function releaseLock(filePath) {
+  fileLocks.delete(filePath);
+}
 
 /**
  * 統合設定管理クラス
@@ -9,8 +32,8 @@ class ConfigManager {
   constructor() {
     this.defaultConfig = {
       star: {
-        adminRoles: [],
-        notifyChannels: []
+        adminRoleIds: [],
+        notifyChannelId: null,
       },
       chatgpt: {
         apiKey: null,
@@ -28,36 +51,40 @@ class ConfigManager {
 
   /**
    * ギルド設定を取得
-   * @param {string} guildId 
-   * @returns {object}
+   * @param {string} guildId
+   * @returns {Promise<object>}
    */
-  getGuildConfig(guildId) {
-    const jsonPath = ensureGuildJSON(guildId);
-    const config = readJSON(jsonPath);
-    
-    // デフォルト値をマージ
-    return this.mergeWithDefaults(config);
+  async getGuildConfig(guildId) {
+    const jsonPath = await ensureGuildJSON(guildId);
+    const config = await readJSON(jsonPath);
+    return this._mergeWithDefaults(config);
   }
 
   /**
    * ギルド設定を保存
    * @param {string} guildId 
    * @param {object} config 
+   * @returns {Promise<void>}
    */
-  saveGuildConfig(guildId, config) {
-    const jsonPath = ensureGuildJSON(guildId);
-    writeJSON(jsonPath, config);
+  async saveGuildConfig(guildId, config) {
+    const jsonPath = await ensureGuildJSON(guildId);
+    await acquireLock(jsonPath);
+    try {
+      await writeJSON(jsonPath, config);
+    } finally {
+      releaseLock(jsonPath);
+    }
   }
 
   /**
    * 特定セクションの設定を取得
    * @param {string} guildId 
    * @param {string} section - 'star', 'chatgpt', 'totusuna', 'kpi'
-   * @returns {object}
+   * @returns {Promise<object>}
    */
-  getSectionConfig(guildId, section) {
-    const config = this.getGuildConfig(guildId);
-    return config[section] || this.defaultConfig[section];
+  async getSectionConfig(guildId, section) {
+    const config = await this.getGuildConfig(guildId);
+    return config[section] ?? this.defaultConfig[section];
   }
 
   /**
@@ -65,21 +92,30 @@ class ConfigManager {
    * @param {string} guildId 
    * @param {string} section 
    * @param {object} sectionConfig 
+   * @param {object} sectionConfig
+   * @returns {Promise<void>}
    */
-  updateSectionConfig(guildId, section, sectionConfig) {
-    const config = this.getGuildConfig(guildId);
-    config[section] = { ...config[section], ...sectionConfig };
-    this.saveGuildConfig(guildId, config);
+  async updateSectionConfig(guildId, section, sectionConfig) {
+    const jsonPath = await ensureGuildJSON(guildId);
+    await acquireLock(jsonPath);
+    try {
+      const config = await this.getGuildConfig(guildId);
+      config[section] = { ...(config[section] ?? {}), ...sectionConfig };
+      await writeJSON(jsonPath, config);
+    } finally {
+      releaseLock(jsonPath);
+    }
   }
 
   /**
    * デフォルト値とマージ
+   * @private
    * @param {object} config 
    * @returns {object}
    */
-  mergeWithDefaults(config) {
+  _mergeWithDefaults(config) {
     const merged = { ...this.defaultConfig };
-    
+
     for (const [key, value] of Object.entries(config)) {
       if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
         merged[key] = { ...merged[key], ...value };
@@ -87,7 +123,7 @@ class ConfigManager {
         merged[key] = value;
       }
     }
-    
+
     return merged;
   }
 
@@ -95,15 +131,15 @@ class ConfigManager {
    * STAR管理者権限をチェック
    * @param {string} guildId 
    * @param {import('discord.js').GuildMember} member 
-   * @returns {boolean}
+   * @returns {Promise<boolean>}
    */
-  isStarAdmin(guildId, member) {
-    const config = this.getSectionConfig(guildId, 'star');
-    const adminRoles = config.adminRoles || [];
-    
+  async isStarAdmin(guildId, member) {
+    const config = await this.getSectionConfig(guildId, 'star');
+    const adminRoleIds = config.adminRoleIds ?? [];
+
     // 管理者権限またはSTAR管理ロールを持っているかチェック
     return member.permissions.has('Administrator') || 
-           adminRoles.some(roleId => member.roles.cache.has(roleId));
+           adminRoleIds.some(roleId => member.roles.cache.has(roleId));
   }
 
   /**
@@ -111,24 +147,33 @@ class ConfigManager {
    * @param {string} guildId 
    * @param {object} instance 
    */
-  addTotusunaInstance(guildId, instance) {
-    const config = this.getGuildConfig(guildId);
-    if (!config.totusuna) config.totusuna = {};
-    if (!Array.isArray(config.totusuna.instances)) config.totusuna.instances = [];
-    
-    config.totusuna.instances.push(instance);
-    this.saveGuildConfig(guildId, config);
+  async addTotusunaInstance(guildId, instanceData) {
+    const jsonPath = await ensureGuildJSON(guildId);
+    await acquireLock(jsonPath);
+    try {
+      const config = await this.getGuildConfig(guildId);
+      config.totusuna = config.totusuna ?? { instances: [] };
+      config.totusuna.instances = config.totusuna.instances ?? [];
+
+      const newInstance = { id: uuidv4(), ...instanceData };
+      config.totusuna.instances.push(newInstance);
+
+      await writeJSON(jsonPath, config);
+      return newInstance;
+    } finally {
+      releaseLock(jsonPath);
+    }
   }
 
   /**
    * totusuna インスタンスを取得
    * @param {string} guildId 
    * @param {string} uuid 
-   * @returns {object|null}
+   * @returns {Promise<object|null>}
    */
-  getTotusunaInstance(guildId, uuid) {
-    const config = this.getSectionConfig(guildId, 'totusuna');
-    const instances = config.instances || [];
+  async getTotusunaInstance(guildId, uuid) {
+    const config = await this.getSectionConfig(guildId, 'totusuna');
+    const instances = config.instances ?? [];
     return instances.find(instance => instance.id === uuid) || null;
   }
 
@@ -137,39 +182,52 @@ class ConfigManager {
    * @param {string} guildId 
    * @param {string} uuid 
    * @param {object} updates 
+   * @param {object} updates
+   * @returns {Promise<boolean>}
    */
-  updateTotusunaInstance(guildId, uuid, updates) {
-    const config = this.getGuildConfig(guildId);
-    if (!config.totusuna || !Array.isArray(config.totusuna.instances)) return false;
-    
-    const instanceIndex = config.totusuna.instances.findIndex(instance => instance.id === uuid);
-    if (instanceIndex === -1) return false;
-    
-    config.totusuna.instances[instanceIndex] = { 
-      ...config.totusuna.instances[instanceIndex], 
-      ...updates 
-    };
-    this.saveGuildConfig(guildId, config);
-    return true;
+  async updateTotusunaInstance(guildId, uuid, updates) {
+    const jsonPath = await ensureGuildJSON(guildId);
+    await acquireLock(jsonPath);
+    try {
+      const config = await this.getGuildConfig(guildId);
+      if (!config.totusuna?.instances) return false;
+
+      const instanceIndex = config.totusuna.instances.findIndex(instance => instance.id === uuid);
+      if (instanceIndex === -1) return false;
+
+      config.totusuna.instances[instanceIndex] = { ...config.totusuna.instances[instanceIndex], ...updates };
+      await writeJSON(jsonPath, config);
+      return true;
+    } finally {
+      releaseLock(jsonPath);
+    }
   }
 
   /**
    * totusuna インスタンスを削除
    * @param {string} guildId 
    * @param {string} uuid 
+   * @param {string} uuid
+   * @returns {Promise<boolean>}
    */
-  removeTotusunaInstance(guildId, uuid) {
-    const config = this.getGuildConfig(guildId);
-    if (!config.totusuna || !Array.isArray(config.totusuna.instances)) return false;
-    
-    const originalLength = config.totusuna.instances.length;
-    config.totusuna.instances = config.totusuna.instances.filter(instance => instance.id !== uuid);
-    
-    if (config.totusuna.instances.length < originalLength) {
-      this.saveGuildConfig(guildId, config);
-      return true;
+  async removeTotusunaInstance(guildId, uuid) {
+    const jsonPath = await ensureGuildJSON(guildId);
+    await acquireLock(jsonPath);
+    try {
+      const config = await this.getGuildConfig(guildId);
+      if (!config.totusuna?.instances) return false;
+
+      const originalLength = config.totusuna.instances.length;
+      config.totusuna.instances = config.totusuna.instances.filter(instance => instance.id !== uuid);
+
+      if (config.totusuna.instances.length < originalLength) {
+        await writeJSON(jsonPath, config);
+        return true;
+      }
+      return false;
+    } finally {
+      releaseLock(jsonPath);
     }
-    return false;
   }
 
   /**
@@ -177,17 +235,17 @@ class ConfigManager {
    * @param {string} guildId 
    * @param {object} chatgptConfig 
    */
-  updateChatGPTConfig(guildId, chatgptConfig) {
-    this.updateSectionConfig(guildId, 'chatgpt', chatgptConfig);
+  async updateChatGPTConfig(guildId, chatgptConfig) {
+    return this.updateSectionConfig(guildId, 'chatgpt', chatgptConfig);
   }
 
   /**
    * ChatGPT設定を取得
    * @param {string} guildId 
-   * @returns {object}
+   * @returns {Promise<object>}
    */
-  getChatGPTConfig(guildId) {
-    return this.getSectionConfig(guildId, 'chatgpt');
+  async getChatGPTConfig(guildId) {
+    return await this.getSectionConfig(guildId, 'chatgpt');
   }
 }
 

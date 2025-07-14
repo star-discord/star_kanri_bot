@@ -1,8 +1,65 @@
 const fs = require('fs').promises;
 const path = require('path');
+const { v4: uuidv4 } = require('uuid'); // For generating unique record IDs
 
 // 出退勤データ保存用のベースディレクトリ
 const baseDir = path.resolve(__dirname, '../data');
+
+// A simple in-memory lock to prevent race conditions on file writes
+const fileLocks = new Map();
+
+/**
+ * Acquires a lock for a specific file path.
+ * @param {string} filePath The path to the file to lock.
+ */
+async function acquireLock(filePath) {
+  while (fileLocks.has(filePath)) {
+    await new Promise(resolve => setTimeout(resolve, 50));
+  }
+  fileLocks.set(filePath, true);
+}
+
+/**
+ * Releases the lock for a specific file path.
+ * @param {string} filePath The path to the file to unlock.
+ */
+function releaseLock(filePath) {
+  fileLocks.delete(filePath);
+}
+
+/**
+ * Gets the file path for today's attendance data.
+ * @param {string} guildId
+ * @returns {{filePath: string, dateStr: string, dir: string}}
+ */
+function getDailyAttendanceFilePath(guildId) {
+  const today = new Date();
+  const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`;
+  const dir = path.join(baseDir, guildId);
+  const fileName = `attendance_${dateStr}.json`;
+  return { filePath: path.join(dir, fileName), dateStr, dir };
+}
+
+/**
+ * Reads the daily attendance file, creating it if it doesn't exist.
+ * @param {string} guildId
+ * @returns {Promise<{date: string, records: Array<object>}>}
+ */
+async function readOrCreateDailyAttendance(guildId) {
+  const { filePath, dateStr, dir } = getDailyAttendanceFilePath(guildId);
+  await fs.mkdir(dir, { recursive: true });
+  try {
+    const data = await fs.readFile(filePath, 'utf8');
+    return JSON.parse(data);
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      // File doesn't exist, return a new structure
+      return { date: dateStr, records: [] };
+    }
+    // Other errors should be thrown
+    throw error;
+  }
+}
 
 /**
  * 出勤記録を保存
@@ -10,38 +67,25 @@ const baseDir = path.resolve(__dirname, '../data');
  * @param {object} attendanceData
  */
 async function saveWorkStart(guildId, attendanceData) {
+  const { filePath } = getDailyAttendanceFilePath(guildId);
+  await acquireLock(filePath);
+
   try {
-    const today = new Date();
-    const dateStr = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`;
-    
-    const dir = path.join(baseDir, guildId);
-    const fileName = `attendance_${dateStr}.json`;
-    const filePath = path.join(dir, fileName);
-
-    await fs.mkdir(dir, { recursive: true });
-
-    let fileData = { date: dateStr, records: [] };
-    
-    try {
-      const existingData = await fs.readFile(filePath, 'utf8');
-      fileData = JSON.parse(existingData);
-    } catch (error) {
-      // ファイルが存在しない場合は新規作成
-    }
+    const fileData = await readOrCreateDailyAttendance(guildId);
 
     // 既存の出勤記録があるかチェック
-    const existingIndex = fileData.records.findIndex(
+    const isAlreadyWorking = fileData.records.some(
       record => record.userId === attendanceData.userId && !record.workEndTime
     );
 
-    if (existingIndex !== -1) {
-      throw new Error('already_working');
+    if (isAlreadyWorking) {
+      return { success: false, reason: 'already_working' };
     }
 
     // 新しい出勤記録を追加
     fileData.records.push({
       ...attendanceData,
-      recordId: Date.now().toString(),
+      recordId: uuidv4(), // Use UUID for a truly unique ID
       createdAt: new Date().toISOString()
     });
 
@@ -49,11 +93,10 @@ async function saveWorkStart(guildId, attendanceData) {
     return { success: true };
 
   } catch (error) {
-    if (error.message === 'already_working') {
-      return { success: false, reason: 'already_working' };
-    }
     console.error('出勤記録保存エラー:', error);
     return { success: false, reason: 'save_error', error };
+  } finally {
+    releaseLock(filePath);
   }
 }
 
@@ -64,21 +107,11 @@ async function saveWorkStart(guildId, attendanceData) {
  * @param {object} endData
  */
 async function saveWorkEnd(guildId, userId, endData) {
-  try {
-    const today = new Date();
-    const dateStr = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`;
-    
-    const dir = path.join(baseDir, guildId);
-    const fileName = `attendance_${dateStr}.json`;
-    const filePath = path.join(dir, fileName);
+  const { filePath } = getDailyAttendanceFilePath(guildId);
+  await acquireLock(filePath);
 
-    let fileData;
-    try {
-      const existingData = await fs.readFile(filePath, 'utf8');
-      fileData = JSON.parse(existingData);
-    } catch (error) {
-      return { success: false, reason: 'no_work_start' };
-    }
+  try {
+    const fileData = await readOrCreateDailyAttendance(guildId);
 
     // 未退勤の出勤記録を検索
     const recordIndex = fileData.records.findIndex(
@@ -89,10 +122,11 @@ async function saveWorkEnd(guildId, userId, endData) {
       return { success: false, reason: 'no_work_start' };
     }
 
-    // 退勤時間を記録
-    fileData.records[recordIndex].workEndTime = endData.workEndTime;
-    fileData.records[recordIndex].workEndDisplay = endData.workEndDisplay;
-    fileData.records[recordIndex].status = 'completed';
+    // 退勤情報を記録
+    const record = fileData.records[recordIndex];
+    record.workEndTime = endData.workEndTime;
+    record.workEndDisplay = endData.workEndDisplay;
+    record.status = 'completed';
 
     await fs.writeFile(filePath, JSON.stringify(fileData, null, 2), 'utf8');
     return { success: true, record: fileData.records[recordIndex] };
@@ -100,6 +134,8 @@ async function saveWorkEnd(guildId, userId, endData) {
   } catch (error) {
     console.error('退勤記録保存エラー:', error);
     return { success: false, reason: 'save_error', error };
+  } finally {
+    releaseLock(filePath);
   }
 }
 
@@ -108,25 +144,11 @@ async function saveWorkEnd(guildId, userId, endData) {
  * @param {string} guildId
  */
 async function getTodayAttendance(guildId) {
-  try {
-    const today = new Date();
-    const dateStr = `${today.getFullYear()}-${(today.getMonth() + 1).toString().padStart(2, '0')}-${today.getDate().toString().padStart(2, '0')}`;
-    
-    const dir = path.join(baseDir, guildId);
-    const fileName = `attendance_${dateStr}.json`;
-    const filePath = path.join(dir, fileName);
-
-    try {
-      const data = await fs.readFile(filePath, 'utf8');
-      return JSON.parse(data);
-    } catch (error) {
-      return { date: dateStr, records: [] };
-    }
-
-  } catch (error) {
+  return readOrCreateDailyAttendance(guildId).catch(error => {
     console.error('出退勤状況取得エラー:', error);
-    return { date: '', records: [] };
-  }
+    const { dateStr } = getDailyAttendanceFilePath(guildId);
+    return { date: dateStr, records: [] };
+  });
 }
 
 /**

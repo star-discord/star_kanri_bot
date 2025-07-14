@@ -1,62 +1,110 @@
 #!/bin/bash
 
-echo "🔧 GCPインスタンス初期化開始"
+# --- Configuration ---
+set -e # Exit immediately if a command exits with a non-zero status.
 
-# タイムゾーン設定
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+NC='\033[0m' # No Color
+
+PROJECT_DIR="$HOME/star_kanri_bot"
+
+# --- Error Handling ---
+handle_error() {
+    local exit_code=$?
+    echo -e "${RED}❌ エラーが発生しました (終了コード: $exit_code, 行番号: $1)。処理を中止します。${NC}"
+    exit $exit_code
+}
+trap 'handle_error $LINENO' ERR
+
+echo -e "${GREEN}--- サーバー初期化スクリプト開始 ---${NC}"
+
+# --- 1. System Setup ---
+echo -e "\n${YELLOW}1. システムのセットアップ中...${NC}"
 echo "🕒 タイムゾーンを Asia/Tokyo に設定"
 sudo timedatectl set-timezone Asia/Tokyo
 
-# パッケージインストール
-echo "📦 パッケージをインストール"
-sudo apt update && sudo apt upgrade -y
-sudo apt install -y git curl unzip zip jq dos2unix
+echo "📦 必須パッケージをインストール"
+sudo apt-get update && sudo apt-get upgrade -y
+sudo apt-get install -y git curl nodejs npm
 
-# Node.js 20.x インストール
-echo "🟢 Node.js 20.x をインストール"
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt install -y nodejs
+echo "🔧 Node.js と npm のバージョン確認:"
 node -v
 npm -v
 
-# pm2 インストール
-echo "🧪 pm2 をグローバルインストール"
+echo "🚀 PM2 をグローバルインストール"
 sudo npm install -g pm2
 
-# ファイアウォールルール（すでにあれば無視）
-echo "🌐 HTTPポート許可ルールを作成（すでにあればスキップ）"
-gcloud compute firewall-rules create default-allow-http \
-  --allow tcp:80 --source-ranges 0.0.0.0/0 --target-tags http-server || true
-
-# Botディレクトリ作成 & リポジトリクローン
-echo "📂 star_kanri_bot をクローン"
-mkdir -p ~/star_kanri_bot
-cd ~/star_kanri_bot
-
-git clone https://github.com/star-discord/star_kanri_bot.git . || {
-  echo "⚠️ Git clone 失敗（既に存在する可能性あり）"
-}
-
-# .env 設定
-if [ ! -f .env ]; then
-  if [ -f .env.sample ]; then
-    cp .env.sample .env
-    echo "⚠️ .env を作成しました。vim で編集してください。"
-  else
-    echo "⚠️ .env.sample が存在しないため、.env を手動で作成してください。"
-  fi
+# --- 2. Project Setup ---
+echo -e "\n${YELLOW}2. プロジェクトのセットアップ中...${NC}"
+if [ -d "$PROJECT_DIR" ]; then
+    echo -e "${RED}エラー: ディレクトリ '$PROJECT_DIR' は既に存在します。${NC}"
+    echo "このスクリプトは新規サーバーの初期化用です。既存の環境を更新する場合は 'update.sh' を使用してください。"
+    exit 1
 fi
 
-# パッケージインストール
-echo "📦 npm install 実行"
-npm install
+echo "📂 GitHubからリポジトリをクローンします: ${PROJECT_DIR}"
+git clone https://github.com/star-discord/star_kanri_bot.git "$PROJECT_DIR"
+cd "$PROJECT_DIR"
 
-# PM2起動 & 自動起動設定
-echo "🚀 pm2 でBot起動"
-pm2 start ecosystem.config.cjs || echo "⚠️ PM2起動に失敗しました。ecosystem.config.cjs を確認してください。"
+echo "📝 .env ファイルをセットアップします"
+if [ -f .env.sample ]; then
+    cp .env.sample .env
+    echo -e "${GREEN}✅ '.env.sample' から '.env' を作成しました。${NC}"
+else
+    echo -e "${YELLOW}⚠️ '.env.sample' が見つかりません。空の '.env' を作成します。${NC}"
+    touch .env
+fi
+
+echo "📂 ログディレクトリを作成します"
+mkdir -p logs
+
+echo "🔑 スクリプトに実行権限を付与します"
+chmod +x *.sh
+
+echo -e "\n${YELLOW}*** 重要: .env ファイルを編集してください ***${NC}"
+echo "Botのトークンや各種IDを設定する必要があります。"
+echo "例: nano .env  または  vim .env"
+read -p "編集が完了したら、Enterキーを押して続行してください..."
+
+# --- 3. Dependencies & Deployment ---
+echo -e "\n${YELLOW}3. 依存関係のインストールとデプロイ...${NC}"
+echo "📦 npm パッケージをインストールしています (数分かかる場合があります)..."
+npm install --no-audit --no-fund
+
+echo "📡 スラッシュコマンドをDiscordに登録しています..."
+node deploy-commands.js
+
+# --- 4. PM2 Setup ---
+echo -e "\n${YELLOW}4. PM2でBotを起動し、自動起動を設定します...${NC}"
+
+echo "🚀 PM2でBotを起動します..."
+pm2 start ecosystem.config.js
+
+echo "💾 現在のPM2プロセスリストを保存します..."
 pm2 save
-pm2 startup | tee pm2-startup.log
-eval "$(grep sudo pm2-startup.log | tail -1)"
 
-echo "✅ 初期化完了 & Bot 起動済み"
-echo "📜 ログ確認: pm2 logs"
-echo "🔁 再起動: pm2 restart star-kanri-bot"
+echo -e "\n${YELLOW}*** 重要: サーバー起動時にBotを自動起動させる設定 ***${NC}"
+echo "以下のコマンドをコピーして実行してください:"
+
+# Generate the startup command but let the user run it
+STARTUP_COMMAND=$(pm2 startup | grep "sudo")
+if [ -n "$STARTUP_COMMAND" ]; then
+    echo -e "${GREEN}${STARTUP_COMMAND}${NC}"
+else
+    echo -e "${RED}PM2の自動起動コマンドの生成に失敗しました。手動で 'pm2 startup' を実行してください。${NC}"
+fi
+
+echo -e "\n${GREEN}✅ 初期化処理が正常に完了しました！${NC}"
+echo "----------------------------------------"
+echo "💡 次のステップ:"
+echo "1. 上記の 'sudo ...' で始まるコマンドを実行して、自動起動を有効化してください。"
+echo "2. Botの動作状況は以下のコマンドで確認できます:"
+echo -e "   - ${GREEN}pm2 status${NC} (プロセスの状態確認)"
+echo -e "   - ${GREEN}pm2 logs star-kanri-bot${NC} (ログのリアルタイム表示)"
+echo ""
+echo "🔧 Botの更新:"
+echo "   今後の更新は、プロジェクトディレクトリ内で以下のコマンドを実行してください:"
+echo -e "   - ${GREEN}cd ~/star_kanri_bot && ./update.sh${NC}"
+echo "----------------------------------------"

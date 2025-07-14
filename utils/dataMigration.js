@@ -2,6 +2,8 @@
 const fs = require('fs');
 const path = require('path');
 const { readJSON, writeJSON } = require('./fileHelper');
+const starConfigMigrator = require('./star_config/star_configMigration');
+const totusunaMigrator = require('./totusuna_setti/totusunaMigration');
 
 /**
  * データ移行クラス
@@ -10,7 +12,11 @@ const { readJSON, writeJSON } = require('./fileHelper');
 class DataMigration {
   constructor() {
     this.dataDir = path.join(__dirname, '..', 'data');
-    this.migrationVersion = '1.0.0';
+    this.migrationVersion = '1.0';
+    this.migrators = [
+      starConfigMigrator,
+      totusunaMigrator,
+    ];
   }
 
   /**
@@ -134,196 +140,28 @@ class DataMigration {
    * @returns {object}
    */
   async performMigration(data, guildId, client) {
-    const migratedData = { ...data };
+    let migratedData = { ...data };
     let migrationPerformed = false;
 
-    // 1. star_config構造の移行
-    if (this.needsStarConfigMigration(data)) {
-      console.log(`  🔧 star_config構造を移行中...`);
-      migratedData.star_config = this.migrateStarConfig(data);
-      migrationPerformed = true;
-    }
-
-    // 2. 旧式adminRoleIds, notifyChannelIdの移行
-    if (data.adminRoleIds || data.notifyChannelId) {
-      console.log(`  🔧 旧式管理者設定を移行中...`);
-      if (!migratedData.star_config) {
-        migratedData.star_config = {};
-      }
-
-      if (data.adminRoleIds && !migratedData.star_config.adminRoleIds) {
-        migratedData.star_config.adminRoleIds = Array.isArray(data.adminRoleIds) 
-          ? data.adminRoleIds 
-          : [data.adminRoleIds];
-        delete migratedData.adminRoleIds;
-      }
-
-      if (data.notifyChannelId && !migratedData.star_config.notifyChannelId) {
-        migratedData.star_config.notifyChannelId = data.notifyChannelId;
-        delete migratedData.notifyChannelId;
-      }
-
-      migrationPerformed = true;
-    }
-
-    // 3. totsunaデータ構造の正規化
-    if (data.totsuna && this.needsTotsunaStructureMigration(data.totsuna)) {
-      console.log(`  🔧 凸スナデータ構造を移行中...`);
-      migratedData.totsuna = this.migrateTotsunaStructure(data.totsuna);
-      migrationPerformed = true;
-    }
-
-    // 4. 存在しないロール/チャンネルIDのクリーンアップ
     const guild = client.guilds.cache.get(guildId);
-    if (guild) {
-      await this.cleanupInvalidIds(migratedData, guild);
+
+    for (const migrator of this.migrators) {
+      if (typeof migrator.migrate === 'function') {
+        const result = migrator.migrate(migratedData, guild);
+        migratedData = result.data;
+        if (result.modified) {
+          migrationPerformed = true;
+        }
+      }
     }
 
     if (migrationPerformed) {
-      console.log(`  ✅ 移行項目が実行されました`);
+      console.log(`  ✅ 1つ以上の移行項目が実行されました`);
     } else {
       console.log(`  ℹ️ 移行不要でした`);
     }
 
     return migratedData;
-  }
-
-  /**
-   * star_config構造の移行が必要かチェック
-   * @param {object} data
-   * @returns {boolean}
-   */
-  needsStarConfigMigration(data) {
-    return !data.star_config && (data.adminRoleIds || data.notifyChannelId);
-  }
-
-  /**
-   * star_config構造を移行
-   * @param {object} data
-   * @returns {object}
-   */
-  migrateStarConfig(data) {
-    const starConfig = {};
-
-    if (data.adminRoleIds) {
-      starConfig.adminRoleIds = Array.isArray(data.adminRoleIds) 
-        ? data.adminRoleIds 
-        : [data.adminRoleIds];
-    }
-
-    if (data.notifyChannelId) {
-      starConfig.notifyChannelId = data.notifyChannelId;
-    }
-
-    return starConfig;
-  }
-
-  /**
-   * totsunaデータ構造の移行が必要かチェック
-   * @param {object} totsunaData
-   * @returns {boolean}
-   */
-  needsTotsunaStructureMigration(totsunaData) {
-    // 古い形式: 直接配列やオブジェクト
-    // 新しい形式: { instances: [...] }
-    return !totsunaData.instances && (Array.isArray(totsunaData) || typeof totsunaData === 'object');
-  }
-
-  /**
-   * totsunaデータ構造を移行
-   * @param {object|array} totsunaData
-   * @returns {object}
-   */
-  migrateTotsunaStructure(totsunaData) {
-    if (totsunaData.instances) {
-      // 既に新しい形式
-      return totsunaData;
-    }
-
-    if (Array.isArray(totsunaData)) {
-      // 配列形式から新しい形式に移行
-      return { instances: totsunaData };
-    }
-
-    if (typeof totsunaData === 'object') {
-      // オブジェクト形式から新しい形式に移行
-      const instances = Object.values(totsunaData).filter(item => 
-        item && typeof item === 'object' && item.id
-      );
-      return { instances };
-    }
-
-    return { instances: [] };
-  }
-
-  /**
-   * 無効なロール/チャンネルIDをクリーンアップ
-   * @param {object} data
-   * @param {import('discord.js').Guild} guild
-   */
-  async cleanupInvalidIds(data, guild) {
-    let cleanupPerformed = false;
-
-    // star_configのロールIDクリーンアップ
-    if (data.star_config?.adminRoleIds) {
-      const validRoleIds = data.star_config.adminRoleIds.filter(roleId => 
-        guild.roles.cache.has(roleId)
-      );
-
-      if (validRoleIds.length !== data.star_config.adminRoleIds.length) {
-        const removedCount = data.star_config.adminRoleIds.length - validRoleIds.length;
-        console.log(`  🧹 無効な管理者ロールID ${removedCount}件を削除しました`);
-        data.star_config.adminRoleIds = validRoleIds;
-        cleanupPerformed = true;
-      }
-    }
-
-    // star_configのチャンネルIDクリーンアップ
-    if (data.star_config?.notifyChannelId) {
-      if (!guild.channels.cache.has(data.star_config.notifyChannelId)) {
-        console.log(`  🧹 無効な通知チャンネルIDを削除しました`);
-        delete data.star_config.notifyChannelId;
-        cleanupPerformed = true;
-      }
-    }
-
-    // totsunaデータのチャンネルIDクリーンアップ
-    if (data.totsuna?.instances) {
-      for (const instance of data.totsuna.instances) {
-        if (instance.installChannelId && !guild.channels.cache.has(instance.installChannelId)) {
-          console.log(`  🧹 無効な凸スナ設置チャンネルID (${instance.id}) を修正しました`);
-          // 設置チャンネルが無効な場合はインスタンス自体を無効化
-          instance.isInvalid = true;
-          cleanupPerformed = true;
-        }
-
-        if (instance.replicateChannelIds) {
-          const validChannelIds = instance.replicateChannelIds.filter(channelId =>
-            guild.channels.cache.has(channelId)
-          );
-
-          if (validChannelIds.length !== instance.replicateChannelIds.length) {
-            const removedCount = instance.replicateChannelIds.length - validChannelIds.length;
-            console.log(`  🧹 無効な凸スナ複製チャンネルID ${removedCount}件を削除しました (${instance.id})`);
-            instance.replicateChannelIds = validChannelIds;
-            cleanupPerformed = true;
-          }
-        }
-      }
-
-      // 無効化されたインスタンスを削除
-      const validInstances = data.totsuna.instances.filter(instance => !instance.isInvalid);
-      if (validInstances.length !== data.totsuna.instances.length) {
-        const removedCount = data.totsuna.instances.length - validInstances.length;
-        console.log(`  🧹 無効な凸スナインスタンス ${removedCount}件を削除しました`);
-        data.totsuna.instances = validInstances;
-        cleanupPerformed = true;
-      }
-    }
-
-    if (cleanupPerformed) {
-      console.log(`  ✅ 無効IDクリーンアップ完了`);
-    }
   }
 }
 

@@ -1,38 +1,71 @@
-// utils/totusuna_setti/tempStore.js
+// utils/totusuna_setti/state/totusunaTemp.js
 
-const store = new Map();
-
-/**
- * @param {string} guildId
- * @param {string} userId
- * @returns {object|null}
- */
-function get(guildId, userId) {
-  return store.get(`${guildId}:${userId}`) || null;
-}
+const DEFAULT_TTL_MS = 15 * 60 * 1000; // 15 minutes
 
 /**
- * @param {string} guildId
- * @param {string} userId
- * @param {object} data
+ * A temporary in-memory store for multi-step interactions, with automatic cleanup.
  */
-function set(guildId, userId, data) {
-  store.set(`${guildId}:${userId}`, data);
+class TempStateStore {
+  /**
+   * @param {number} [ttl=900000] - Time-to-live for entries in milliseconds.
+   */
+  constructor(ttl = DEFAULT_TTL_MS) {
+    this.store = new Map();
+    this.ttl = ttl;
+
+    // Start a periodic cleanup job.
+    this.cleanupInterval = setInterval(() => this.cleanup(), this.ttl);
+    // Allow the Node.js process to exit even if this interval is active.
+    this.cleanupInterval.unref();
+  }
+
+  /**
+   * Generates a unique key for the store.
+   * @private
+   * @param {string} guildId
+   * @param {string} userId
+   * @returns {string}
+   */
+  _getKey(guildId, userId) {
+    return `${guildId}:${userId}`;
+  }
+
+  get(guildId, userId) {
+    const entry = this.store.get(this._getKey(guildId, userId));
+    return entry ? entry.data : null;
+  }
+
+  set(guildId, userId, data) {
+    const key = this._getKey(guildId, userId);
+    this.store.set(key, { data, timestamp: Date.now() });
+  }
+
+  delete(guildId, userId) {
+    return this.store.delete(this._getKey(guildId, userId));
+  }
+
+  /**
+   * Removes stale entries from the store.
+   */
+  cleanup() {
+    const now = Date.now();
+    for (const [key, entry] of this.store.entries()) {
+      if (now - entry.timestamp > this.ttl) {
+        this.store.delete(key);
+        console.log(`[TempStateStore] Cleaned up stale entry: ${key}`);
+      }
+    }
+  }
+
+  /**
+   * Gets all stored data for debugging.
+   * @returns {[string, {data: object, timestamp: number}][]}
+   */
+  getAll() {
+    return Array.from(this.store.entries());
+  }
 }
 
-/**
- * @param {string} guildId
- * @param {string} userId
- */
-function deleteData(guildId, userId) {
-  return store.delete(`${guildId}:${userId}`);
-}
-
-/**
- * Get all stored data for debugging
- */
-function getAll() {
-  return Array.from(store.entries());
-}
-
-module.exports = { get, set, delete: deleteData, getAll };
+// Export a single, shared instance of the store.
+// The API remains compatible with the previous implementation.
+module.exports = new TempStateStore();
