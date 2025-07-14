@@ -86,7 +86,7 @@ module.exports = {
       console.error('退勤管理設置エラー:', error);
       await interaction.reply({
         content: '❌ 退勤管理パネルの設置に失敗しました。',
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
     }
   })

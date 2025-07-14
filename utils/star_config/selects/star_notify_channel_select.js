@@ -21,7 +21,7 @@ module.exports = {
 
       await interaction.reply({
         content: `通知チャンネルを <#${selected}> に設定しました。`,
-        ephemeral: true
+        flags: MessageFlags.Ephemeral
       });
 
     } catch (error) {
@@ -30,12 +30,12 @@ module.exports = {
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({
           content: '通知チャンネル設定中にエラーが発生しました。',
-          ephemeral: true
+          flags: MessageFlags.Ephemeral
         });
       } else {
         await interaction.followUp({
           content: '通知チャンネル設定中にエラーが発生しました。',
-          ephemeral: true
+          flags: MessageFlags.Ephemeral
         });
       }
     }

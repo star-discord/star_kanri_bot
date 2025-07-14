@@ -92,7 +92,7 @@ client.on('interactionCreate', async interaction => {
     
     const errorMessage = {
       content: '❌ 処理中にエラーが発生しました。管理者に報告してください。',
-      ephemeral: true
+      flags: MessageFlags.Ephemeral
     };
 
     try {

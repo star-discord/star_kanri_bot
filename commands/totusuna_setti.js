@@ -57,10 +57,22 @@ module.exports = {
 
     } catch (error) {
       console.error('凸スナ設置コマンドエラー:', error);
-      await interaction.reply({
-        content: '❌ 凸スナ設置コマンドの実行中にエラーが発生しました。',
-        flags: MessageFlags.Ephemeral
-      });
+      if (!interaction.replied && !interaction.deferred) {
+        await interaction.reply({
+          content: '❌ 凸スナ設置コマンドの実行中にエラーが発生しました。',
+          flags: MessageFlags.Ephemeral
+        });
+      } else if (interaction.deferred && !interaction.replied) {
+        await interaction.editReply({
+          content: '❌ 凸スナ設置コマンドの実行中にエラーが発生しました。',
+          flags: MessageFlags.Ephemeral
+        });
+      } else {
+        await interaction.followUp({
+          content: '❌ 凸スナ設置コマンドの実行中にエラーが発生しました。',
+          flags: MessageFlags.Ephemeral
+        });
+      }
     }
   })
 };

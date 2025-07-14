@@ -122,7 +122,7 @@ client.on('interactionCreate', async interaction => {
       const shouldDefer = ['凸スナ設置', 'star管理bot設定', 'kpi_設定'].includes(interaction.commandName);
       if (shouldDefer && !interaction.deferred && !interaction.replied) {
         try {
-          await interaction.deferReply({ ephemeral: true });
+          await interaction.deferReply({ flags: MessageFlags.Ephemeral });
           console.log(`✅ [interactionCreate] 予防的デファー: ${interaction.commandName}`);
         } catch (deferError) {
           console.error('❌ [interactionCreate] デファー失敗:', deferError.message);
@@ -163,13 +163,13 @@ client.on('interactionCreate', async interaction => {
         // デファー済みの場合はeditReply
         await interaction.editReply({ 
           content: errorMessage,
-          ephemeral: true 
+          flags: MessageFlags.Ephemeral
         });
       } else if (!interaction.replied) {
         // 未応答の場合はreply
         await interaction.reply({ 
           content: errorMessage, 
-          ephemeral: true 
+          flags: MessageFlags.Ephemeral
         });
       }
       // 既に応答済みの場合は何もしない（重複応答防止）

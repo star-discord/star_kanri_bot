@@ -39,10 +39,22 @@ module.exports = {
       data = await readJSON(filePath);
     } catch (err) {
       console.error('❌ ファイル読み込みエラー:', err);
-      return await interaction.reply({
-        content: '❌ 設定ファイルの読み込みに失敗しました。',
-        flags: 1 << 6
-      });
+      if (!interaction.replied && !interaction.deferred) {
+        return await interaction.reply({
+          content: '❌ 設定ファイルの読み込みに失敗しました。',
+          flags: 1 << 6
+        });
+      } else if (interaction.deferred && !interaction.replied) {
+        return await interaction.editReply({
+          content: '❌ 設定ファイルの読み込みに失敗しました。',
+          flags: 1 << 6
+        });
+      } else {
+        return await interaction.followUp({
+          content: '❌ 設定ファイルの読み込みに失敗しました。',
+          flags: 1 << 6
+        });
+      }
     }
 
     // データ構造の互換性確保
@@ -203,7 +215,7 @@ module.exports = {
           await selectInteraction.reply({
             content: '❌ 処理中にエラーが発生しました。もう一度お試しください。',
             flags: 1 << 6,
-            ephemeral: true
+            flags: MessageFlags.Ephemeral
           });
         }
       }

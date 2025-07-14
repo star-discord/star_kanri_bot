@@ -86,7 +86,7 @@ module.exports = {
         if (selectInteraction.user.id !== interaction.user.id) {
           return selectInteraction.reply({
             content: '❌ このメニューは実行者のみ操作できます。',
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
           });
         }
 
@@ -98,7 +98,7 @@ module.exports = {
             embeds: [
               createAdminEmbed('❌ エラー', '選択された凸スナが見つかりませんでした。')
             ],
-            ephemeral: true,
+            flags: MessageFlags.Ephemeral,
           });
         }
 
@@ -140,10 +140,22 @@ module.exports = {
 
     } catch (error) {
       console.error('凸スナ設定コマンドエラー:', error);
-      await interaction.reply({
-        content: '❌ 凸スナ設定の読み込み中にエラーが発生しました。',
-        ephemeral: true,
-      });
+      if (!interaction.replied && !interaction.deferred) {
+        await interaction.reply({
+          content: '❌ 凸スナ設定の読み込み中にエラーが発生しました。',
+          flags: MessageFlags.Ephemeral,
+        });
+      } else if (interaction.deferred && !interaction.replied) {
+        await interaction.editReply({
+          content: '❌ 凸スナ設定の読み込み中にエラーが発生しました。',
+          flags: MessageFlags.Ephemeral,
+        });
+      } else {
+        await interaction.followUp({
+          content: '❌ 凸スナ設定の読み込み中にエラーが発生しました。',
+          flags: MessageFlags.Ephemeral,
+        });
+      }
     }
   }),
 };
