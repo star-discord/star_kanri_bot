@@ -2,6 +2,7 @@ const { EmbedBuilder, ActionRowBuilder, ChannelSelectMenuBuilder, ChannelType, M
 const tempStore = require('../state/totusunaTemp');
 
 module.exports = {
+  customId: 'totusuna_modal_body_input:install',
   /**
    * 凸スナ設定モーダルの送信後処理（チャンネル選択へ）
    * @param {import('discord.js').ModalSubmitInteraction} interaction
