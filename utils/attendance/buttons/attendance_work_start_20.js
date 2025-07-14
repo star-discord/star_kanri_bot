@@ -1,5 +1,6 @@
 // 出勤ボタン（例）
 const { saveWorkStart } = require('../../attendanceUtil');
+const { MessageFlags } = require('discord.js');
 
 module.exports = {
   customId: 'attendance_work_start_20',
@@ -22,13 +23,21 @@ module.exports = {
 
     if (!result.success) {
       if (result.reason === 'already_working') {
-        return interaction.reply({
-          content: '❌ **既に出勤中です**\n退勤処理を行ってから再度出勤してください。',
-          ephemeral: true
-        });
+        if (!interaction.replied && !interaction.deferred) {
+          return interaction.reply({
+            content: '❌ **既に出勤中です**\n退勤処理を行ってから再度出勤してください。',
+            flags: MessageFlags.Ephemeral
+          });
+        }
+        return;
       }
-      return interaction.reply({ content: '出勤処理に失敗しました。', ephemeral: true });
+      if (!interaction.replied && !interaction.deferred) {
+        return interaction.reply({ content: '出勤処理に失敗しました。', flags: MessageFlags.Ephemeral });
+      }
+      return;
     }
-    await interaction.reply({ content: '20時出勤を記録しました。', ephemeral: true });
+    if (!interaction.replied && !interaction.deferred) {
+      await interaction.reply({ content: '20時出勤を記録しました。', flags: MessageFlags.Ephemeral });
+    }
   }
 };
