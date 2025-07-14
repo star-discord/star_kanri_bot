@@ -1,13 +1,9 @@
-// utils/buttonsHandler.js
 const path = require('path');
-const { MessageFlags } = require('discord.js');
+const { MessageFlagsBitField } = require('discord.js');
 const { loadHandlers } = require('./handlerLoader.js');
 const { logAndReplyError } = require('./errorHelper');
 
-/**
- * 1. Load all handler "finder" functions from their respective directories.
- *    Each finder is a function that takes a customId and returns the correct handler.
- */
+// 各カテゴリのハンドラローダーを作成
 const handlerFinders = {
   star_config: loadHandlers(path.join(__dirname, 'star_config/buttons')),
   star_chat_gpt_setti: loadHandlers(path.join(__dirname, 'star_chat_gpt_setti/buttons')),
@@ -18,60 +14,58 @@ const handlerFinders = {
 };
 
 /**
- * Finds the correct handler function based on the customId.
- * @param {string} customId The customId from the interaction.
- * @returns {object|null} The handler object or null if not found.
+ * customId に対応するハンドラを探す
+ * @param {string} customId
+ * @returns {object|null}
  */
 function findButtonHandler(customId) {
-  // Iterate through all handler categories and try to find a match.
   for (const category in handlerFinders) {
     const find = handlerFinders[category];
-    // The `find` function is the `findHandler` returned by `loadHandlers`.
-    // It will return the handler if found, or null otherwise.
+    if (typeof find !== 'function') continue;
+    
     const handler = find(customId);
-    if (handler) {
-      return handler; // Return the first handler found.
-    }
+    if (handler) return handler;
   }
   return null;
 }
 
 /**
- * Handles button interactions by routing them to the correct handler.
+ * ボタンインタラクションを処理
  * @param {import('discord.js').ButtonInteraction} interaction
  */
 async function handleButton(interaction) {
   if (!interaction.isButton()) return;
 
   const { customId } = interaction;
+  console.log(`[buttonsHandler] ボタン受信: customId=${customId}, user=${interaction.user?.tag}, guild=${interaction.guildId}`);
 
   if (!customId || typeof customId !== 'string') {
-    console.warn('[buttonsHandler] Invalid customId received:', customId);
+    console.warn('[buttonsHandler] 無効な customId:', customId);
     return interaction.reply({
       content: '⚠️ 不正なボタンが押されました。',
-      flags: MessageFlags.Ephemeral,
+      flags: MessageFlagsBitField.Flags.Ephemeral,
     });
   }
 
   const handler = findButtonHandler(customId);
 
   if (!handler) {
-    console.warn(`[buttonsHandler] Unhandled button customId: ${customId}`);
+    console.warn(`[buttonsHandler] 未処理の customId: ${customId}`);
     return interaction.reply({
       content: '⚠️ このボタンは現在利用できません。',
-      flags: MessageFlags.Ephemeral,
+      flags: MessageFlagsBitField.Flags.Ephemeral,
     });
   }
 
   try {
     await handler.handle(interaction);
   } catch (err) {
-    console.error(`[buttonsHandler] Error executing handler for ${customId}:`, err);
+    console.error(`[buttonsHandler] ボタンハンドラエラー: ${customId}`, err);
     await logAndReplyError(
       interaction,
       `❌ ボタン処理エラー: ${customId}\n${err?.stack || err}`,
       '❌ ボタン処理中にエラーが発生しました。',
-      { ephemeral: true }
+      { flags: MessageFlagsBitField.Flags.Ephemeral }
     );
   }
 }
