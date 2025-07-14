@@ -17,7 +17,7 @@ async function actualHandler(interaction) {
   try {
     // 設定マネージャーを使用して現在の設定を安全に取得
     const currentConfig = await configManager.getSectionConfig(guildId, 'star');
-    const prevIds = new Set(currentConfig.adminRoleIds || []);
+    const prevIds = new Set(currentConfig?.adminRoleIds || []);
     const currentNotifyChannelId = currentConfig.notifyChannelId || null;
 
     const nextIds = new Set(selectedIds.filter(id => guild.roles.cache.has(id)));
@@ -25,8 +25,20 @@ async function actualHandler(interaction) {
     const added = [...nextIds].filter(id => !prevIds.has(id));
     const removed = [...prevIds].filter(id => !nextIds.has(id));
 
-    // 設定マネージャーを使用して設定を更新
-    await configManager.updateSectionConfig(guildId, 'star', { adminRoleIds: [...nextIds] });
+    // --- [追加] 詳細なデバッグログ ---
+    console.log(`[admin_role_select] Guild: ${guildId}`);
+    console.log(`  - 現在のロール:`, [...prevIds]);
+    console.log(`  - 選択されたロール:`, selectedIds);
+    console.log(`  - 追加されるロール:`, added);
+    console.log(`  - 削除されるロール:`, removed);
+
+    try {
+      // 設定マネージャーを使用して設定を更新
+      await configManager.updateSectionConfig(guildId, 'star', { adminRoleIds: [...nextIds] });
+    } catch (error) {
+      console.error(`❌ [star_config/selects] 設定更新エラー guildId=${guildId}`, error);
+      throw error;
+    }
 
     const formatRoleMentions = (ids) =>
       ids.length > 0

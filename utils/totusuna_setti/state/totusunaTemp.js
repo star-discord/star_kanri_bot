@@ -1,3 +1,5 @@
+// utils/totusuna_setti/state/totusunaTemp.js
+
 const DEFAULT_TTL_MS = 15 * 60 * 1000; // 15 minutes
 
 /**

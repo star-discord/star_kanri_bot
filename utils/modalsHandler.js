@@ -1,4 +1,4 @@
-const { MessageFlags } = require('discord.js');
+const { MessageFlagsBitField } = require('discord.js');
 const path = require('path');
 const { loadHandlers } = require('./handlerLoader');
 const { logAndReplyError } = require('./errorHelper');
@@ -6,12 +6,10 @@ const { logAndReplyError } = require('./errorHelper');
 // totusuna系モーダルハンドラ取得関数
 const totusunaHandlerFinder = loadHandlers(path.join(__dirname, 'totusuna_setti/modals'));
 
-// star_chat_gpt_setti/modals.js は単一のハンドラオブジェクトなので、
-// 他のハンドラと同様の「検索関数(finder)」形式にラップする
+// star_chat_gpt_setti/modals.js は単一のハンドラオブジェクトなので、finder形式にラップ
 const chatGptModalHandler = require(path.join(__dirname, 'star_chat_gpt_setti', 'modals.js'));
-const chatGptFinder = (customId) => {
-  return chatGptModalHandler.customId === customId ? chatGptModalHandler : null;
-};
+const chatGptFinder = (customId) =>
+  chatGptModalHandler.customId === customId ? chatGptModalHandler : null;
 
 // フォールバック用ハンドラ群（順に試す）
 const fallbackHandlerFinders = [
@@ -29,24 +27,28 @@ async function handleModal(interaction) {
 
   const { customId } = interaction;
 
+  console.log(`[handleModal] モーダル受信: customId=${customId}, user=${interaction.user?.tag}, guild=${interaction.guildId}`);
+
   try {
     let handler = null;
 
-    // customIdでハンドラを探す
+    // totusuna系は専用finderを優先
     if (customId.startsWith('totusuna_')) {
       handler = totusunaHandlerFinder(customId);
     } else {
       for (const finder of fallbackHandlerFinders) {
-        handler = finder(customId); // finderが関数でない場合にエラーが発生していた
+        if (typeof finder !== 'function') continue;
+        handler = finder(customId);
         if (handler) break;
       }
     }
 
     if (!handler) {
-      return await interaction.reply({
+      await interaction.reply({
         content: '❌ モーダルに対応する処理が見つかりませんでした。',
-        flags: MessageFlags.Ephemeral,
+        flags: MessageFlagsBitField.Flags.Ephemeral,
       });
+      return;
     }
 
     // ハンドラ実行
@@ -59,7 +61,7 @@ async function handleModal(interaction) {
       interaction,
       `❌ モーダル処理エラー: ${customId}\n${error?.stack || error}`,
       '❌ モーダル処理中にエラーが発生しました。',
-      { flags: MessageFlags.Ephemeral }
+      { flags: MessageFlagsBitField.Flags.Ephemeral }
     );
   }
 }

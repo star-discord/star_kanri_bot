@@ -1,74 +1,71 @@
-
 const path = require('path');
 const { loadHandlers } = require('../../handlerLoader');
 
-// 「totusuna_setti」配下のセレクトメニュー用ハンドラー群を読み込み
-const totusunaHandler = loadHandlers(path.join(__dirname, '../../totusuna_setti/selects'));
+/**
+ * 各セレクトメニューのハンドラーマップを読み込む
+ * Map<customId, handler>
+ */
+function loadHandlerMap(...subDirs) {
+  const merged = new Map();
+  for (const sub of subDirs) {
+    const handlerMap = loadHandlers(path.join(__dirname, '../../', sub));
+    for (const [key, val] of handlerMap.entries()) {
+      merged.set(key, val);
+    }
+  }
+  return merged;
+}
 
-// その他のセレクトメニュー用ハンドラー群（後方互換など）
-const fallbackDirs = [
+// 優先ハンドラ: totusuna_setti/selects
+const totusunaHandlerMap = loadHandlers(path.join(__dirname, '../../totusuna_setti/selects'));
+
+// フォールバック: star_config, totusuna_config
+const fallbackHandlerMap = loadHandlerMap(
   'star_config/selects',
   'totusuna_config/selects'
-].map(sub => loadHandlers(path.join(__dirname, '../../', sub)));
+);
 
 /**
  * セレクトメニューインタラクションを処理するメイン関数
  * @param {import('discord.js').StringSelectMenuInteraction} interaction
  */
 async function handleSelect(interaction) {
-  // セレクトメニュー以外のインタラクションは無視
   if (!interaction.isStringSelectMenu()) return;
 
-  const customId = interaction.customId;
+  const { customId } = interaction;
   let handler = null;
 
   try {
-    // 「totusuna_」で始まるcustomId を優先的に処理
     if (customId.startsWith('totusuna_')) {
-      handler = totusunaHandler(customId);
-    } else {
-      // フォールバック用ディレクトリ群から対応するハンドラを順次探索
-      for (const find of fallbackDirs) {
-        handler = find(customId);
-        if (handler) break;
-      }
+      handler = totusunaHandlerMap.get(customId);
+    }
+    if (!handler) {
+      handler = fallbackHandlerMap.get(customId);
     }
 
     if (!handler) {
-      // 対応ハンドラなし。ユーザーへ通知
       await interaction.reply({
-        content: 'エラー: セレクトメニューに対応する処理が見つかりませんでした。',
+        content: '❌ セレクトメニューに対応する処理が見つかりませんでした。',
         ephemeral: true,
       });
       return;
     }
 
-    // ハンドラの処理を実行
     await handler.handle(interaction);
 
   } catch (error) {
-    // 例外発生時のログ出力
-    console.error(`エラー: セレクトメニュー処理中にエラー発生 (customId: ${customId}):`, error);
+    console.error(`❌ セレクトメニュー処理中にエラー (customId: ${customId}):`, error);
 
-    // すでに返信済み or defer済みならfollowUp、それ以外は reply でエラーメッセージ送信
-    if (interaction.replied || interaction.deferred) {
-      try {
-        await interaction.followUp({
-          content: '警告: セレクトメニュー処理中にエラーが発生しました。管理者に報告してください。',
-          ephemeral: true,
-        });
-      } catch (followUpError) {
-        console.error('エラー: フォローアップ送信中にエラー:', followUpError);
+    const msg = '⚠️ セレクトメニュー処理中にエラーが発生しました。管理者に報告してください。';
+
+    try {
+      if (interaction.replied || interaction.deferred) {
+        await interaction.followUp({ content: msg, ephemeral: true });
+      } else {
+        await interaction.reply({ content: msg, ephemeral: true });
       }
-    } else {
-      try {
-        await interaction.reply({
-          content: '警告: セレクトメニュー処理中にエラーが発生しました。管理者に報告してください。',
-          ephemeral: true,
-        });
-      } catch (replyError) {
-        console.error('エラー: リプライ送信中にエラー:', replyError);
-      }
+    } catch (nestedError) {
+      console.error('⚠️ エラーメッセージ送信に失敗:', nestedError);
     }
   }
 }

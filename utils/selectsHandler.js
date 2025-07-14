@@ -61,25 +61,27 @@ async function handleSelect(interaction) {
         await totusunaSelectHandler(interaction);
         return;
       }
-      console.warn(`[selectHandler] 未対応 customId: ${customId}`);
+      console.warn(`[selectHandler] 未対応 customId: ${customId}, guild=${guildId}, user=${user.id}`);
       await interaction.reply({
         content: '❌ 対応する処理が見つかりませんでした。',
-        flags: MessageFlagsBitField.Ephemeral,
+        flags: MessageFlagsBitField.Flags.Ephemeral,
       });
       return;
     }
 
+    // 実行処理
+    await interaction.deferReply({ ephemeral: true });
+
     if (isHandlerObject(handler)) {
-      await interaction.deferReply({ ephemeral: true });
       await handler.handle(interaction);
-      await interaction.editReply({ content: '✅ 処理が完了しました。' });
     } else if (isHandlerFunction(handler)) {
-      await interaction.deferReply({ ephemeral: true });
       await handler(interaction);
-      await interaction.editReply({ content: '✅ 処理が完了しました。' });
     } else {
       throw new Error(`ハンドラーの形式が不正です。customId=${customId}`);
     }
+
+    await interaction.editReply({ content: '✅ 処理が完了しました。' });
+
   } catch (error) {
     console.error(`[selectHandler] エラー: ${error.stack || error}`);
 
@@ -87,7 +89,7 @@ async function handleSelect(interaction) {
       interaction,
       `❌ セレクトエラー (${customId})\n${error.stack || error}`,
       '❌ エラーが発生しました。詳細はコンソールを確認してください。',
-      { flags: MessageFlagsBitField.Ephemeral }
+      { flags: MessageFlagsBitField.Flags.Ephemeral }
     );
   }
 }
