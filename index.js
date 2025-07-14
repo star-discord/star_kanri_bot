@@ -5,7 +5,7 @@ const { Client, GatewayIntentBits, Collection } = require('discord.js');
 require('dotenv').config();
 
 // ======== 起動時診断 ========
-const { StartupDiagnostics } = require('../utils/startupDiagnostics');
+const { StartupDiagnostics } = require('./utils/startupDiagnostics');
 
 async function runStartupDiagnostics() {
   const diagnostics = new StartupDiagnostics();
@@ -94,9 +94,9 @@ if (fs.existsSync(eventsPath)) {
 }
 
 // ======== インタラクションハンドラー ========
-const { handleButton } = require('../utils/buttonsHandler');
-const { handleModal } = require('../utils/modalsHandler');
-const { handleSelect } = require('../utils/selectsHandler');
+const { handleButton } = require('./utils/buttonsHandler');
+const { handleModal } = require('./utils/modalsHandler');
+const { handleSelect } = require('./utils/selectsHandler');
 
 client.on('interactionCreate', async interaction => {
   const startTime = Date.now();
