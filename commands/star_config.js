@@ -9,7 +9,7 @@ const {
   ChannelType
 } = require('discord.js');
 const { PermissionFlagsBits } = require('discord.js');
-const { readJSON, writeJSON, ensureGuildJSON } = require('../utils/fileHelper');
+const { configManager } = require('../utils/configManager');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -24,52 +24,22 @@ module.exports = {
 
     // star_config コマンドは Discord 標準の管理者権限が必要
     if (!member.permissions.has('Administrator')) {
-      return await interaction.reply({
+      return await interaction.editReply({
         content: '❌ この設定コマンドには Discord の管理者権限が必要です。\n' +
-                'サーバー設定で管理者権限を付与してください。',
-        flags: 1 << 6
+                 'サーバー設定で管理者権限を付与してください。',
       });
     }
 
-    let filePath;
-    let data;
-
+    let config;
     try {
-      filePath = await ensureGuildJSON(guildId);
-      data = await readJSON(filePath);
+      config = await configManager.getGuildConfig(guildId);
     } catch (err) {
       console.error('❌ ファイル読み込みエラー:', err);
-      if (!interaction.replied && !interaction.deferred) {
-        return await interaction.reply({
-          content: '❌ 設定ファイルの読み込みに失敗しました。',
-          flags: 1 << 6
-        });
-      } else if (interaction.deferred && !interaction.replied) {
-        return await interaction.editReply({
-          content: '❌ 設定ファイルの読み込みに失敗しました。',
-          flags: 1 << 6
-        });
-      } else {
-        return await interaction.followUp({
-          content: '❌ 設定ファイルの読み込みに失敗しました。',
-          flags: 1 << 6
-        });
-      }
+      return interaction.editReply({ content: '❌ 設定ファイルの読み込みに失敗しました。' });
     }
 
-    // データ構造の互換性確保
-    if (!data.star_config) data.star_config = {};
-    
-    // 既存データのマイグレーション（古い形式から新しい形式へ）
-    if (data.adminRoleIds && !data.star_config.adminRoleIds) {
-      data.star_config.adminRoleIds = data.adminRoleIds;
-    }
-    if (data.notifyChannelId && !data.star_config.notifyChannelId) {
-      data.star_config.notifyChannelId = data.notifyChannelId;
-    }
-    
-    const currentAdminRoleIds = data.star_config.adminRoleIds || [];
-    const currentNotifyChannelId = data.star_config.notifyChannelId || null;
+    const currentAdminRoleIds = config.star.adminRoleIds || [];
+    const currentNotifyChannelId = config.star.notifyChannelId || null;
 
     const getSettingsEmbed = (roleIds, notifyId) => {
       const roleMentions =
@@ -107,10 +77,9 @@ module.exports = {
     const row1 = new ActionRowBuilder().addComponents(roleSelect);
     const row2 = new ActionRowBuilder().addComponents(channelSelect);
 
-    await interaction.reply({
+    await interaction.editReply({
       embeds: [getSettingsEmbed(currentAdminRoleIds, currentNotifyChannelId)],
       components: [row1, row2],
-      flags: 1 << 6
     });
 
     const collector = interaction.channel?.createMessageComponentCollector({
@@ -128,23 +97,22 @@ module.exports = {
       if (customId === 'admin_role_select') {
         const selectedRoleIds = selectInteraction.values;
         const validRoleIds = selectedRoleIds.filter(id => guild.roles.cache.has(id));
-        const previousRoleIds = data.star_config.adminRoleIds || [];
+        const previousRoleIds = (await configManager.getSectionConfig(guildId, 'star')).adminRoleIds || [];
         const added = validRoleIds.filter(id => !previousRoleIds.includes(id));
         const removed = previousRoleIds.filter(id => !validRoleIds.includes(id));
 
-        data.star_config.adminRoleIds = validRoleIds;
-
         try {
-          await writeJSON(filePath, data);
+          await configManager.updateSectionConfig(guildId, 'star', { adminRoleIds: validRoleIds });
         } catch (err) {
           console.error('❌ ロール保存失敗:', err);
           return await selectInteraction.reply({
             content: '❌ ロール設定の保存に失敗しました。',
-            flags: 1 << 6
+            ephemeral: true
           });
         }
 
-        const embeds = [getSettingsEmbed(validRoleIds, data.star_config.notifyChannelId)];
+        const updatedConfig = await configManager.getGuildConfig(guildId);
+        const embeds = [getSettingsEmbed(validRoleIds, updatedConfig.star.notifyChannelId)];
 
         if (added.length > 0) {
           embeds.push(
@@ -167,7 +135,6 @@ module.exports = {
         await selectInteraction.update({
           embeds,
           components: [row1, row2],
-          flags: 1 << 6
         });
 
       } else if (customId === 'notify_channel_select') {
@@ -177,36 +144,32 @@ module.exports = {
         if (!channel || !channel.isTextBased()) {
           return await selectInteraction.update({
             content: '❌ 無効なチャンネルです。もう一度選択してください。',
-            embeds: [getSettingsEmbed(data.star_config.adminRoleIds, data.star_config.notifyChannelId)],
+            embeds: [getSettingsEmbed(currentAdminRoleIds, currentNotifyChannelId)],
             components: [row1, row2],
-            flags: 1 << 6
           });
         }
 
-        data.star_config.notifyChannelId = selectedChannelId;
-
         try {
-          await writeJSON(filePath, data);
+          await configManager.updateSectionConfig(guildId, 'star', { notifyChannelId: selectedChannelId });
         } catch (err) {
           console.error('❌ チャンネル保存失敗:', err);
           return await selectInteraction.update({
             content: '❌ 通知チャンネルの保存に失敗しました。',
-            embeds: [getSettingsEmbed(data.star_config.adminRoleIds, data.star_config.notifyChannelId)],
+            embeds: [getSettingsEmbed(currentAdminRoleIds, currentNotifyChannelId)],
             components: [row1, row2],
-            flags: 1 << 6
           });
         }
 
+        const updatedConfig = await configManager.getGuildConfig(guildId);
         await selectInteraction.update({
           embeds: [
-            getSettingsEmbed(data.star_config.adminRoleIds, selectedChannelId),
+            getSettingsEmbed(updatedConfig.star.adminRoleIds, selectedChannelId),
             new EmbedBuilder()
               .setTitle('📣 通知チャンネルを設定しました')
               .setDescription(`設定されたチャンネル: <#${selectedChannelId}>`)
               .setColor(0x00cc99)
           ],
           components: [row1, row2],
-          flags: 1 << 6
         });
       }
       } catch (error) {
@@ -214,16 +177,15 @@ module.exports = {
         if (!selectInteraction.replied && !selectInteraction.deferred) {
           await selectInteraction.reply({
             content: '❌ 処理中にエラーが発生しました。もう一度お試しください。',
-            flags: 1 << 6,
-            flags: MessageFlags.Ephemeral
+            ephemeral: true
           });
         }
       }
     });
 
-    collector.on('end', collected => {
-      if (collected.size === 0 && !(interaction.replied || interaction.deferred)) {
-        interaction.editReply({
+    collector.on('end', async (collected) => {
+      if (collected.size === 0) {
+        await interaction.editReply({
           content: '⏱️ 時間切れのため設定がキャンセルされました。',
           components: []
         });
