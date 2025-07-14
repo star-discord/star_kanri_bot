@@ -9,7 +9,7 @@ const {
 } = require('discord.js');
 
 module.exports = {
-  customIdStart: 'totsusuna_setti:edit_settings:',
+  customIdStart: 'totusuna_setti:edit_settings:',
 
   /**
    * 凸スナ設置の編集モーダル表示
@@ -65,7 +65,7 @@ module.exports = {
       return;
     }
 
-    const instances = json.totsusuna?.instances;
+    const instances = json.totusuna?.instances;
     if (!Array.isArray(instances)) {
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({
@@ -88,7 +88,7 @@ module.exports = {
     }
 
     const modal = new ModalBuilder()
-      .setCustomId(`totsusuna_edit_settings_modal:${uuid}`)
+      .setCustomId(`totusuna_edit_settings_modal:${uuid}`)
       .setTitle('📘 凸スナ本文の編集');
 
     const bodyInput = new TextInputBuilder()

@@ -13,7 +13,7 @@ class IdManager {
       buttons: {
         star_config: 'star_config:{action}',
         star_chat_gpt: 'star_chat_gpt_{action}',
-        totusuna_setti: 'totsusuna_setti:{action}:{uuid?}',
+        totusuna_setti: 'totusuna_setti:{action}:{uuid?}',
         totusuna_config: 'totusuna_config:{action}:{uuid?}',
         totusuna_report: 'totusuna:report:{uuid}',
         kpi: 'kpi_{action}',
@@ -30,7 +30,7 @@ class IdManager {
       // セレクトメニューID
       selects: {
         star_config: 'star_config:{action}',
-        totusuna_setti: 'totsusuna_setti:{action}',
+        totusuna_setti: 'totusuna_setti:{action}',
         totusuna_config: 'totusuna_config_select',
       }
     };
@@ -58,7 +58,7 @@ class IdManager {
       case 'star_chat_gpt':
         return `star_chat_gpt_${action}`;
       case 'totusuna_setti':
-        return uuid ? `totsusuna_setti:${action}:${uuid}` : `totsusuna_setti:${action}`;
+        return uuid ? `totusuna_setti:${action}:${uuid}` : `totusuna_setti:${action}`;
       case 'totusuna_config':
         return uuid ? `totusuna_config:${action}:${uuid}` : `totusuna_config:${action}`;
       case 'totusuna_report':
@@ -107,7 +107,7 @@ class IdManager {
       case 'star_config':
         return `star_config:${action}`;
       case 'totusuna_setti':
-        return `totsusuna_setti:${action}`;
+        return `totusuna_setti:${action}`;
       case 'totusuna_config':
         return 'totusuna_config_select';
       default:
@@ -132,9 +132,9 @@ class IdManager {
       { regex: /^chatgpt_config_modal$/, category: 'star_chat_gpt', type: 'modal', action: 'config' },
       
       // totusuna設定
-      { regex: /^totsusuna_setti:([^:]+):?(.*)$/, category: 'totusuna_setti', type: 'button' },
+      { regex: /^totusuna_setti:([^:]+):?(.*)$/, category: 'totusuna_setti', type: 'button' },
       { regex: /^totusuna_modal_([^:]+):?(.*)$/, category: 'totusuna_setti', type: 'modal' },
-      { regex: /^totsusuna_setti:(.+)$/, category: 'totusuna_setti', type: 'select' },
+      { regex: /^totusuna_setti:(.+)$/, category: 'totusuna_setti', type: 'select' },
       
       // totusuna設定（config）
       { regex: /^totusuna_config:([^:]+):?(.*)$/, category: 'totusuna_config', type: 'button' },
@@ -200,14 +200,14 @@ class IdManager {
 
   /**
    * 名前正規化（統一化）
-   * totusuna ↔ totsusuna の統一など
+   * totusuna ↔ totusuna の統一など
    * @param {string} name 
    * @returns {string}
    */
   normalizeName(name) {
     const normalizations = {
       'totusuna': 'totusuna',
-      'totsusuna': 'totusuna',
+      'totusuna': 'totusuna',
       'toutsuna': 'totusuna',
     };
     

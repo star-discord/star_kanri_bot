@@ -2,7 +2,7 @@ const { configManager } = require('../../configManager');
 const { createSuccessEmbed, createErrorEmbed } = require('../../embedHelper');
 
 module.exports = {
-  customIdStart: 'totsusuna_setti:delete:',
+  customIdStart: 'totusuna_setti:delete:',
 
   /**
    * Deletes a "Totsuna" instance, including its message and data entry.
@@ -27,7 +27,7 @@ module.exports = {
             await message.delete();
           }
         } catch (err) {
-          console.warn(`[totsusuna_setti:delete] Could not delete original message for instance ${uuid}:`, err.message);
+          console.warn(`[totusuna_setti:delete] Could not delete original message for instance ${uuid}:`, err.message);
           // This is not a fatal error; continue with data deletion.
         }
       }
@@ -45,7 +45,7 @@ module.exports = {
         });
       }
     } catch (err) {
-      console.error(`[totsusuna_setti:delete] Error deleting instance ${uuid}:`, err);
+      console.error(`[totusuna_setti:delete] Error deleting instance ${uuid}:`, err);
       await interaction.editReply({
         embeds: [createErrorEmbed('処理エラー', '凸スナの削除中に予期せぬエラーが発生しました。')],
       });

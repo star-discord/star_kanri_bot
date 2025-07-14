@@ -1,12 +1,12 @@
 // commands/common/selectHandler.js
 const starSelectHandler = require('../utils/star_config/selects');
-const totsusunaSelectHandler = require('../utils/totusuna_setti/selects');
+const totusunaSelectHandler = require('../utils/totusuna_setti/selects');
 const totusunaConfigSelectHandler = require('../utils/totusuna_config/selects/totusuna_channel_selected');
 const { MessageFlagsBitField } = require('discord.js');
 const { logAndReplyError } = require('./errorHelper');
 
 const PREFIX_STAR_CONFIG = 'star_config:';
-const PREFIX_TOTSUUNA_SETTI = 'totsusuna_setti:';
+const PREFIX_TOTSUUNA_SETTI = 'totusuna_setti:';
 const PREFIX_TOTSUUNA_CONFIG = 'totusuna_channel_selected_';
 
 const DIRECT_STAR_HANDLERS = new Set(['admin_role_select', 'notify_channel_select']);
@@ -32,7 +32,7 @@ function isHandlerFunction(handler) {
  */
 function getHandlerByPrefix(customId) {
   if (customId.startsWith(PREFIX_STAR_CONFIG)) return starSelectHandler(customId);
-  if (customId.startsWith(PREFIX_TOTSUUNA_SETTI)) return totsusunaSelectHandler(customId);
+  if (customId.startsWith(PREFIX_TOTSUUNA_SETTI)) return totusunaSelectHandler(customId);
   if (customId.startsWith(PREFIX_TOTSUUNA_CONFIG)) return totusunaConfigSelectHandler;
   return null;
 }
@@ -58,7 +58,7 @@ async function handleSelect(interaction) {
         return;
       }
       if (DIRECT_TOTSUUNA_HANDLERS.has(customId)) {
-        await totsusunaSelectHandler(interaction);
+        await totusunaSelectHandler(interaction);
         return;
       }
       console.warn(`[selectHandler] 未対応 customId: ${customId}`);

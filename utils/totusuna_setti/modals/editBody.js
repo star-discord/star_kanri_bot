@@ -9,7 +9,7 @@ const {
 } = require('discord.js');
 
 module.exports = {
-  customIdStart: 'totsusuna_edit_modal:',
+  customIdStart: 'totusuna_edit_modal:',
 
   /**
    * 本文編集モーダル送信後処理
@@ -45,7 +45,7 @@ module.exports = {
       });
     }
 
-    const instances = json.totsusuna?.instances;
+    const instances = json.totusuna?.instances;
     if (!Array.isArray(instances)) {
       return await interaction.reply({
         content: '⚠️ 設置データが見つかりません。',
@@ -87,7 +87,7 @@ module.exports = {
         .setColor(0x00bfff);
 
       const button = new ButtonBuilder()
-        .setCustomId(`totsusuna_report_button_${uuid}`)
+        .setCustomId(`totusuna_report_button_${uuid}`)
         .setLabel('凸スナ報告')
         .setStyle(ButtonStyle.Primary);
 

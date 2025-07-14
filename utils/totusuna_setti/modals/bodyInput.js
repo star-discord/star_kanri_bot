@@ -10,7 +10,7 @@ const { ensureGuildJSON, readJSON, writeJSON } = require('../../../utils/fileHel
 const tempStore = require('../state/totusunaTemp');
 
 module.exports = {
-  customIdStart: 'totsusuna_modal_body_input:',
+  customIdStart: 'totusuna_modal_body_input:',
 
   /**
    * 凸スナ本文モーダルの送信後処理
@@ -34,8 +34,8 @@ module.exports = {
       const jsonPath = await ensureGuildJSON(guildId);
       const json = await readJSON(jsonPath);
 
-      if (!json.totsusuna) json.totsusuna = {};
-      if (!Array.isArray(json.totsusuna.instances)) json.totsusuna.instances = [];
+      if (!json.totusuna) json.totusuna = {};
+      if (!Array.isArray(json.totusuna.instances)) json.totusuna.instances = [];
 
       const uuid = uuidv4();
 
@@ -54,7 +54,7 @@ module.exports = {
         .setColor(0x00bfff);
 
       const button = new ButtonBuilder()
-        .setCustomId(`totsusuna_report_button_${uuid}`) // 統一したプレフィックス
+        .setCustomId(`totusuna_report_button_${uuid}`) // 統一したプレフィックス
         .setLabel('凸スナ報告')
         .setStyle(ButtonStyle.Primary);
 
@@ -75,7 +75,7 @@ module.exports = {
       });
 
       newInstance.messageId = sentMessage.id;
-      json.totsusuna.instances.push(newInstance);
+      json.totusuna.instances.push(newInstance);
 
       await writeJSON(jsonPath, json);
 
@@ -85,7 +85,7 @@ module.exports = {
       });
 
     } catch (error) {
-      console.error('[totsusuna_modal_body_input] 処理中にエラー:', error);
+      console.error('[totusuna_modal_body_input] 処理中にエラー:', error);
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({
           content: '❌ 凸スナ設置処理中にエラーが発生しました。',

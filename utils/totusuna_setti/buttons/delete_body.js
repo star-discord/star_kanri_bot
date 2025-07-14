@@ -2,9 +2,9 @@ const { configManager } = require('../../configManager');
 const { createSuccessEmbed, createErrorEmbed } = require('../../embedHelper');
 
 module.exports = {
-  // NOTE: Based on `totusuna_config.js`, the correct customId prefix is likely 'totsusuna_setti:delete:'.
+  // NOTE: Based on `totusuna_config.js`, the correct customId prefix is likely 'totusuna_setti:delete:'.
   // Consider renaming this file to 'delete.js' and updating the customIdStart to match.
-  customIdStart: 'totsusuna_setti:delete_body:',
+  customIdStart: 'totusuna_setti:delete_body:',
 
   /**
    * Deletes a "Totsuna" instance, including its message and data entry.
@@ -47,7 +47,7 @@ module.exports = {
         });
       }
     } catch (err) {
-      console.error(`[totsusuna_setti:delete_body] Error deleting instance ${uuid}:`, err);
+      console.error(`[totusuna_setti:delete_body] Error deleting instance ${uuid}:`, err);
       await interaction.editReply({
         embeds: [createErrorEmbed('処理エラー', '凸スナの削除中に予期せぬエラーが発生しました。')],
       });

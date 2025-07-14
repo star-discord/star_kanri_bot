@@ -6,7 +6,7 @@ const {
   MessageFlagsBitField,
 } = require('discord.js');
 
-const CUSTOM_ID_START = 'totsusuna_report_button_';
+const CUSTOM_ID_START = 'totusuna_report_button_';
 
 module.exports = {
   customIdStart: CUSTOM_ID_START,
@@ -21,7 +21,7 @@ module.exports = {
 
       // customIdが期待した形式かチェック
       if (!customId.startsWith(CUSTOM_ID_START)) {
-        console.warn(`[totsusuna_report_button] 不正なcustomId: ${customId}`);
+        console.warn(`[totusuna_report_button] 不正なcustomId: ${customId}`);
         return await interaction.reply({
           content: '❌ 不正なボタン操作です。',
           flags: MessageFlagsBitField.Ephemeral,
@@ -31,7 +31,7 @@ module.exports = {
       // UUID部分を切り出す
       const uuid = customId.substring(CUSTOM_ID_START.length);
       if (!uuid) {
-        console.warn('[totsusuna_report_button] UUIDが抽出できません');
+        console.warn('[totusuna_report_button] UUIDが抽出できません');
         return await interaction.reply({
           content: '❌ 凸スナ識別子が不正です。',
           flags: MessageFlagsBitField.Ephemeral,
@@ -40,7 +40,7 @@ module.exports = {
 
       // モーダル作成
       const modal = new ModalBuilder()
-        .setCustomId(`totsusuna_modal_${uuid}`)
+        .setCustomId(`totusuna_modal_${uuid}`)
         .setTitle('📝 凸スナ報告フォーム');
 
       // 各入力欄の作成。最大文字数も設定（必要に応じて調整）
@@ -90,7 +90,7 @@ module.exports = {
       // モーダルを表示
       await interaction.showModal(modal);
     } catch (error) {
-      console.error('[totsusuna_report_button] モーダル表示エラー:', error);
+      console.error('[totusuna_report_button] モーダル表示エラー:', error);
 
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({

@@ -118,13 +118,13 @@ module.exports = {
           );
 
         const editButton = new ButtonBuilder()
-          .setCustomId(`totsusuna_setti:edit:${instance.id}`)
+          .setCustomId(`totusuna_setti:edit:${instance.id}`)
           .setLabel('本文を編集')
           .setStyle(ButtonStyle.Primary)
           .setEmoji('✏️');
 
         const deleteButton = new ButtonBuilder()
-          .setCustomId(`totsusuna_setti:delete:${instance.id}`)
+          .setCustomId(`totusuna_setti:delete:${instance.id}`)
           .setLabel('この設置を削除')
           .setStyle(ButtonStyle.Danger)
           .setEmoji('🗑️');

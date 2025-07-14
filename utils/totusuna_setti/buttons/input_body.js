@@ -7,7 +7,7 @@ const {
 } = require('discord.js');
 
 module.exports = {
-  customId: 'totsusuna_setti:input_body',
+  customId: 'totusuna_setti:input_body',
 
   /**
    * 凸スナ本文入力モーダルを表示する処理

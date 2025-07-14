@@ -8,7 +8,7 @@ const { ensureGuildJSON, readJSON } = require('../../fileHelper');
 const { createAdminEmbed } = require('../../embedHelper');
 
 module.exports = {
-  customId: 'totsusuna_config_button', // "totusuna" → "totsusuna" に修正（名前揺れ防止）
+  customId: 'totusuna_config_button', // "totusuna" → "totusuna" に修正（名前揺れ防止）
 
   /**
    * 凸スナ設定管理ボタンの処理
@@ -20,7 +20,7 @@ module.exports = {
     try {
       const filePath = await ensureGuildJSON(guildId);
       const data = await readJSON(filePath);
-      const instances = data.totsusuna?.instances ?? [];
+      const instances = data.totusuna?.instances ?? [];
 
       if (instances.length === 0) {
         return await interaction.reply({
@@ -54,7 +54,7 @@ module.exports = {
         });
 
       const selectMenu = new StringSelectMenuBuilder()
-        .setCustomId('totsusuna_config_select')
+        .setCustomId('totusuna_config_select')
         .setPlaceholder('編集・削除する凸スナを選択してください')
         .addOptions(options);
 

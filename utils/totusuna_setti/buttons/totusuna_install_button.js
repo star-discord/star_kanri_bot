@@ -16,7 +16,7 @@ module.exports = {
   async handle(interaction) {
     try {
       const modal = new ModalBuilder()
-        .setCustomId('totsusuna_modal_body_input:install')
+        .setCustomId('totusuna_modal_body_input:install')
         .setTitle('📝 凸スナ本文入力');
 
       // 本文入力（ParagraphのみsetMaxLength未対応）

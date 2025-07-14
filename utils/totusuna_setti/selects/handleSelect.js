@@ -1,7 +1,7 @@
 const { MessageFlagsBitField } = require('discord.js');
 
 // カテゴリごとの findHandler を読み込み
-const findTotsusunaHandler = require('../../totusuna_setti/selects');
+const findTotusunaHandler = require('../../totusuna_setti/selects');
 const findStarHandler = require('../../star_config/selects');
 
 /**
@@ -14,8 +14,8 @@ async function handleSelect(interaction) {
   const customId = interaction.customId;
   let handler;
 
-  if (customId.startsWith('totsusuna_setti:')) {
-    handler = findTotsusunaHandler(customId);
+  if (customId.startsWith('totusuna_setti:')) {
+    handler = findTotusunaHandler(customId);
   } else {
     handler = findStarHandler(customId);
   }

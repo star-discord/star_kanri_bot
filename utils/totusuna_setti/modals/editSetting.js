@@ -35,7 +35,7 @@ module.exports = {
       });
     }
 
-    const instances = json.totsusuna?.instances;
+    const instances = json.totusuna?.instances;
     if (!Array.isArray(instances)) {
       return await interaction.reply({
         content: '⚠️ 凸スナ設置データが見つかりません。',

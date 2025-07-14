@@ -23,7 +23,7 @@ async function safeReply(interaction, content) {
 }
 
 module.exports = {
-  customIdStart: 'totsusuna_setti:edit:',
+  customIdStart: 'totusuna_setti:edit:',
 
   /**
    * 凸スナ本文編集モーダル表示
@@ -56,7 +56,7 @@ module.exports = {
       return;
     }
 
-    const instances = json.totsusuna?.instances;
+    const instances = json.totusuna?.instances;
     if (!Array.isArray(instances)) {
       await safeReply(interaction, '⚠️ 凸スナ設置データが存在しません。');
       return;
@@ -69,7 +69,7 @@ module.exports = {
     }
 
     const modal = new ModalBuilder()
-      .setCustomId(`totsusuna_edit_modal:${uuid}`)
+      .setCustomId(`totusuna_edit_modal:${uuid}`)
       .setTitle('📘 凸スナ本文の編集');
 
     const input = new TextInputBuilder()

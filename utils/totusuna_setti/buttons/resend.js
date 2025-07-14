@@ -9,7 +9,7 @@ const {
 } = require('discord.js');
 
 module.exports = {
-  customIdStart: 'totsusuna_setti:resend:',
+  customIdStart: 'totusuna_setti:resend:',
 
   /**
    * 凸スナ再送信処理：設置メッセージを再投稿
@@ -44,7 +44,7 @@ module.exports = {
       });
     }
 
-    const instances = json.totsusuna?.instances ?? [];
+    const instances = json.totusuna?.instances ?? [];
     const instance = instances.find(i => i.id === uuid);
 
     if (!instance) {
@@ -92,7 +92,7 @@ module.exports = {
 
       // ボタン作成
       const button = new ButtonBuilder()
-        .setCustomId(`totsusuna_report_button_${uuid}`)
+        .setCustomId(`totusuna_report_button_${uuid}`)
         .setLabel('凸スナ報告')
         .setStyle(ButtonStyle.Primary);
 

@@ -45,7 +45,7 @@ class UnifiedInteractionHandler {
       'star_config:': 'star_config',
       'star_chat_gpt_': 'star_chat_gpt_setti',
       'totusuna_': 'totusuna_setti',
-      'totsusuna_': 'totusuna_setti', // 命名統一のため両方対応
+      'totusuna_': 'totusuna_setti', // 命名統一のため両方対応
       'totusuna_config:': 'totusuna_config',
       'kpi_': 'kpi_setti',
     };
