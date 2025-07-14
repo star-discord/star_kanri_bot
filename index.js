@@ -1,7 +1,7 @@
 // ======== 基本モジュール読み込み ========
 const fs = require('fs');
 const path = require('path');
-const { Client, GatewayIntentBits, Collection, MessageFlags } = require('discord.js');
+const { Client, GatewayIntentBits, Collection, MessageFlagsBitField } = require('discord.js');
 require('dotenv').config();
 
 // ======== 起動時診断 ========
@@ -35,7 +35,6 @@ const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
-    // GatewayIntentBits.MessageContent, // メッセージ本文が必要な場合のみ有効化
   ],
 });
 
@@ -118,11 +117,10 @@ client.on('interactionCreate', async interaction => {
         return;
       }
 
-      // 長時間処理が予想されるコマンドは予防的にデファー
       const shouldDefer = ['凸スナ設置', 'star管理bot設定', 'kpi_設定'].includes(interaction.commandName);
       if (shouldDefer && !interaction.deferred && !interaction.replied) {
         try {
-          await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+          await interaction.deferReply({ flags: MessageFlagsBitField.Flags.Ephemeral });
           console.log(`✅ [interactionCreate] 予防的デファー: ${interaction.commandName}`);
         } catch (deferError) {
           console.error('❌ [interactionCreate] デファー失敗:', deferError.message);
@@ -130,7 +128,7 @@ client.on('interactionCreate', async interaction => {
       }
 
       await command.execute(interaction);
-      
+
     } else if (interaction.isButton()) {
       await handleButton(interaction);
     } else if (interaction.isStringSelectMenu()) {
@@ -146,7 +144,8 @@ client.on('interactionCreate', async interaction => {
     const duration = Date.now() - startTime;
     console.error('❌ [interactionCreate] ハンドリングエラー:', {
       error: err.message,
-      stack: err.stack?.split('\n').slice(0, 3).join('\n'), // スタック短縮
+      full: err,
+      stack: err.stack?.split('\n').slice(0, 3).join('\n'),
       commandName: interaction.commandName || interaction.customId,
       interactionId,
       duration,
@@ -155,25 +154,21 @@ client.on('interactionCreate', async interaction => {
       user: interaction.user?.tag
     });
 
-    // エラーレスポンスの安全な送信
     try {
       const errorMessage = '⚠️ 処理中にエラーが発生しました。しばらく時間をおいて再試行してください。';
-      
+
       if (interaction.deferred) {
-        // デファー済みの場合はeditReply
-        await interaction.editReply({ 
+        await interaction.editReply({
           content: errorMessage,
-          flags: MessageFlags.Ephemeral
+          flags: MessageFlagsBitField.Flags.Ephemeral
         });
       } else if (!interaction.replied) {
-        // 未応答の場合はreply
-        await interaction.reply({ 
-          content: errorMessage, 
-          flags: MessageFlags.Ephemeral
+        await interaction.reply({
+          content: errorMessage,
+          flags: MessageFlagsBitField.Flags.Ephemeral
         });
       }
-      // 既に応答済みの場合は何もしない（重複応答防止）
-      
+
     } catch (replyError) {
       console.error('❌ [interactionCreate] エラーレスポンス送信失敗:', {
         error: replyError.message,
@@ -181,7 +176,6 @@ client.on('interactionCreate', async interaction => {
         deferred: interaction.deferred,
         replied: interaction.replied
       });
-      // エラーレスポンス送信失敗でもプロセスを継続
     }
   }
 });
@@ -202,7 +196,6 @@ process.on('unhandledRejection', (reason, promise) => {
     promise: promise.toString(),
     timestamp: new Date().toISOString()
   });
-  // プロセス継続（PM2が管理）
 });
 
 process.on('uncaughtException', (err, origin) => {
@@ -212,10 +205,9 @@ process.on('uncaughtException', (err, origin) => {
     origin,
     timestamp: new Date().toISOString()
   });
-  
-  // グレースフルシャットダウン
+
   console.log('🔄 [UncaughtException] プロセス再起動...');
-  process.exit(1); // PM2が自動的に再起動
+  process.exit(1);
 });
 
 process.on('warning', (warning) => {
@@ -226,7 +218,7 @@ process.on('warning', (warning) => {
   });
 });
 
-// SIGTERM/SIGINT ハンドリング（グレースフルシャットダウン）
+// SIGTERM/SIGINT ハンドリング
 process.on('SIGTERM', () => {
   console.log('📡 [SIGTERM] 受信 - グレースフルシャットダウン開始');
   client.destroy();
