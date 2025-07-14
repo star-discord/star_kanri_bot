@@ -1,6 +1,6 @@
 const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const requireAdmin = require('../../utils/permissions/requireAdmin');
-const { createAdminEmbed } = require('../../utils/embedHelper');
+const requireAdmin = require('../utils/permissions/requireAdmin');
+const { createAdminEmbed } = require('../utils/embedHelper');
 
 module.exports = {
   data: new SlashCommandBuilder()
