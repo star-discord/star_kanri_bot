@@ -20,6 +20,18 @@ echo.
 :: --- 変更状況の確認 ---
 echo 📋 現在の変更状況:
 git status --porcelain
+
+:: --- コミットする変更があるか確認 ---
+git diff --quiet --exit-code --cached
+if %errorlevel% equ 0 (
+    git diff --quiet --exit-code
+    if %errorlevel% equ 0 (
+        echo.
+        echo ✅ コミットする変更はありません。
+        pause
+        exit /b 0
+    )
+)
 echo.
 
 :: --- ステージング ---
@@ -29,12 +41,12 @@ echo.
 
 :: --- コミットメッセージの取得 ---
 set "COMMIT_MESSAGE=%~1"
-if not defined COMMIT_MESSAGE (
-    echo 💬 コミットメッセージを入力してください (例: 機能追加、バグ修正など):
+if "%COMMIT_MESSAGE%"=="" (
+    echo [?] コミットメッセージを入力してください (例: 機能追加、バグ修正など):
     set /p "COMMIT_MESSAGE="
 )
 
-if not defined COMMIT_MESSAGE (
+if "%COMMIT_MESSAGE%"=="" (
     echo ⚠️ コミットメッセージが入力されなかったため、処理を中止します。
     pause
     exit /b 1

@@ -1,104 +1,54 @@
-// utils/totusuna_setti/buttons/delete.js
-const fs = require('fs').promises;
-const path = require('path');
-const { MessageFlagsBitField } = require('discord.js');
+const { configManager } = require('../../configManager');
+const { createSuccessEmbed, createErrorEmbed } = require('../../embedHelper');
 
 module.exports = {
   customIdStart: 'totsusuna_setti:delete:',
 
   /**
-   * 凸スナ設置データの削除処理
+   * Deletes a "Totsuna" instance, including its message and data entry.
    * @param {import('discord.js').ButtonInteraction} interaction
    */
   async handle(interaction) {
+    await interaction.deferReply({ ephemeral: true });
+
+    const { guild, customId } = interaction;
+    const uuid = customId.substring(this.customIdStart.length);
+
     try {
-      await interaction.deferReply({ ephemeral: true });
-    } catch (err) {
-      console.error(`[${new Date().toISOString()}] deferReply失敗:`, err);
-      if (!interaction.replied && !interaction.deferred) {
-        await interaction.reply({
-          content: '❌ 応答準備中にエラーが発生しました。',
-          flags: MessageFlagsBitField.Ephemeral,
-        }).catch(() => {});
-      }
-      return;
-    }
+      // First, get the instance data to find the message to delete.
+      const instance = await configManager.getTotusunaInstance(guild.id, uuid);
 
-    const guildId = interaction.guildId;
-    if (!guildId) {
-      return interaction.editReply({ content: '⚠️ ギルドIDが取得できません。' });
-    }
-
-    if (!interaction.guild) {
-      return interaction.editReply({ content: '⚠️ ギルド情報が取得できません。' });
-    }
-
-    const uuid = interaction.customId.substring(this.customIdStart.length);
-    const filePath = path.resolve(__dirname, '..', '..', '..', 'data', guildId, `${guildId}.json`);
-
-    // ファイル存在チェック
-    try {
-      await fs.access(filePath);
-    } catch {
-      return interaction.editReply({ content: '⚠️ データファイルが見つかりません。' });
-    }
-
-    let json;
-    try {
-      const fileData = await fs.readFile(filePath, 'utf8');
-      json = JSON.parse(fileData);
-    } catch (err) {
-      console.error(`[${new Date().toISOString()}] JSON読み込みエラー:`, err);
-      return interaction.editReply({ content: '❌ データの読み込みに失敗しました。' });
-    }
-
-    const list = json.totsusuna?.instances;
-    if (!Array.isArray(list)) {
-      return interaction.editReply({ content: '⚠️ インスタンスデータが存在しません。' });
-    }
-
-    const targetIndex = list.findIndex(i => i.id === uuid);
-    if (targetIndex === -1) {
-      return interaction.editReply({ content: '⚠️ 指定された設置データが見つかりません。' });
-    }
-
-    const instance = list[targetIndex];
-
-    // メッセージ削除処理
-    if (instance.messageId && instance.installChannelId) {
-      try {
-        const channel = await interaction.guild.channels.fetch(instance.installChannelId);
-        if (channel) {
+      // Attempt to delete the associated Discord message if it exists.
+      if (instance?.messageId && instance.installChannelId) {
+        try {
+          const channel = await guild.channels.fetch(instance.installChannelId);
           const message = await channel.messages.fetch(instance.messageId).catch(() => null);
           if (message) {
             await message.delete();
-          } else {
-            console.warn(`[${new Date().toISOString()}] メッセージが見つかりません: チャンネルID=${instance.installChannelId}, メッセージID=${instance.messageId}`);
           }
-        } else {
-          console.warn(`[${new Date().toISOString()}] チャンネルが見つかりません: ${instance.installChannelId}`);
+        } catch (err) {
+          console.warn(`[totsusuna_setti:delete] Could not delete original message for instance ${uuid}:`, err.message);
+          // This is not a fatal error; continue with data deletion.
         }
-      } catch (err) {
-        console.warn(`[${new Date().toISOString()}] メッセージ削除失敗:`, err);
-        // 削除失敗は致命的ではないため無視
       }
-    }
 
-    // 配列から削除して保存
-    list.splice(targetIndex, 1);
-    try {
-      await fs.writeFile(filePath, JSON.stringify(json, null, 2), 'utf8');
+      // Remove the instance from the configuration file using the centralized manager.
+      const success = await configManager.removeTotusunaInstance(guild.id, uuid);
+
+      if (success) {
+        await interaction.editReply({
+          embeds: [createSuccessEmbed('削除完了', '凸スナの設置データを削除しました。')],
+        });
+      } else {
+        await interaction.editReply({
+          embeds: [createErrorEmbed('削除失敗', '指定された凸スナが見つかりませんでした。データが既に削除されている可能性があります。')],
+        });
+      }
     } catch (err) {
-      console.error(`[${new Date().toISOString()}] JSON書き込み失敗:`, err);
-      return interaction.editReply({ content: '❌ データの保存に失敗しました。' });
-    }
-
-    try {
+      console.error(`[totsusuna_setti:delete] Error deleting instance ${uuid}:`, err);
       await interaction.editReply({
-        content: '🗑️ 凸スナ設置データを削除しました。',
+        embeds: [createErrorEmbed('処理エラー', '凸スナの削除中に予期せぬエラーが発生しました。')],
       });
-    } catch (err) {
-      console.error(`[${new Date().toISOString()}] 応答送信失敗:`, err);
     }
   },
 };
