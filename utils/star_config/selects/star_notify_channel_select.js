@@ -6,6 +6,7 @@ const {
   RoleSelectMenuBuilder,
   ChannelSelectMenuBuilder,
   ChannelType,
+  MessageFlagsBitField,
 } = require('discord.js');
 
 async function actualHandler(interaction) {
@@ -71,9 +72,9 @@ async function actualHandler(interaction) {
     console.error('notify_channel_select処理エラー:', error);
     const errorMsg = '⚠️ 通知チャンネル設定中にエラーが発生しました。';
     if (!interaction.replied && !interaction.deferred) {
-      await interaction.reply({ content: errorMsg, ephemeral: true });
+      await interaction.reply({ content: errorMsg, flags: MessageFlagsBitField.Flags.Ephemeral });
     } else {
-      await interaction.followUp({ content: errorMsg, ephemeral: true });
+      await interaction.followUp({ content: errorMsg, flags: MessageFlagsBitField.Flags.Ephemeral });
     }
   }
 }
