@@ -1,7 +1,7 @@
 // ======== 基本モジュール読み込み ========
 const fs = require('fs');
 const path = require('path');
-const { Client, GatewayIntentBits, Collection } = require('discord.js');
+const { Client, GatewayIntentBits, Collection, MessageFlags } = require('discord.js');
 require('dotenv').config();
 
 // ======== 起動時診断 ========
@@ -106,7 +106,7 @@ client.on('interactionCreate', async interaction => {
     type: interaction.type,
     commandName: interaction.commandName || interaction.customId || 'unknown',
     user: interaction.user.tag,
-    guild: interaction.guild?.name || 'DM',
+    guildId: interaction.guild?.id || 'DM',
     timestamp: new Date().toISOString()
   });
 
