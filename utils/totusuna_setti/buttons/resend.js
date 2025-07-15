@@ -27,7 +27,8 @@ module.exports = {
     }
     const uuid = interaction.customId.slice(this.customIdStart.length);
 
-    const dataPath = path.join(__dirname, '../../../data', guildId, `${guildId}.json`);
+    // パスを utils 内から見て修正
+    const dataPath = path.join(__dirname, '..', '..', '..', 'data', guildId, `${guildId}.json`);
 
     // データファイルの読み込みとインスタンスの検索
     let json;
@@ -46,7 +47,14 @@ module.exports = {
     }
 
     // インスタンスまたは必須プロパティの存在チェック
-    if (!instance || !instance.installChannelId) {
+    if (!instance) {
+      console.warn(`[再送信] 対象の設置データが見つかりません。 UUID: ${uuid}`);
+      return await interaction.reply({
+        content: '⚠️ 対象の設置データが見つかりません。',
+        flags: MessageFlagsBitField.Ephemeral,
+      });
+    }
+    if (!instance.installChannelId || !instance.messageId) {
       console.warn(`[再送信] 対象の設置データが見つからないか、データが不完全です。 UUID: ${uuid}`);
       return await interaction.reply({
         content: '⚠️ 対象の設置データが見つからないか、データが不完全です。',
@@ -67,12 +75,10 @@ module.exports = {
       });
     }
     if (!channel.isTextBased()) {
-      if (!channel || !channel.isTextBased()) {
-        return await interaction.reply({
-          content: '⚠️ 対象チャンネルがテキストチャンネルではありません。',
-          flags: MessageFlagsBitField.Ephemeral,
-        });
-      }
+      return await interaction.reply({
+        content: '⚠️ 対象チャンネルがテキストチャンネルではありません。',
+        flags: MessageFlagsBitField.Flags.Ephemeral,
+      });
     }
 
     try {
@@ -95,7 +101,7 @@ module.exports = {
 
       // ボタン作成
       const button = new ButtonBuilder()
-        .setCustomId(`totusuna_report_button_${uuid}`)
+        .setCustomId(`totusuna_report:${uuid}`) // 修正: ID生成関数を使用
         .setLabel('凸スナ報告')
         .setStyle(ButtonStyle.Primary);
 
@@ -123,5 +129,5 @@ module.exports = {
         });
       }
     }
-  },
-};
+  }
+}

@@ -83,6 +83,7 @@ module.exports = {
         new ActionRowBuilder().addComponents(groupInput),
         new ActionRowBuilder().addComponents(nameInput),
         new ActionRowBuilder().addComponents(table1),
+        new ActionRowBuilder().addComponents(table2),
         new ActionRowBuilder().addComponents(detail),
       );
       
