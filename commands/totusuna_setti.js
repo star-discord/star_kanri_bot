@@ -1,6 +1,6 @@
 const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlagsBitField } = require('discord.js');
 const { checkAdmin } = require('../utils/permissions/checkAdmin');
-const { createAdminEmbed } = require('../utils/embedHelper');
+const { createAdminEmbed, createAdminRejectEmbed } = require('../utils/embedHelper');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -15,11 +15,7 @@ module.exports = {
       // Check for admin permissions after deferring.
       const isAdmin = await checkAdmin(interaction);
       if (!isAdmin) {
-        return interaction.editReply({
-          embeds: [
-            createAdminEmbed('❌ 権限がありません', 'このコマンドを実行するには管理者権限が必要です。')
-          ]
-        });
+        return interaction.editReply({ embeds: [createAdminRejectEmbed()] });
       }
 
       // 凸スナ設置用のボタンを作成
@@ -60,9 +56,17 @@ module.exports = {
 
     } catch (error) {
       console.error('凸スナ設置コマンドエラー:', error);
-      // The interaction should be deferred, so we can safely edit the reply.
-      if (interaction.deferred) {
-        await interaction.editReply({ content: '❌ 凸スナ設置コマンドの実行中にエラーが発生しました。' });
+      try {
+        if (interaction.replied || interaction.deferred) {
+          await interaction.editReply({ content: '❌ 処理中にエラーが発生しました。' });
+        } else {
+          await interaction.reply({
+            content: '❌ 処理中にエラーが発生しました。',
+            flags: MessageFlagsBitField.Flags.Ephemeral,
+          });
+        }
+      } catch (replyError) {
+        console.error('❌ エラー応答の送信に失敗:', replyError);
       }
     }
   }
