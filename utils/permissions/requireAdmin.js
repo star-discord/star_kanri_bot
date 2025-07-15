@@ -18,29 +18,36 @@ function requireAdmin(executeFunction) {
       });
     }
 
-    let isAdmin = false;
     try {
-      // configManagerを使用して、安全かつ一元的に権限をチェック
-      isAdmin = await configManager.isStarAdmin(interaction.guildId, interaction.member);
+      const isAdmin = await configManager.isStarAdmin(interaction.guildId, interaction.member);
+
+      if (!isAdmin) {
+        return interaction.reply({
+          content: '❌ あなたには権限がありません。\n' +
+                   'この操作には、サーバーの管理者権限またはBotで設定された管理者ロールが必要です。',
+          flags: MessageFlagsBitField.Flags.Ephemeral
+        });
+      }
+
+      // 権限チェックをパスしたので、元の関数を実行
+      return await executeFunction(interaction);
+
     } catch (error) {
-      console.error('❌ requireAdmin: isStarAdminの権限チェック中にエラー:', error);
-      return interaction.reply({
-        content: '❌ 権限チェック中にエラーが発生しました。',
-        flags: MessageFlagsBitField.Flags.Ephemeral
-      });
+      // isStarAdmin または executeFunction が投げたエラーをここでキャッチ
+      console.error(`❌ requireAdmin: 保護された処理 (${interaction.commandName || interaction.customId}) の実行中にエラー:`, error);
+      
+      const errorMessage = { content: '❌ 処理中に予期せぬエラーが発生しました。' };
+      
+      try {
+        if (interaction.deferred) {
+          await interaction.editReply(errorMessage);
+        } else if (!interaction.replied) {
+          await interaction.reply({ ...errorMessage, flags: MessageFlagsBitField.Flags.Ephemeral });
+        }
+      } catch (replyError) {
+        console.error('❌ requireAdmin: エラー応答の送信にも失敗:', replyError);
+      }
     }
-
-    if (!isAdmin) {
-      return interaction.reply({
-        content: '❌ あなたには権限がありません。\n' +
-                 'この操作には、サーバーの管理者権限またはBotで設定された管理者ロールが必要です。',
-        flags: MessageFlagsBitField.Ephemeral
-      });
-    }
-
-    // 権限チェックをパスしたので、元の関数を実行
-    // 元の関数内で発生したエラーは、呼び出し元の interactionCreate ハンドラでキャッチされます
-    return executeFunction(interaction);
   };
 }
 
