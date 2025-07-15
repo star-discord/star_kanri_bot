@@ -13,12 +13,22 @@ async function logAndReplyError(interaction, logMsg, userMsg, opts = {}) {
   } else {
     console.error(logMsg);
   }
-  if (!interaction.replied && !interaction.deferred) {
-    return interaction.reply({
-      content: userMsg,
-      flags: MessageFlagsBitField.Ephemeral,
-      ...opts
-    });
+
+  // 二重応答を避けつつ、安全にエラーメッセージを送信する
+  try {
+    const payload = { content: userMsg, embeds: [], components: [], ...opts };
+
+    if (interaction.deferred) {
+      // deferReply済みならeditReply
+      await interaction.editReply(payload);
+    } else if (!interaction.replied) {
+      // まだreplyもdeferもしていなければreply
+      await interaction.reply({ ...payload, flags: MessageFlagsBitField.Flags.Ephemeral });
+    }
+    // interaction.repliedがtrueの場合は、既に応答済みのため何もしない
+    // (showModal成功後や、ハンドラ内で既に応答した場合など)
+  } catch (replyError) {
+    console.error(`❌ エラー応答の送信に失敗しました (Interaction ID: ${interaction.id})`, replyError.message);
   }
 }
 

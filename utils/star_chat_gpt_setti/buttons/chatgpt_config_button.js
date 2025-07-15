@@ -38,16 +38,10 @@ module.exports = {
       modal.addComponents(row1, row2, row3);
 
       await interaction.showModal(modal);
-
     } catch (error) {
       console.error('ChatGPT設定ボタン処理エラー:', error);
-
-      if (!interaction.replied && !interaction.deferred) {
-        await interaction.reply({
-          content: '❌ 設定画面の表示中にエラーが発生しました。',
-          flags: MessageFlagsBitField.Ephemeral,
-        });
-      }
+      // エラーを再スローして、中央の buttonsHandler.js で一元的に処理させる
+      throw error;
     }
   }
 };

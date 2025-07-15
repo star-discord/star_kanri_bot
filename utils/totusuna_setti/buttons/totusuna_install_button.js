@@ -32,13 +32,8 @@ async function actualHandler(interaction) {
     await interaction.showModal(modal);
   } catch (error) {
     console.error('❌ [totusuna_install_button] モーダル表示エラー:', error);
-    // エラーが起きても、まだ応答していなければフォールバックメッセージを送信
-    if (!interaction.replied && !interaction.deferred) {
-      await interaction.reply({
-        content: '⚠️ モーダルの表示に失敗しました。時間をおいて再度お試しください。',
-        flags: MessageFlagsBitField.Flags.Ephemeral,
-      });
-    }
+    // エラーを再スローして、中央の buttonsHandler.js で一元的に処理させる
+    throw error;
   }
 }
 
