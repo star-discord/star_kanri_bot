@@ -5,9 +5,10 @@ const {
   RoleSelectMenuBuilder,
   ChannelSelectMenuBuilder,
   EmbedBuilder,
-  ChannelType
+  ChannelType,
+  PermissionFlagsBits,
+  MessageFlagsBitField
 } = require('discord.js');
-const { PermissionFlagsBits } = require('discord.js');
 const { configManager } = require('../utils/configManager');
 
 module.exports = {
@@ -19,7 +20,7 @@ module.exports = {
   async execute(interaction) {
     try {
       // Defer the reply to prevent "Unknown Interaction" errors for long-running operations.
-      await interaction.deferReply({ ephemeral: true });
+      await interaction.deferReply({ flags: MessageFlagsBitField.Flags.Ephemeral });
 
       const { guild, member } = interaction;
       const guildId = guild.id;
@@ -92,7 +93,7 @@ module.exports = {
         if (interaction.deferred || interaction.replied) {
           await interaction.editReply({ content: '❌ コマンドの実行中に予期せぬエラーが発生しました。' });
         } else {
-          await interaction.reply({ content: '❌ コマンドの実行中に予期せぬエラーが発生しました。', ephemeral: true });
+          await interaction.reply({ content: '❌ コマンドの実行中に予期せぬエラーが発生しました。', flags: MessageFlagsBitField.Flags.Ephemeral });
         }
       } catch (replyError) {
         // フォールバックの応答すら失敗した場合
