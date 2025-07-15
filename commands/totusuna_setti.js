@@ -11,8 +11,11 @@ module.exports = {
 
   async execute(interaction) {
     try {
-      // Defer the reply to prevent "Unknown Interaction" errors.
-      await interaction.deferReply({ flags: MessageFlagsBitField.Flags.Ephemeral });
+      // 中央のハンドラ(index.js)が既に応答遅延している可能性があるため、
+      // "Interaction has already been acknowledged" エラーを回避するために最初にチェックします。
+      if (!interaction.deferred && !interaction.replied) {
+        await interaction.deferReply({ flags: MessageFlagsBitField.Flags.Ephemeral });
+      }
 
       // Check for admin permissions after deferring.
       const isAdmin = await checkAdmin(interaction);
@@ -59,13 +62,11 @@ module.exports = {
     } catch (error) {
       console.error('凸スナ設置コマンドエラー:', error);
       try {
+        const errorMessage = { content: '❌ 処理中にエラーが発生しました。', embeds: [], components: [] };
         if (interaction.replied || interaction.deferred) {
-          await interaction.editReply({ content: '❌ 処理中にエラーが発生しました。' });
+          await interaction.editReply(errorMessage);
         } else {
-          await interaction.reply({
-            content: '❌ 処理中にエラーが発生しました。',
-            flags: MessageFlagsBitField.Flags.Ephemeral,
-          });
+          await interaction.reply({ ...errorMessage, flags: MessageFlagsBitField.Flags.Ephemeral });
         }
       } catch (replyError) {
         console.error('❌ エラー応答の送信に失敗:', replyError);
