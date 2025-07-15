@@ -1,24 +1,17 @@
 // utils/permissions/checkAdmin.js
-
 const { configManager } = require('../configManager');
 
 /**
- * Checks if the interacting user has admin permissions.
- * This includes Discord's Administrator permission or a configured admin role.
+ * Checks if the interaction user is an administrator.
+ * An admin is someone with the 'Administrator' permission or a role configured in star_config.
  * @param {import('discord.js').Interaction} interaction
- * @returns {Promise<boolean>} True if the user is an admin, false otherwise.
+ * @returns {Promise<boolean>}
  */
 async function checkAdmin(interaction) {
-  if (!interaction.inGuild() || !interaction.member) {
-    // Cannot check permissions outside of a guild context.
-    return false;
+  if (!interaction.inGuild()) {
+    return false; // Admin commands are guild-only
   }
-  try {
-    return await configManager.isStarAdmin(interaction.guildId, interaction.member);
-  } catch (err) {
-    console.error(`❌ [checkAdmin] Error during permission check for user ${interaction.user.id} in guild ${interaction.guildId}:`, err);
-    return false; // Fail safely
-  }
+  return configManager.isStarAdmin(interaction.guildId, interaction.member);
 }
 
 module.exports = { checkAdmin };
