@@ -39,5 +39,5 @@ async function actualHandler(interaction) {
 
 module.exports = {
   customId: 'totusuna_install_button',
-  handle: requireAdmin(actualHandler),
+  handle: actualHandler,
 };
