@@ -23,15 +23,14 @@ const INFO_CONFIG = {
 /**
  * OpenAIから指定された情報を取得する汎用関数
  * @param {'weather' | 'news' | 'trivia'} type - 取得する情報の種類
- * @param {string} guildId - APIキー特定用のギルドID
  * @returns {Promise<string>}
  */
-async function fetchInfo(type, guildId) {
+async function fetchInfo(type) {
   const config = INFO_CONFIG[type];
   if (!config) return '不明な情報タイプです。';
 
   try {
-    const res = await getChatCompletion(config.prompt, guildId);
+    const res = await getChatCompletion(config.prompt);
     if (res.error) return `❌ ${res.message}`;
 
     return res.choices[0]?.message?.content || '有効な応答がありませんでした。';
@@ -55,10 +54,10 @@ module.exports = {
 
     try {
       // 全てのデータを並行して取得します。
-      const [weather, news, trivia] = await Promise.all([
-        fetchInfo('weather', guildId),
-        fetchInfo('news', guildId),
-        fetchInfo('trivia', guildId),
+      const [weather, news, trivia, usageInfo] = await Promise.all([
+        fetchInfo('weather'),
+        fetchInfo('news'),
+        fetchInfo('trivia', guildId), // 修正: ギルドIDを渡す
         // fetchUsageInfo(guildId),  // 使用量表示は一旦削除
       ]);
 
