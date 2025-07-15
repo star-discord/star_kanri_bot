@@ -40,7 +40,10 @@ async function getChatCompletion(prompt, guildId, options = {}) {
     return { error: true, message: 'APIキーが設定されていません。' };
   }
 
-  const defaultOptions = {
+  // OpenAI クライアントを初期化（APIキーを使用）
+  const openai = new OpenAI({ apiKey: chatgpt.apiKey });
+
+    const defaultOptions = {
     model: 'gpt-3.5-turbo',
     messages: [{ role: 'user', content: prompt }],
     max_tokens: chatgpt.maxTokens || 150,
@@ -48,7 +51,7 @@ async function getChatCompletion(prompt, guildId, options = {}) {
     ...options,
   };
   
-  return await safeOpenAICall(
+    return await safeOpenAICall(
     () => openai.chat.completions.create(defaultOptions),
     {
       error: true,
