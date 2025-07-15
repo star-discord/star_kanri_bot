@@ -20,14 +20,14 @@ const EXCLUDED_FILES = new Set(['index.js', 'handleSelect.js', 'install_channel.
  * @param {string} dirPath - 読み込むディレクトリの絶対パス
  * @returns {Promise<(customId: string) => Handler|null>} - 対応するハンドラを返す関数を解決するPromise
  */
-async function loadHandlers(dirPath) {
+function loadHandlers(dirPath) {
   const handlers = {};              // 完全一致用ハンドラ格納
   const startsWithHandlers = [];    // 前方一致用ハンドラ格納
   
   let fileNames;
   try {
-    // fs.promises を使用して非同期にディレクトリを読み込む
-    fileNames = await fs.promises.readdir(dirPath);
+    // 同期的にディレクトリを読み込む
+    fileNames = fs.readdirSync(dirPath);
   } catch (err) {
     if (err.code === 'ENOENT') {
       console.warn(`⚠️ [handlerLoader] ディレクトリが存在しません: ${dirPath}`);
