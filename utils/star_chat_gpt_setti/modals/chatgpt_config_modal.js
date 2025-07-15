@@ -1,6 +1,7 @@
 // utils/star_chat_gpt_setti/modals/chatgpt_config_modal.js
-const { ensureGuildJSON, readJSON, writeJSON } = require('../../../fileHelper');
-const { createSuccessEmbed } = require('../../../embedHelper');
+const path = require('path');
+const { ensureGuildJSON, readJSON, writeJSON } = require(path.resolve(__dirname, '../../fileHelper'));
+const { createSuccessEmbed } = require(path.resolve(__dirname, '../../embedHelper'));
 
 module.exports = {
   customId: 'chatgpt_config_modal',
