@@ -1,5 +1,5 @@
-const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
-const requireAdmin = require('../utils/permissions/requireAdmin');
+const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlagsBitField } = require('discord.js');
+const { checkAdmin } = require('../utils/permissions/checkAdmin');
 const { createAdminEmbed } = require('../utils/embedHelper');
 
 module.exports = {
@@ -7,11 +7,20 @@ module.exports = {
     .setName('凸スナ設置')
     .setDescription('指定チャンネルに凸スナ案内メッセージとボタンを設置します（管理者専用）'),
 
-  execute: requireAdmin(async (interaction) => {
+  async execute(interaction) {
     try {
-      // Deferral is now handled centrally in index.js for this command.
-      // This avoids "already replied" errors and deprecation warnings.
-      // await interaction.deferReply({ ephemeral: true });
+      // Defer the reply to prevent "Unknown Interaction" errors.
+      await interaction.deferReply({ flags: MessageFlagsBitField.Flags.Ephemeral });
+
+      // Check for admin permissions after deferring.
+      const isAdmin = await checkAdmin(interaction);
+      if (!isAdmin) {
+        return interaction.editReply({
+          embeds: [
+            createAdminEmbed('❌ 権限がありません', 'このコマンドを実行するには管理者権限が必要です。')
+          ]
+        });
+      }
 
       // 凸スナ設置用のボタンを作成
       const installButton = new ButtonBuilder()
@@ -51,13 +60,10 @@ module.exports = {
 
     } catch (error) {
       console.error('凸スナ設置コマンドエラー:', error);
-      const errorMessage = { content: '❌ 凸スナ設置コマンドの実行中にエラーが発生しました。', ephemeral: true };
-      try {
-        // Use followUp for safety, as it works for both deferred and replied interactions.
-        await interaction.followUp(errorMessage);
-      } catch (replyError) {
-        console.error('❌ エラー応答の送信に失敗:', replyError);
+      // The interaction should be deferred, so we can safely edit the reply.
+      if (interaction.deferred) {
+        await interaction.editReply({ content: '❌ 凸スナ設置コマンドの実行中にエラーが発生しました。' });
       }
     }
-  })
+  }
 };
