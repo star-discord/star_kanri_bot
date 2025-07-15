@@ -3,6 +3,9 @@
 const fs = require('fs');
 const path = require('path');
 
+// 読み込み対象から除外するファイル名のリスト
+const EXCLUDED_FILES = new Set(['index.js', 'handleSelect.js', 'install_channel.js']);
+
 /**
  * @typedef {Object} Handler
  * @property {string} [customId]
@@ -15,28 +18,33 @@ const path = require('path');
  * 各ハンドラは { customId, handle } または { customIdStart, handle } をエクスポートする必要がある
  * 
  * @param {string} dirPath - 読み込むディレクトリの絶対パス
- * @returns {(customId: string) => Handler|null} - 対応するハンドラを返す関数
+ * @returns {Promise<(customId: string) => Handler|null>} - 対応するハンドラを返す関数を解決するPromise
  */
-function loadHandlers(dirPath) {
+async function loadHandlers(dirPath) {
   const handlers = {};              // 完全一致用ハンドラ格納
   const startsWithHandlers = [];    // 前方一致用ハンドラ格納
-  if (!fs.existsSync(dirPath)) {
-    console.warn(`⚠️ [handlerLoader] ディレクトリが存在しません: ${dirPath}`);
-    return () => null;
+  
+  let fileNames;
+  try {
+    // fs.promises を使用して非同期にディレクトリを読み込む
+    fileNames = await fs.promises.readdir(dirPath);
+  } catch (err) {
+    if (err.code === 'ENOENT') {
+      console.warn(`⚠️ [handlerLoader] ディレクトリが存在しません: ${dirPath}`);
+    } else {
+      console.error(`❌ [handlerLoader] ディレクトリの読み込みに失敗: ${dirPath}`, err);
+    }
+    return () => null; // エラー時も空のハンドラ関数を返す
   }
 
-  const files = fs.readdirSync(dirPath).filter(file => 
-    file.endsWith('.js') && 
-    file !== 'index.js' && 
-    file !== 'handleSelect.js' && 
-    file !== 'install_channel.js'
-  );
+  const files = fileNames.filter(file => file.endsWith('.js') && !EXCLUDED_FILES.has(file));
 
   for (const file of files) {
     const modulePath = path.join(dirPath, file);
     try {
-      // 開発中のキャッシュクリア
-      delete require.cache[require.resolve(modulePath)];
+      if (process.env.NODE_ENV !== 'production') {
+        delete require.cache[require.resolve(modulePath)];
+      }
 
       const mod = require(modulePath);
 
@@ -47,12 +55,12 @@ function loadHandlers(dirPath) {
           }
           handlers[mod.customId] = mod;
         } else if (typeof mod.customIdStart === 'string') {
-          // 重複チェックし、重複ならスキップ
-          if (startsWithHandlers.some(h => h.key === mod.customIdStart)) {
-            console.warn(`⚠️ [handlerLoader] 重複する customIdStart "${mod.customIdStart}" があるためスキップ: ${file}`);
+          const existingHandler = startsWithHandlers.find(h => h.key === mod.customIdStart);
+          if (existingHandler) {
+            console.warn(`⚠️ [handlerLoader] 重複する customIdStart "${mod.customIdStart}" が '${path.basename(existingHandler.filePath)}' と '${file}' で見つかりました。'${file}' はスキップされます。`);
             continue;
           }
-          startsWithHandlers.push({ key: mod.customIdStart, handler: mod });
+          startsWithHandlers.push({ key: mod.customIdStart, handler: mod, filePath: modulePath });
         } else {
           console.warn(`⚠️ [handlerLoader] ${file} に customId または customIdStart が定義されていません`);
         }

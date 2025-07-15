@@ -1,3 +1,5 @@
+// commands/totusuna_setti.js
+
 const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlagsBitField } = require('discord.js');
 const { checkAdmin } = require('../utils/permissions/checkAdmin');
 const { createAdminEmbed, createAdminRejectEmbed } = require('../utils/embedHelper');

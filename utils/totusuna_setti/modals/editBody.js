@@ -1,12 +1,13 @@
-const fs = require('fs').promises;
-const path = require('path');
+// utils/totusuna_setti/modals/editBody.js
+
 const {
   EmbedBuilder,
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
-  MessageFlags,
+  MessageFlagsBitField,
 } = require('discord.js');
+const { configManager } = require('../../configManager');
 
 module.exports = {
   customIdStart: 'totusuna_edit_modal:',
@@ -16,101 +17,58 @@ module.exports = {
    * @param {import('discord.js').ModalSubmitInteraction} interaction
    */
   async handle(interaction) {
+    await interaction.deferReply({ flags: MessageFlagsBitField.Flags.Ephemeral });
+
     const modalId = interaction.customId;
-    const uuid = modalId.replace(this.customIdStart, '');
+    const uuid = modalId.replace(module.exports.customIdStart, '');
     const guildId = interaction.guildId;
-    const inputText = interaction.fields.getTextInputValue('body');
-    const dataPath = path.join(__dirname, '../../../data', guildId, `${guildId}.json`);
+    const inputText = interaction.fields.getTextInputValue('body').trim();
 
-    // ファイル存在確認
     try {
-      await fs.access(dataPath);
-    } catch {
-      return await interaction.reply({
-        content: '⚠️ 設定ファイルが見つかりません。',
-        flags: MessageFlags.Ephemeral,
-      });
-    }
-
-    // JSON読み込み
-    let json;
-    try {
-      const raw = await fs.readFile(dataPath, 'utf-8');
-      json = JSON.parse(raw);
-    } catch (err) {
-      console.error('[editBody] JSON読み込み失敗:', err);
-      return await interaction.reply({
-        content: '❌ 設定ファイルの読み込みに失敗しました。',
-        flags: MessageFlags.Ephemeral,
-      });
-    }
-
-    const instances = json.totusuna?.instances;
-    if (!Array.isArray(instances)) {
-      return await interaction.reply({
-        content: '⚠️ 設置データが見つかりません。',
-        flags: MessageFlags.Ephemeral,
-      });
-    }
-
-    const target = instances.find(i => i.id === uuid);
-    if (!target) {
-      return await interaction.reply({
-        content: '⚠️ 指定された設置データが存在しません。',
-        flags: MessageFlags.Ephemeral,
-      });
-    }
-
-    // 本文更新と保存
-    target.body = inputText;
-    try {
-      await fs.writeFile(dataPath, JSON.stringify(json, null, 2), 'utf8');
-    } catch (err) {
-      console.error('[editBody] JSON保存失敗:', err);
-      return await interaction.reply({
-        content: '❌ データの保存に失敗しました。',
-        flags: MessageFlags.Ephemeral,
-      });
-    }
-
-    // メッセージ編集処理
-    try {
-      const channel = await interaction.guild.channels.fetch(target.installChannelId);
-      if (!channel?.isTextBased()) throw new Error('設置チャンネルがテキストチャンネルではありません');
-
-      const message = await channel.messages.fetch(target.messageId);
-      if (!message) throw new Error('設置メッセージが見つかりません');
-
-      const embed = new EmbedBuilder()
-        .setTitle('📣 凸スナ報告受付中')
-        .setDescription(inputText)
-        .setColor(0x00bfff);
-
-      const button = new ButtonBuilder()
-        .setCustomId(`totusuna_report_button_${uuid}`)
-        .setLabel('凸スナ報告')
-        .setStyle(ButtonStyle.Primary);
-
-      const row = new ActionRowBuilder().addComponents(button);
-
-      await message.edit({ embeds: [embed], components: [row] });
-    } catch (err) {
-      console.error('[editBody] メッセージ編集失敗:', err);
-      if (!interaction.replied && !interaction.deferred) {
-        return await interaction.reply({
-          content: '⚠️ メッセージの更新に失敗しました。',
-          flags: MessageFlags.Ephemeral,
-        });
+      // Add validation for the input text
+      if (!inputText) {
+        return await interaction.editReply({ content: '⚠️ 本文を空にすることはできません。' });
       }
-      return;
-    }
 
-    // 最終返信
-    if (!interaction.replied && !interaction.deferred) {
-      await interaction.reply({
-        content: '✅ 本文を更新し、表示も変更しました。',
-        flags: MessageFlags.Ephemeral,
-      });
+      const success = await configManager.updateTotusunaInstance(guildId, uuid, { body: inputText });
+
+      if (!success) {
+        return await interaction.editReply({ content: '⚠️ 指定された設置データが存在しません。' });
+      }
+
+      // Update the original message
+      const instance = await configManager.getTotusunaInstance(guildId, uuid);
+      if (instance?.messageId && instance.installChannelId) {
+        try {
+          const channel = await interaction.guild.channels.fetch(instance.installChannelId);
+          const message = await channel.messages.fetch(instance.messageId);
+
+          const embed = new EmbedBuilder()
+            .setTitle('📣 凸スナ報告受付中')
+            .setDescription(inputText)
+            .setColor(0x00bfff);
+
+          const button = new ButtonBuilder()
+            .setCustomId(`totusuna_report_button_${uuid}`)
+            .setLabel('凸スナ報告')
+            .setStyle(ButtonStyle.Primary);
+
+          const row = new ActionRowBuilder().addComponents(button);
+
+          await message.edit({ embeds: [embed], components: [row] });
+        } catch (msgError) {
+          console.warn(`[editBody] メッセージの更新に失敗しました (instance: ${uuid}):`, msgError.message);
+          return await interaction.editReply({ content: '✅ 本文の保存には成功しましたが、設置メッセージの更新には失敗しました。' });
+        }
+      }
+
+      await interaction.editReply({ content: '✅ 本文を更新し、表示も変更しました。' });
+
+    } catch (error) {
+      console.error(`[editBody] 処理エラー (uuid: ${uuid}):`, error);
+      if (interaction.deferred) {
+        await interaction.editReply({ content: '❌ 本文の更新中に予期せぬエラーが発生しました。' });
+      }
     }
   },
 };

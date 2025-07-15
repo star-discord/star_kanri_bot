@@ -1,28 +1,36 @@
+// utils/totusuna_setti/selects/select_main.js
+
 const { MessageFlagsBitField } = require('discord.js');
-const tempState = require('../state/totusunaTemp'); // もし状態管理があれば読み込み
+const { checkAdmin } = require('../../permissions/checkAdmin');
+const tempState = require('../state/totusunaTemp');
 
 module.exports = {
   customId: 'totusuna_setti:select_main',
 
   /**
-   * 投稿先メインチャンネル選択処理
+   * 凸スナの投稿先メインチャンネルを一時状態に保存します。
    * @param {import('discord.js').StringSelectMenuInteraction} interaction
    */
   async handle(interaction) {
     try {
+      // Defer immediately to prevent timeouts
+      await interaction.deferReply({ flags: MessageFlagsBitField.Flags.Ephemeral });
+
+      // Then, check for admin permissions
+      const isAdmin = await checkAdmin(interaction);
+      if (!isAdmin) {
+        return await interaction.editReply({ content: '❌ この操作には管理者権限が必要です。' });
+      }
+
       const guildId = interaction.guildId;
       const userId = interaction.user.id;
       const selectedChannelId = interaction.values?.[0];
 
       if (!selectedChannelId) {
-        await interaction.reply({
+        return await interaction.editReply({
           content: '⚠️ チャンネルが選択されていません。もう一度お試しください。',
-          flags: MessageFlagsBitField.Ephemeral,
         });
-        return;
       }
-
-      console.log(`[select_main] guildId=${guildId}, userId=${userId}, selectedChannelId=${selectedChannelId}`);
 
       // 一時状態に保存（既存のデータがあればマージ）
       const prevData = tempState.get(guildId, userId) || {};
@@ -31,17 +39,15 @@ module.exports = {
         installChannelId: selectedChannelId,
       });
 
-      // インタラクションはメッセージを編集せずに完了
-      await interaction.deferUpdate();
+      await interaction.editReply({
+        content: `✅ メインチャンネルとして <#${selectedChannelId}> を選択しました。`,
+      });
+
     } catch (error) {
-      console.error('[select_main] 処理中エラー:', error);
-      if (!interaction.replied && !interaction.deferred) {
-        await interaction.reply({
-          content: '❌ チャンネル選択処理でエラーが発生しました。管理者に連絡してください。',
-          flags: MessageFlagsBitField.Ephemeral,
-        });
+      console.error(`[select_main] 処理中エラー: guild=${interaction.guildId}, user=${interaction.user.id}`, error);
+      if (interaction.deferred) {
+        await interaction.editReply({ content: '❌ チャンネル設定中にエラーが発生しました。' });
       }
     }
   },
 };
-

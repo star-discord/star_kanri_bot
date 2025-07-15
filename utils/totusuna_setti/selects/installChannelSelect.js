@@ -1,6 +1,8 @@
+// utils/totusuna_setti/selects/installChannelSelect.js
+
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlagsBitField } = require('discord.js');
 const { v4: uuidv4 } = require('uuid');
-const { ensureGuildJSON, readJSON, writeJSON } = require('../../fileHelper');
+const { configManager } = require('../../configManager');
 const tempStore = require('../state/totusunaTemp');
 
 module.exports = {
@@ -12,9 +14,6 @@ module.exports = {
    */
   async handle(interaction) {
     console.log('📍 [installChannelSelect] 処理開始');
-    console.log('   guildId:', interaction.guildId);
-    console.log('   userId:', interaction.user.id);
-    console.log('   values:', interaction.values);
 
     try {
       const guildId = interaction.guildId;
@@ -24,7 +23,7 @@ module.exports = {
         console.error('❌ [installChannelSelect] チャンネルが選択されていません');
         return await interaction.reply({
           content: '❌ チャンネルが選択されていません。再度お試しください。',
-          flags: MessageFlagsBitField.Ephemeral,
+          flags: MessageFlagsBitField.Flags.Ephemeral,
         });
       }
 
@@ -37,20 +36,14 @@ module.exports = {
         console.error('❌ [installChannelSelect] tempStoreにデータが見つかりません');
         return await interaction.reply({
           content: '❌ 設置データが見つかりません。最初からやり直してください。',
-          flags: MessageFlagsBitField.Ephemeral,
+          flags: MessageFlagsBitField.Flags.Ephemeral,
         });
       }
-
-      const jsonPath = ensureGuildJSON(guildId);
-      const json = readJSON(jsonPath);
-
-      if (!json.totusuna) json.totusuna = {};
-      if (!Array.isArray(json.totusuna.instances)) json.totusuna.instances = [];
 
       const uuid = uuidv4();
       const newInstance = {
         id: uuid,
-        userId,
+        creatorId: userId,
         title: userData.title || '',
         body: userData.body,
         installChannelId: selectedChannelId,
@@ -64,7 +57,7 @@ module.exports = {
         console.error('❌ [installChannelSelect] チャンネルが無効またはテキストチャンネルではありません');
         return await interaction.reply({
           content: '❌ 指定されたチャンネルは無効です。',
-          flags: MessageFlagsBitField.Ephemeral,
+          flags: MessageFlagsBitField.Flags.Ephemeral,
         });
       }
 
@@ -72,7 +65,7 @@ module.exports = {
       const embed = new EmbedBuilder()
         .setTitle(userData.title || '📣 凸スナ報告受付中')
         .setDescription(userData.body)
-        .setColor(0x00bfff);
+        .setColor(0x00bfff); // Consider using a shared color from embedHelper
 
       const button = new ButtonBuilder()
         .setCustomId(`totusuna:report:${uuid}`)
@@ -88,8 +81,8 @@ module.exports = {
       });
 
       newInstance.messageId = sentMessage.id;
-      json.totusuna.instances.push(newInstance);
-      writeJSON(jsonPath, json);
+
+      await configManager.addTotusunaInstance(guildId, newInstance);
 
       // 一時データ削除（失敗しても処理継続）
       try {
@@ -110,7 +103,7 @@ module.exports = {
             )
             .setColor(0x00cc99),
         ],
-        flags: MessageFlagsBitField.Ephemeral,
+        flags: MessageFlagsBitField.Flags.Ephemeral,
       });
 
       console.log('🎉 [installChannelSelect] 処理完全完了');
@@ -122,7 +115,7 @@ module.exports = {
         if (!interaction.replied && !interaction.deferred) {
           await interaction.reply({
             content: '❌ 凸スナ設置中にエラーが発生しました。詳細はコンソールを確認してください。',
-            flags: MessageFlagsBitField.Ephemeral,
+            flags: MessageFlagsBitField.Flags.Ephemeral,
           });
         } else if (interaction.deferred && !interaction.replied) {
           await interaction.editReply({
@@ -131,7 +124,7 @@ module.exports = {
         } else {
           await interaction.followUp({
             content: '❌ 凸スナ設置中にエラーが発生しました。詳細はコンソールを確認してください。',
-            flags: MessageFlagsBitField.Ephemeral,
+            flags: MessageFlagsBitField.Flags.Ephemeral,
           });
         }
       } catch (replyError) {

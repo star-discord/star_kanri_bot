@@ -1,5 +1,6 @@
 const requireAdmin = require('../../permissions/requireAdmin');
 const { ensureGuildJSON, readJSON } = require('../../fileHelper');
+const { MessageFlagsBitField } = require('discord.js');
 
 module.exports = {
   customId: 'totusuna_config_select',
@@ -18,7 +19,7 @@ module.exports = {
       if (!totusuna) {
         await interaction.reply({
           content: '選択された凸スナデータが見つかりません。',
-          ephemeral: true
+          flags: MessageFlagsBitField.Flags.Ephemeral
         });
         return;
       }
@@ -28,7 +29,7 @@ module.exports = {
         content: `**${totusuna.body || '本文未設定'}** の設定を編集できます。\n` +
                  `**メインチャンネル:** <#${totusuna.mainChannelId}>\n` +
                  `**複製チャンネル:** ${totusuna.replicateChannelIds?.length ? totusuna.replicateChannelIds.map(id => `<#${id}>`).join(', ') : '未設定'}`,
-        ephemeral: true
+        flags: MessageFlagsBitField.Flags.Ephemeral
       });
 
     } catch (error) {
@@ -37,12 +38,12 @@ module.exports = {
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({
           content: '設定表示中にエラーが発生しました。',
-          ephemeral: true
+          flags: MessageFlagsBitField.Flags.Ephemeral
         });
       } else {
         await interaction.followUp({
           content: '設定表示中にエラーが発生しました。',
-          ephemeral: true
+          flags: MessageFlagsBitField.Flags.Ephemeral
         });
       }
     }

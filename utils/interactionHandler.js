@@ -152,7 +152,7 @@ class InteractionHandler {
             'attendance_',
             'chatgpt_',
             'openai_'
-        ];
+        ]; 
         
         return deferPatterns.some(pattern => customId.includes(pattern));
     }

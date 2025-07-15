@@ -1,3 +1,5 @@
+// utils/totusuna_setti/buttons/totusuna_install_button.js
+
 const {
   ModalBuilder,
   TextInputBuilder,

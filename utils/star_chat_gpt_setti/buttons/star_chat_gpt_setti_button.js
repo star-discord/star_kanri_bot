@@ -1,6 +1,8 @@
 const { EmbedBuilder } = require('discord.js');
 const { getChatCompletion } = require('../../openai');
 const { createErrorEmbed, createBaseEmbed, COLORS } = require('../../embedHelper');
+const { configManager } = require('../../configManager');
+const { getOpenAIUsage } = require('../../openaiUsage');
 
 // プロンプトとエラーメッセージを集中管理
 const INFO_CONFIG = {
@@ -29,10 +31,8 @@ async function fetchInfo(type) {
 
   try {
     const res = await getChatCompletion(config.prompt);
-    if (res.error) {
-      // openai.jsからの構造化されたエラーメッセージを利用
-      return `❌ ${res.message}`;
-    }
+    if (res.error) return `❌ ${res.message}`;
+
     return res.choices[0]?.message?.content || '有効な応答がありませんでした。';
   } catch (error) {
     console.error(`[fetchInfo:${type}] Error:`, error);
@@ -46,16 +46,19 @@ module.exports = {
    * ChatGPT情報ボタンのインタラクションを処理します。
    * @param {import('discord.js').ButtonInteraction} interaction
    */
-  handle: async function(interaction) {
+  async handle(interaction) {
+    const guildId = interaction.guildId;
+
     // タイムアウトを防ぐために、すぐに応答を遅延させます。
     await interaction.deferReply();
 
     try {
       // 全てのデータを並行して取得します。
-      const [weather, news, trivia] = await Promise.all([
+      const [weather, news, trivia, usageInfo] = await Promise.all([
         fetchInfo('weather'),
         fetchInfo('news'),
-        fetchInfo('trivia'),
+        fetchInfo('trivia', guildId), // 修正: ギルドIDを渡す
+        // fetchUsageInfo(guildId),  // 使用量表示は一旦削除
       ]);
 
       const embed = createBaseEmbed({
@@ -64,8 +67,9 @@ module.exports = {
       })
         .addFields(
           { name: '☀️ 天気', value: weather.slice(0, 1024) },
-          { name: '📰 ニュース', value: news.slice(0, 1024) },
-          { name: '💡 豆知識', value: trivia.slice(0, 1024) }
+          { name: '📰 ニュース', value: news.slice(0, 1024) },  
+          { name: '💡 豆知識', value: trivia.slice(0, 1024) },  
+          // { name: '📊 使用量', value: usageInfo.slice(0, 1024) } // 使用量表示は一旦削除
         )
         .setFooter({ text: 'Powered by OpenAI' }); // フッターを上書き
 

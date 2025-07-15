@@ -1,5 +1,5 @@
 // commands/star_migration.js
-const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits, MessageFlagsBitField } = require('discord.js');
 const { DataMigration } = require('../utils/dataMigration');
 
 module.exports = {
@@ -15,11 +15,11 @@ module.exports = {
     if (!member.permissions.has('Administrator')) {
       return await interaction.reply({
         content: '❌ この操作にはDiscordの管理者権限が必要です。',
-        flags: 1 << 6
+        flags: MessageFlagsBitField.Flags.Ephemeral
       });
     }
 
-    await interaction.deferReply({ flags: 1 << 6 });
+    await interaction.deferReply({ flags: MessageFlagsBitField.Flags.Ephemeral });
 
     try {
       const migration = new DataMigration();

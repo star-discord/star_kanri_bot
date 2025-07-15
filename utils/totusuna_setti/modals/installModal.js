@@ -1,3 +1,5 @@
+// utils/totusuna_setti/modals/installModal.js
+
 const { EmbedBuilder, ActionRowBuilder, ChannelSelectMenuBuilder, ChannelType, MessageFlagsBitField } = require('discord.js');
 const tempStore = require('../state/totusunaTemp');
 

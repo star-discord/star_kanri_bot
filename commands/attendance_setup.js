@@ -1,5 +1,5 @@
-const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlags } = require('discord.js');
-const requireAdmin = require('../utils/permissions/requireAdmin');
+const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlagsBitField } = require('discord.js');
+const { checkAdmin } = require('../utils/permissions/checkAdmin');
 const { createAdminEmbed } = require('../utils/embedHelper');
 
 module.exports = {
@@ -7,8 +7,19 @@ module.exports = {
     .setName('退勤管理設置')
     .setDescription('出退勤管理パネルを設置します（管理者専用）'),
 
-  execute: requireAdmin(async (interaction) => {
+  async execute(interaction) {
     try {
+      await interaction.deferReply({ flags: MessageFlagsBitField.Flags.Ephemeral });
+
+      const isAdmin = await checkAdmin(interaction);
+      if (!isAdmin) {
+        return interaction.editReply({
+          embeds: [
+            createAdminEmbed('❌ 権限がありません', 'このコマンドを実行するには管理者権限が必要です。')
+          ]
+        });
+      }
+
       // 出退勤管理用のエンベッド作成
       const embed = new EmbedBuilder()
         .setTitle('👥 出退勤管理システム')
@@ -77,17 +88,15 @@ module.exports = {
             .setEmoji('⚙️')
         );
 
-      await interaction.reply({
+      await interaction.editReply({
         embeds: [embed],
         components: [row1, row2],
-        flags: 1 << 6
       });
     } catch (error) {
       console.error('退勤管理設置エラー:', error);
-      await interaction.reply({
-        content: '❌ 退勤管理パネルの設置に失敗しました。',
-        flags: MessageFlags.Ephemeral
-      });
+      if (interaction.deferred) {
+        await interaction.editReply({ content: '❌ 退勤管理パネルの設置に失敗しました。' });
+      }
     }
-  })
+  }
 };

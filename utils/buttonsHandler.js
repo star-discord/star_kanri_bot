@@ -1,3 +1,5 @@
+// utils/buttonsHandler.js
+
 const path = require('path');
 const { MessageFlagsBitField } = require('discord.js');
 const { loadHandlers } = require('./handlerLoader.js');
@@ -13,19 +15,28 @@ const handlerFinders = {
   attendance: loadHandlers(path.join(__dirname, 'attendance/buttons')),
 };
 
+const handlerCache = new Map();
+
 /**
  * customId に対応するハンドラを探す
  * @param {string} customId
  * @returns {object|null}
  */
 function findButtonHandler(customId) {
+  if (handlerCache.has(customId)) return handlerCache.get(customId);
+
   for (const category in handlerFinders) {
     const find = handlerFinders[category];
     if (typeof find !== 'function') continue;
-    
+
     const handler = find(customId);
-    if (handler) return handler;
+    if (handler) {
+      handlerCache.set(customId, handler);
+      return handler;
+    }
   }
+
+  handlerCache.set(customId, null);
   return null;
 }
 
@@ -37,7 +48,7 @@ async function handleButton(interaction) {
   if (!interaction.isButton()) return;
 
   const { customId } = interaction;
-  console.log(`[buttonsHandler] ボタン受信: customId=${customId}, user=${interaction.user?.tag}, guild=${interaction.guildId}`);
+  console.log('[buttonsHandler] ボタン受信:', { customId, user: interaction.user?.tag, guild: interaction.guildId });
 
   if (!customId || typeof customId !== 'string') {
     console.warn('[buttonsHandler] 無効な customId:', customId);
@@ -50,7 +61,7 @@ async function handleButton(interaction) {
   const handler = findButtonHandler(customId);
 
   if (!handler) {
-    console.warn(`[buttonsHandler] 未処理の customId: ${customId}`);
+    console.warn('[buttonsHandler] 未処理の customId:', customId);
     return interaction.reply({
       content: '⚠️ このボタンは現在利用できません。',
       flags: MessageFlagsBitField.Flags.Ephemeral,
@@ -60,7 +71,7 @@ async function handleButton(interaction) {
   try {
     await handler.handle(interaction);
   } catch (err) {
-    console.error(`[buttonsHandler] ボタンハンドラエラー: ${customId}`, err);
+    console.error('[buttonsHandler] ボタンハンドラエラー:', { customId, error: err });
     await logAndReplyError(
       interaction,
       `❌ ボタン処理エラー: ${customId}\n${err?.stack || err}`,

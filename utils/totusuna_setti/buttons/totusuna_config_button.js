@@ -1,3 +1,5 @@
+// utils/totusuna_setti/buttons/totusuna_config_button.js
+
 const {
   EmbedBuilder,
   ActionRowBuilder,

@@ -1,3 +1,5 @@
+// utils/totusuna_setti/buttons/reportButton.js
+
 const {
   ModalBuilder,
   TextInputBuilder,
@@ -5,11 +7,10 @@ const {
   ActionRowBuilder,
   MessageFlagsBitField,
 } = require('discord.js');
-
-const CUSTOM_ID_START = 'totusuna_report_button_';
+const { idManager } = require('../../idManager');
 
 module.exports = {
-  customIdStart: CUSTOM_ID_START,
+  customIdStart: 'totusuna:report:',
 
   /**
    * 凸スナ報告ボタン押下時の処理：モーダルを表示
@@ -19,28 +20,28 @@ module.exports = {
     try {
       const { customId } = interaction;
 
-      // customIdが期待した形式かチェック
-      if (!customId.startsWith(CUSTOM_ID_START)) {
+      // Use module.exports to avoid 'this' context issues.
+      if (!customId.startsWith(module.exports.customIdStart)) {
         console.warn(`[totusuna_report_button] 不正なcustomId: ${customId}`);
         return await interaction.reply({
           content: '❌ 不正なボタン操作です。',
-          flags: MessageFlagsBitField.Ephemeral,
+          flags: MessageFlagsBitField.Flags.Ephemeral,
         });
       }
 
       // UUID部分を切り出す
-      const uuid = customId.substring(CUSTOM_ID_START.length);
+      const uuid = customId.substring(module.exports.customIdStart.length);
       if (!uuid) {
         console.warn('[totusuna_report_button] UUIDが抽出できません');
         return await interaction.reply({
           content: '❌ 凸スナ識別子が不正です。',
-          flags: MessageFlagsBitField.Ephemeral,
+          flags: MessageFlagsBitField.Flags.Ephemeral,
         });
       }
 
       // モーダル作成
       const modal = new ModalBuilder()
-        .setCustomId(`totusuna_modal_${uuid}`)
+        .setCustomId(idManager.createModalId('totusuna_report', null, uuid))
         .setTitle('📝 凸スナ報告フォーム');
 
       // 各入力欄の作成。最大文字数も設定（必要に応じて調整）
@@ -72,6 +73,20 @@ module.exports = {
         .setMaxLength(20)
         .setRequired(false);
 
+      const table3 = new TextInputBuilder()
+        .setCustomId('table3')
+        .setLabel('卓3（任意）')
+        .setStyle(TextInputStyle.Short)
+        .setMaxLength(20)
+        .setRequired(false);
+
+      const table4 = new TextInputBuilder()
+        .setCustomId('table4')
+        .setLabel('卓4（任意）')
+        .setStyle(TextInputStyle.Short)
+        .setMaxLength(20)
+        .setRequired(false);
+
       const detail = new TextInputBuilder()
         .setCustomId('detail')
         .setLabel('補足・詳細（任意）')
@@ -84,18 +99,20 @@ module.exports = {
         new ActionRowBuilder().addComponents(nameInput),
         new ActionRowBuilder().addComponents(table1),
         new ActionRowBuilder().addComponents(table2),
+        new ActionRowBuilder().addComponents(table3),
+        new ActionRowBuilder().addComponents(table4),
         new ActionRowBuilder().addComponents(detail),
       );
 
       // モーダルを表示
       await interaction.showModal(modal);
     } catch (error) {
-      console.error('[totusuna_report_button] モーダル表示エラー:', error);
+      console.error('[totusuna_report_button] モーダル表示エラー:', error.stack || error);
 
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({
           content: '❌ モーダルの表示に失敗しました。再度お試しください。',
-          flags: MessageFlagsBitField.Ephemeral,
+          flags: MessageFlagsBitField.Flags.Ephemeral,
         });
       }
     }

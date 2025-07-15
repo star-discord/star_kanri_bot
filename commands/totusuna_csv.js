@@ -1,6 +1,7 @@
 const {
   SlashCommandBuilder,
   AttachmentBuilder,
+  MessageFlagsBitField,
 } = require('discord.js');
 const fs = require('fs').promises;
 const path = require('path');
@@ -13,7 +14,7 @@ module.exports = {
     .setDescription('今月の凸スナ報告CSVをダウンロードします（管理者専用）'),
 
   execute: requireAdmin(async (interaction) => {
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: MessageFlagsBitField.Flags.Ephemeral });
 
     try {
       const guildId = interaction.guild.id;

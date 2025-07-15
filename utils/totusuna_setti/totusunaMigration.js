@@ -15,9 +15,9 @@ class TotusunaMigration {
     const migratedData = { ...data };
 
     // 1. totsunaデータ構造の正規化
-    if (migratedData.totsuna && !migratedData.totsuna.instances) {
+    if (migratedData.totusuna && !migratedData.totsuna.instances) {
       console.log(`  [totusuna] 🔧 データ構造を { instances: [...] } 形式に移行中...`);
-      migratedData.totsuna = { instances: Array.isArray(migratedData.totsuna) ? migratedData.totsuna : [] };
+      migratedData.totusuna = { instances: Array.isArray(migratedData.totsuna) ? migratedData.totusuna : [] };
       modified = true;
     }
 
@@ -25,7 +25,7 @@ class TotusunaMigration {
     if (guild && migratedData.totsuna?.instances) {
       const cleanupResult = this.cleanupInvalidIds(migratedData.totsuna, guild);
       if (cleanupResult.modified) {
-        migratedData.totsuna = cleanupResult.config;
+        migratedData.totusuna = cleanupResult.config;
         modified = true;
       }
     }

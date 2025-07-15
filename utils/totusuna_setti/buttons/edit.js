@@ -1,5 +1,5 @@
-const fs = require('fs').promises;
-const path = require('path');
+// utils/totusuna_setti/buttons/edit.js
+
 const {
   ModalBuilder,
   TextInputBuilder,
@@ -7,20 +7,9 @@ const {
   ActionRowBuilder,
   MessageFlagsBitField,
 } = require('discord.js');
-
-/**
- * Ephemeralで安全にreplyを送るヘルパー
- * @param {import('discord.js').Interaction} interaction
- * @param {string} content
- */
-async function safeReply(interaction, content) {
-  if (!interaction.replied && !interaction.deferred) {
-    await interaction.reply({
-      content,
-      flags: MessageFlagsBitField.Ephemeral,
-    });
-  }
-}
+const { checkAdmin } = require('../../permissions/checkAdmin');
+const { configManager } = require('../../configManager');
+const { createAdminRejectEmbed } = require('../../embedHelper');
 
 module.exports = {
   customIdStart: 'totusuna_setti:edit:',
@@ -30,62 +19,50 @@ module.exports = {
    * @param {import('discord.js').ButtonInteraction} interaction
    */
   async handle(interaction) {
-    const guildId = interaction.guildId;
-    if (!guildId) {
-      await safeReply(interaction, '⚠️ ギルドコンテキストでのみ使用可能です。');
-      return;
-    }
-
-    const uuid = interaction.customId.substring(this.customIdStart.length);
-    const filePath = path.resolve(__dirname, '../../../data', guildId, `${guildId}.json`);
-
+    let uuid; // Declare uuid here to make it accessible in the catch block
     try {
-      await fs.access(filePath);
-    } catch {
-      await safeReply(interaction, '⚠️ データファイルが見つかりません。');
-      return;
-    }
+      // Since showing a modal is a reply, we don't defer.
+      // Instead, we check permissions first.
+      const isAdmin = await checkAdmin(interaction);
+      if (!isAdmin) {
+        return await interaction.reply({
+          embeds: [createAdminRejectEmbed()],
+          flags: MessageFlagsBitField.Flags.Ephemeral,
+        });
+      }
 
-    let json;
-    try {
-      const content = await fs.readFile(filePath, 'utf8');
-      json = JSON.parse(content);
-    } catch (err) {
-      console.error(new Date().toISOString(), '[edit] JSON読み込み失敗:', err);
-      await safeReply(interaction, '❌ データファイルの読み込みに失敗しました。');
-      return;
-    }
+      uuid = interaction.customId.substring(module.exports.customIdStart.length);
 
-    const instances = json.totusuna?.instances;
-    if (!Array.isArray(instances)) {
-      await safeReply(interaction, '⚠️ 凸スナ設置データが存在しません。');
-      return;
-    }
+      // Use the safe configManager to get instance data
+      const instance = await configManager.getTotusunaInstance(interaction.guildId, uuid);
 
-    const target = instances.find(i => i.id === uuid);
-    if (!target) {
-      await safeReply(interaction, '⚠️ 指定された凸スナ設置情報が見つかりません。');
-      return;
-    }
+      if (!instance) {
+        return await interaction.reply({
+          content: '⚠️ 指定された設定情報が見つかりません。',
+          flags: MessageFlagsBitField.Flags.Ephemeral,
+        });
+      }
 
-    const modal = new ModalBuilder()
-      .setCustomId(`totusuna_edit_modal:${uuid}`)
-      .setTitle('📘 凸スナ本文の編集');
+      const modal = new ModalBuilder()
+        .setCustomId(`totusuna_edit_modal:${uuid}`)
+        .setTitle('📘 凸スナ本文の編集');
 
-    const input = new TextInputBuilder()
-      .setCustomId('body')
-      .setLabel('本文メッセージ（変更後）')
-      .setStyle(TextInputStyle.Paragraph)
-      .setRequired(true)
-      .setValue(target.body || '');
+      const input = new TextInputBuilder()
+        .setCustomId('body')
+        .setLabel('本文メッセージ（変更後）')
+        .setStyle(TextInputStyle.Paragraph)
+        .setRequired(true)
+        .setValue(instance.body || '');
 
-    modal.addComponents(new ActionRowBuilder().addComponents(input));
+      modal.addComponents(new ActionRowBuilder().addComponents(input));
 
-    try {
       await interaction.showModal(modal);
     } catch (err) {
-      console.error(new Date().toISOString(), '[edit] モーダル表示失敗:', err);
-      await safeReply(interaction, '❌ モーダルの表示に失敗しました。');
+      console.error(`[edit.js] モーダル表示失敗 (uuid: ${uuid}):`, err);
+      // If showing the modal fails, we can attempt a text-based reply.
+      if (!interaction.replied) {
+        await interaction.reply({ content: '❌ モーダルの表示に失敗しました。', flags: MessageFlagsBitField.Flags.Ephemeral });
+      }
     }
   },
 };

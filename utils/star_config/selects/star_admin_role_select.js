@@ -1,4 +1,4 @@
-// utils/star_config/selects/star_admin_role_select.js .js
+// utils/star_config/selects/star_admin_role_select.js
 const requireAdmin = require('../../permissions/requireAdmin');
 const { configManager } = require('../../configManager');
 const {
@@ -7,73 +7,71 @@ const {
   RoleSelectMenuBuilder,
   ChannelSelectMenuBuilder,
   ChannelType,
+  MessageFlagsBitField,
 } = require('discord.js');
 
 async function actualHandler(interaction) {
-  const guild = interaction.guild;
+  const { guild } = interaction;
   const guildId = guild.id;
   const selectedIds = interaction.values;
 
   try {
-    // 設定マネージャーを使用して現在の設定を安全に取得
     const currentConfig = await configManager.getSectionConfig(guildId, 'star');
     const prevIds = new Set(currentConfig?.adminRoleIds || []);
-    const currentNotifyChannelId = currentConfig.notifyChannelId || null;
+    const notifyChannelId = currentConfig?.notifyChannelId ?? null;
 
+    // ロールIDフィルタと差分検出
     const nextIds = new Set(selectedIds.filter(id => guild.roles.cache.has(id)));
-
     const added = [...nextIds].filter(id => !prevIds.has(id));
     const removed = [...prevIds].filter(id => !nextIds.has(id));
 
-    // --- [追加] 詳細なデバッグログ ---
-    console.log(`[admin_role_select] Guild: ${guildId}`);
-    console.log(`  - 現在のロール:`, [...prevIds]);
-    console.log(`  - 選択されたロール:`, selectedIds);
-    console.log(`  - 追加されるロール:`, added);
-    console.log(`  - 削除されるロール:`, removed);
+    console.log(`[admin_role_select] guildId=${guildId}`);
+    console.log(`  currentRoles:`, [...prevIds]);
+    console.log(`  selected:`, selectedIds);
+    console.log(`  added:`, added);
+    console.log(`  removed:`, removed);
 
-    try {
-      // 設定マネージャーを使用して設定を更新
-      await configManager.updateSectionConfig(guildId, 'star', { adminRoleIds: [...nextIds] });
-    } catch (error) {
-      console.error(`❌ [star_config/selects] 設定更新エラー guildId=${guildId}`, error);
-      throw error;
-    }
+    // 設定を更新
+    await configManager.updateSectionConfig(guildId, 'star', { adminRoleIds: [...nextIds] });
+    console.log(`[configManager] ✅ adminRoleIds updated for ${guildId}`);
 
+    // 表示整形関数
     const formatRoleMentions = (ids) =>
       ids.length > 0
         ? ids.map(id => guild.roles.cache.get(id) ? `<@&${id}>` : `~~(削除済ロール: ${id})~~`).join('\n')
         : '*未設定*';
 
-    const formatChannelDisplay = (notifyId) => {
-      const notifyChannel = notifyId ? guild.channels.cache.get(notifyId) : null;
-      return notifyChannel
-        ? `<#${notifyId}>`
-        : notifyId ? `~~(削除済チャンネル: ${notifyId})~~` : '*未設定*';
+    const formatChannel = (id) => {
+      const channel = id ? guild.channels.cache.get(id) : null;
+      return channel ? `<#${id}>` : (id ? `~~(削除済チャンネル: ${id})~~` : '*未設定*');
     };
 
-    const mainEmbed = new EmbedBuilder()
-      .setTitle('🌟 STAR管理Bot設定')
-      .setDescription(`**管理者ロール / 通知チャンネル 設定**\n\n📌 現在の管理者ロール:\n${formatRoleMentions([...nextIds])}\n\n📣 現在の通知チャンネル:\n${formatChannelDisplay(currentNotifyChannelId)}`)
-      .setColor(0x0099ff);
+    const roleDisplay = formatRoleMentions([...nextIds]);
+    const notifyDisplay = formatChannel(notifyChannelId);
 
-    const embeds = [mainEmbed];
+    // エンベッド構築
+    const embeds = [
+      new EmbedBuilder()
+        .setTitle('🌟 STAR管理Bot設定')
+        .setDescription(`**管理者ロール / 通知チャンネル 設定**\n\n📌 管理者ロール:\n${roleDisplay}\n\n📣 通知チャンネル:\n${notifyDisplay}`)
+        .setColor(0x0099ff)
+    ];
 
     if (added.length > 0) {
       embeds.push(new EmbedBuilder()
-        .setTitle('✅ ロール追加')
+        .setTitle('✅ 追加されたロール')
         .setDescription(formatRoleMentions(added))
         .setColor(0x00cc99));
     }
 
     if (removed.length > 0) {
       embeds.push(new EmbedBuilder()
-        .setTitle('⚠️ ロール解除')
+        .setTitle('⚠️ 削除されたロール')
         .setDescription(formatRoleMentions(removed))
         .setColor(0xff6600));
     }
 
-    // UIの再構築
+    // UI再構築
     const roleSelect = new RoleSelectMenuBuilder()
       .setCustomId('admin_role_select')
       .setPlaceholder('管理者ロールを再選択できます')
@@ -84,31 +82,32 @@ async function actualHandler(interaction) {
       .setCustomId('notify_channel_select')
       .setPlaceholder('通知チャンネルを選択')
       .addChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement)
-      .setMinValues(1)
+      .setMinValues(0)  // ← 未設定許容
       .setMaxValues(1);
-
-    const row1 = new ActionRowBuilder().addComponents(roleSelect);
-    const row2 = new ActionRowBuilder().addComponents(channelSelect);
 
     await interaction.update({
       embeds,
-      components: [row1, row2],
+      components: [
+        new ActionRowBuilder().addComponents(roleSelect),
+        new ActionRowBuilder().addComponents(channelSelect),
+      ]
     });
 
   } catch (error) {
-    console.error('❌ admin_role_select処理エラー:', error);
+    console.error('❌ [admin_role_select] 処理中エラー:', error);
+    const msg = '⚠️ ロール設定の更新中にエラーが発生しました。';
 
-    const errorMsg = '⚠️ ロール設定処理中にエラーが発生しました。';
+    const replyData = { content: msg, flags: MessageFlagsBitField.Flags.Ephemeral };
 
     if (!interaction.replied && !interaction.deferred) {
-      await interaction.reply({ content: errorMsg, ephemeral: true });
+      await interaction.reply(replyData);
     } else {
-      await interaction.followUp({ content: errorMsg, ephemeral: true });
+      await interaction.followUp(replyData);
     }
   }
 }
 
 module.exports = {
   customId: 'admin_role_select',
-  handle: requireAdmin(actualHandler)
+  handle: requireAdmin(actualHandler),
 };

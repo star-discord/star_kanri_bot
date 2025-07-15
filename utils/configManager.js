@@ -36,7 +36,7 @@ class ConfigManager {
         notifyChannelId: null,
       },
       chatgpt: {
-        apiKey: null,
+        apiKey: '', // 初期値は空文字列
         maxTokens: 150,
         temperature: 0.7
       },
@@ -155,11 +155,10 @@ class ConfigManager {
       config.totusuna = config.totusuna ?? { instances: [] };
       config.totusuna.instances = config.totusuna.instances ?? [];
 
-      const newInstance = { id: uuidv4(), ...instanceData };
-      config.totusuna.instances.push(newInstance);
+      config.totusuna.instances.push(instanceData);
 
       await writeJSON(jsonPath, config);
-      return newInstance;
+      return instanceData;
     } finally {
       releaseLock(jsonPath);
     }

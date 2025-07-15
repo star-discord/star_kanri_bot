@@ -117,9 +117,7 @@ client.on('interactionCreate', async interaction => {
         return;
       }
 
-      // 'star管理bot設定' is intentionally excluded here because it handles its own deferral.
-      const commandsToPreemptivelyDefer = ['凸スナ設置', 'kpi_設定'];
-      const shouldDefer = commandsToPreemptivelyDefer.includes(interaction.commandName);
+      const shouldDefer = ['凸スナ設置', 'kpi_設定'].includes(interaction.commandName);
       if (shouldDefer && !interaction.deferred && !interaction.replied) {
         try {
           await interaction.deferReply({ flags: MessageFlagsBitField.Flags.Ephemeral });

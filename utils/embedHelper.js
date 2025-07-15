@@ -10,12 +10,13 @@ const COLORS = {
 
 /**
  * 標準的なフッターとタイムスタンプを持つ基本的なEmbedを作成します。
- * @param {import('discord.js').EmbedData} options - Embedのオプション
+ * @param {import('discord.js').EmbedBuilderOptions} options - Embedのオプション
  * @returns {EmbedBuilder}
  */
 function createBaseEmbed(options) {
-  return new EmbedBuilder(options)
-    .setFooter({ text: 'STAR管理bot' })
+  const { footer = { text: 'STAR管理bot' }, ...rest } = options;
+  return new EmbedBuilder(rest)
+    .setFooter(footer)
     .setTimestamp();
 }
 
@@ -27,7 +28,7 @@ function createBaseEmbed(options) {
  */
 function createAdminEmbed(title, description) {
   return createBaseEmbed({
-    title: `${title} 🔒 管理者専用`,
+    title: `🔒 ${title} (管理者専用)`,
     description,
     color: COLORS.PRIMARY,
   });
@@ -73,6 +74,20 @@ function createErrorEmbed(title, description) {
   });
 }
 
+/**
+ * 警告メッセージ用のEmbedを作成します。
+ * @param {string} title - 警告メッセージのタイトル
+ * @param {string} description - 警告メッセージの詳細
+ * @returns {EmbedBuilder}
+ */
+function createWarningEmbed(title, description) {
+  return createBaseEmbed({
+    title: `⚠️ ${title}`,
+    description,
+    color: COLORS.WARNING,
+  });
+}
+
 module.exports = {
   COLORS,
   createBaseEmbed,
@@ -80,4 +95,5 @@ module.exports = {
   createAdminRejectEmbed,
   createSuccessEmbed,
   createErrorEmbed,
+  createWarningEmbed,
 };

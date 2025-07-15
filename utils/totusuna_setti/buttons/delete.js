@@ -1,5 +1,9 @@
+// utils/totusuna_setti/buttons/delete.js
+
 const { configManager } = require('../../configManager');
-const { createSuccessEmbed, createErrorEmbed } = require('../../embedHelper');
+const { createSuccessEmbed, createErrorEmbed, createAdminRejectEmbed } = require('../../embedHelper');
+const { MessageFlagsBitField } = require('discord.js');
+const { checkAdmin } = require('../../permissions/checkAdmin');
 
 module.exports = {
   customIdStart: 'totusuna_setti:delete:',
@@ -9,10 +13,16 @@ module.exports = {
    * @param {import('discord.js').ButtonInteraction} interaction
    */
   async handle(interaction) {
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: MessageFlagsBitField.Flags.Ephemeral });
+
+    const isAdmin = await checkAdmin(interaction);
+    if (!isAdmin) {
+      return await interaction.editReply({ embeds: [createAdminRejectEmbed()] });
+    }
 
     const { guild, customId } = interaction;
-    const uuid = customId.substring(this.customIdStart.length);
+    // Use module.exports to avoid 'this' context issues.
+    const uuid = customId.substring(module.exports.customIdStart.length);
 
     try {
       // First, get the instance data to find the message to delete.
@@ -27,7 +37,7 @@ module.exports = {
             await message.delete();
           }
         } catch (err) {
-          console.warn(`[totusuna_setti:delete] Could not delete original message for instance ${uuid}:`, err.message);
+          console.warn(`[delete.js] Could not delete original message for instance ${uuid} in guild ${guild.id}:`, err.message);
           // This is not a fatal error; continue with data deletion.
         }
       }
@@ -45,7 +55,7 @@ module.exports = {
         });
       }
     } catch (err) {
-      console.error(`[totusuna_setti:delete] Error deleting instance ${uuid}:`, err);
+      console.error(`[delete.js] Error deleting instance ${uuid} in guild ${guild.id}:`, err);
       await interaction.editReply({
         embeds: [createErrorEmbed('処理エラー', '凸スナの削除中に予期せぬエラーが発生しました。')],
       });

@@ -1,4 +1,4 @@
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, MessageFlagsBitField } = require('discord.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -27,7 +27,7 @@ module.exports = {
 
 詳しくは GitHub または開発者へお問い合わせください。
       `,
-      flags: 1 << 6 // 非公開メッセージ
+      flags: MessageFlagsBitField.Flags.Ephemeral
     });
   },
 };

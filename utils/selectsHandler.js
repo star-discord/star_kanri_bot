@@ -34,10 +34,12 @@ async function handleSelect(interaction) {
   const { customId } = interaction;
   console.log(`[selectsHandler] セレクト受信: customId=${customId}, user=${interaction.user?.tag}, guild=${interaction.guildId}`);
 
-  const handler = findSelectHandler(customId);
+  // 修正: handler.handle(interaction) を呼び出すようにする
+  const handler = findSelectHandler(customId)?.handle;
 
   if (!handler) {
     console.warn(`[selectsHandler] 未処理の customId: ${customId}`);
+
     return interaction.reply({
       content: '⚠️ このメニューは現在利用できません。',
       flags: MessageFlagsBitField.Flags.Ephemeral,
@@ -45,7 +47,7 @@ async function handleSelect(interaction) {
   }
 
   try {
-    await handler.handle(interaction);
+    await handler(interaction);
   } catch (error) {
     console.error(`[selectsHandler] セレクトハンドラエラー: ${customId}`, error);
     await logAndReplyError(
