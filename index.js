@@ -117,7 +117,9 @@ client.on('interactionCreate', async interaction => {
         return;
       }
 
-      const shouldDefer = ['凸スナ設置', 'kpi_設定'].includes(interaction.commandName);
+      // `凸スナ設置`は軽量なため、予防的デファーの対象外とします。
+      // 重い処理を行うコマンドのみをここに追加してください。
+      const shouldDefer = ['kpi_設定'].includes(interaction.commandName);
       if (shouldDefer && !interaction.deferred && !interaction.replied) {
         try {
           await interaction.deferReply({ flags: MessageFlagsBitField.Flags.Ephemeral });
