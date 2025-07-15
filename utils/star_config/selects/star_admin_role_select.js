@@ -10,6 +10,12 @@ const {
   MessageFlagsBitField,
 } = require('discord.js');
 
+/**
+ * 実際の処理を行う関数
+ * @param {import('discord.js').StringSelectMenuInteraction} interaction
+ * @returns {Promise<void>}
+ */
+
 async function actualHandler(interaction) {
   const { guild } = interaction;
   const guildId = guild.id;

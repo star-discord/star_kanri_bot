@@ -5,7 +5,8 @@ const {
   RoleSelectMenuBuilder,
   ChannelSelectMenuBuilder,
   EmbedBuilder,
-  ChannelType
+  ChannelType,
+  MessageFlagsBitField
 } = require('discord.js');
 const { PermissionFlagsBits } = require('discord.js');
 const { configManager } = require('../utils/configManager');
@@ -19,7 +20,7 @@ module.exports = {
   async execute(interaction) {
     try {
       // Defer the reply to prevent "Unknown Interaction" errors for long-running operations.
-      await interaction.deferReply({ ephemeral: true });
+      await interaction.deferReply({ flags: MessageFlagsBitField.Flags.Ephemeral });
 
       const { guild, member } = interaction;
       const guildId = guild.id;

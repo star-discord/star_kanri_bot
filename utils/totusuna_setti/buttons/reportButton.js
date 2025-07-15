@@ -72,21 +72,6 @@ module.exports = {
         .setStyle(TextInputStyle.Short)
         .setMaxLength(20)
         .setRequired(false);
-
-      const table3 = new TextInputBuilder()
-        .setCustomId('table3')
-        .setLabel('卓3（任意）')
-        .setStyle(TextInputStyle.Short)
-        .setMaxLength(20)
-        .setRequired(false);
-
-      const table4 = new TextInputBuilder()
-        .setCustomId('table4')
-        .setLabel('卓4（任意）')
-        .setStyle(TextInputStyle.Short)
-        .setMaxLength(20)
-        .setRequired(false);
-
       const detail = new TextInputBuilder()
         .setCustomId('detail')
         .setLabel('補足・詳細（任意）')
@@ -98,12 +83,9 @@ module.exports = {
         new ActionRowBuilder().addComponents(groupInput),
         new ActionRowBuilder().addComponents(nameInput),
         new ActionRowBuilder().addComponents(table1),
-        new ActionRowBuilder().addComponents(table2),
-        new ActionRowBuilder().addComponents(table3),
-        new ActionRowBuilder().addComponents(table4),
         new ActionRowBuilder().addComponents(detail),
       );
-
+      
       // モーダルを表示
       await interaction.showModal(modal);
     } catch (error) {

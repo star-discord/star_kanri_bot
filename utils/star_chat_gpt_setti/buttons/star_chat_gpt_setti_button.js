@@ -25,12 +25,12 @@ const INFO_CONFIG = {
  * @param {'weather' | 'news' | 'trivia'} type - 取得する情報の種類
  * @returns {Promise<string>}
  */
-async function fetchInfo(type) {
+async function fetchInfo(type, guildId) {
   const config = INFO_CONFIG[type];
   if (!config) return '不明な情報タイプです。';
 
   try {
-    const res = await getChatCompletion(config.prompt);
+    const res = await getChatCompletion(config.prompt, guildId);
     if (res.error) return `❌ ${res.message}`;
 
     return res.choices[0]?.message?.content || '有効な応答がありませんでした。';
@@ -55,9 +55,9 @@ module.exports = {
     try {
       // 全てのデータを並行して取得します。
       const [weather, news, trivia, usageInfo] = await Promise.all([
-        fetchInfo('weather'),
-        fetchInfo('news'),
-        fetchInfo('trivia', guildId), // 修正: ギルドIDを渡す
+        fetchInfo('weather', guildId),
+        fetchInfo('news', guildId),
+        fetchInfo('trivia', guildId),
         // fetchUsageInfo(guildId),  // 使用量表示は一旦削除
       ]);
 
