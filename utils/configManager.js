@@ -1,28 +1,7 @@
 // utils/configManager.js
 const { ensureGuildJSON, readJSON, writeJSON } = require('./fileHelper');
 const { v4: uuidv4 } = require('uuid');
-
-// A simple in-memory lock to prevent race conditions on file writes
-const fileLocks = new Map();
-
-/**
- * Acquires a lock for a specific file path.
- * @param {string} filePath The path to the file to lock.
- */
-async function acquireLock(filePath) {
-  while (fileLocks.has(filePath)) {
-    await new Promise(resolve => setTimeout(resolve, 50));
-  }
-  fileLocks.set(filePath, true);
-}
-
-/**
- * Releases the lock for a specific file path.
- * @param {string} filePath The path to the file to unlock.
- */
-function releaseLock(filePath) {
-  fileLocks.delete(filePath);
-}
+const { Mutex, withTimeout, E_TIMEOUT } = require('async-mutex');
 
 /**
  * 統合設定管理クラス
@@ -30,6 +9,8 @@ function releaseLock(filePath) {
  */
 class ConfigManager {
   constructor() {
+    this.pathCache = new Map(); // ギルドごとのJSONパスをキャッシュ
+    this.mutexes = new Map(); // ファイルパスごとのMutexインスタンスをキャッシュ
     this.defaultConfig = {
       star: {
         adminRoleIds: [],
@@ -50,29 +31,56 @@ class ConfigManager {
   }
 
   /**
+   * ギルドのJSONファイルパスを取得（キャッシュ利用）
+   * @param {string} guildId
+   * @returns {Promise<string>}
+   */
+  async getJsonPath(guildId) {
+    if (!this.pathCache.has(guildId)) {
+      const path = await ensureGuildJSON(guildId);
+      this.pathCache.set(guildId, path);
+    }
+    return this.pathCache.get(guildId);
+  }
+
+  /**
    * ギルド設定を取得
    * @param {string} guildId
    * @returns {Promise<object>}
    */
   async getGuildConfig(guildId) {
-    const jsonPath = await ensureGuildJSON(guildId);
+    const jsonPath = await this.getJsonPath(guildId);
     const config = await readJSON(jsonPath);
     return this._mergeWithDefaults(config);
   }
 
   /**
    * ギルド設定を保存
-   * @param {string} guildId 
-   * @param {object} config 
+   * @param {string} guildId
+   * @param {object} config
+   * @param {string} context - ロックエラー時のデバッグ用コンテキスト
    * @returns {Promise<void>}
    */
-  async saveGuildConfig(guildId, config) {
-    const jsonPath = await ensureGuildJSON(guildId);
-    await acquireLock(jsonPath);
+  async saveGuildConfig(guildId, config, context = 'Unknown Context') {
+    const jsonPath = await this.getJsonPath(guildId);
+    let mutex = this.mutexes.get(jsonPath);
+    if (!mutex) {
+      mutex = new Mutex();
+      this.mutexes.set(jsonPath, mutex);
+    }
+
+    let release;
     try {
+      // 10秒のタイムアウト付きでロックを取得
+      release = await withTimeout(mutex.acquire(), 10000)
+        .catch(e => {
+          if (e === E_TIMEOUT) throw new Error(`ファイルロックの取得がタイムアウトしました (Context: ${context})`);
+          throw e;
+        });
       await writeJSON(jsonPath, config);
     } finally {
-      releaseLock(jsonPath);
+      // ロックが取得できた場合のみ解放
+      if (release) release();
     }
   }
 
@@ -96,15 +104,9 @@ class ConfigManager {
    * @returns {Promise<void>}
    */
   async updateSectionConfig(guildId, section, sectionConfig) {
-    const jsonPath = await ensureGuildJSON(guildId);
-    await acquireLock(jsonPath);
-    try {
-      const config = await this.getGuildConfig(guildId);
-      config[section] = { ...(config[section] ?? {}), ...sectionConfig };
-      await writeJSON(jsonPath, config);
-    } finally {
-      releaseLock(jsonPath);
-    }
+    const config = await this.getGuildConfig(guildId);
+    config[section] = { ...(config[section] ?? {}), ...sectionConfig };
+    await this.saveGuildConfig(guildId, config, `updateSectionConfig: ${section}`);
   }
 
   /**
@@ -148,20 +150,12 @@ class ConfigManager {
    * @param {object} instance 
    */
   async addTotusunaInstance(guildId, instanceData) {
-    const jsonPath = await ensureGuildJSON(guildId);
-    await acquireLock(jsonPath);
-    try {
-      const config = await this.getGuildConfig(guildId);
-      config.totusuna = config.totusuna ?? { instances: [] };
-      config.totusuna.instances = config.totusuna.instances ?? [];
-
-      config.totusuna.instances.push(instanceData);
-
-      await writeJSON(jsonPath, config);
-      return instanceData;
-    } finally {
-      releaseLock(jsonPath);
-    }
+    const config = await this.getGuildConfig(guildId);
+    config.totusuna = config.totusuna ?? { instances: [] };
+    config.totusuna.instances = config.totusuna.instances ?? [];
+    config.totusuna.instances.push(instanceData);
+    await this.saveGuildConfig(guildId, config, 'addTotusunaInstance');
+    return instanceData;
   }
 
   /**
@@ -185,21 +179,15 @@ class ConfigManager {
    * @returns {Promise<boolean>}
    */
   async updateTotusunaInstance(guildId, uuid, updates) {
-    const jsonPath = await ensureGuildJSON(guildId);
-    await acquireLock(jsonPath);
-    try {
-      const config = await this.getGuildConfig(guildId);
-      if (!config.totusuna?.instances) return false;
+    const config = await this.getGuildConfig(guildId);
+    if (!config.totusuna?.instances) return false;
 
-      const instanceIndex = config.totusuna.instances.findIndex(instance => instance.id === uuid);
-      if (instanceIndex === -1) return false;
+    const instanceIndex = config.totusuna.instances.findIndex(instance => instance.id === uuid);
+    if (instanceIndex === -1) return false;
 
-      config.totusuna.instances[instanceIndex] = { ...config.totusuna.instances[instanceIndex], ...updates };
-      await writeJSON(jsonPath, config);
-      return true;
-    } finally {
-      releaseLock(jsonPath);
-    }
+    config.totusuna.instances[instanceIndex] = { ...config.totusuna.instances[instanceIndex], ...updates };
+    await this.saveGuildConfig(guildId, config, `updateTotusunaInstance: ${uuid}`);
+    return true;
   }
 
   /**
@@ -210,23 +198,17 @@ class ConfigManager {
    * @returns {Promise<boolean>}
    */
   async removeTotusunaInstance(guildId, uuid) {
-    const jsonPath = await ensureGuildJSON(guildId);
-    await acquireLock(jsonPath);
-    try {
-      const config = await this.getGuildConfig(guildId);
-      if (!config.totusuna?.instances) return false;
+    const config = await this.getGuildConfig(guildId);
+    if (!config.totusuna?.instances) return false;
 
-      const originalLength = config.totusuna.instances.length;
-      config.totusuna.instances = config.totusuna.instances.filter(instance => instance.id !== uuid);
+    const originalLength = config.totusuna.instances.length;
+    config.totusuna.instances = config.totusuna.instances.filter(instance => instance.id !== uuid);
 
-      if (config.totusuna.instances.length < originalLength) {
-        await writeJSON(jsonPath, config);
-        return true;
-      }
-      return false;
-    } finally {
-      releaseLock(jsonPath);
+    if (config.totusuna.instances.length < originalLength) {
+      await this.saveGuildConfig(guildId, config, `removeTotusunaInstance: ${uuid}`);
+      return true;
     }
+    return false;
   }
 
   /**
