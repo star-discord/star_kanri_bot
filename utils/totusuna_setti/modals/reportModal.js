@@ -1,8 +1,8 @@
-const fs = require('fs');
 const path = require('path');
 const dayjs = require('dayjs');
 const { writeCsvRow } = require('../../spreadsheetHandler');
 const { MessageFlagsBitField } = require('discord.js');
+const { configManager } = require('../../configManager');
 
 module.exports = {
   customIdStart: 'totusuna_modal:',
@@ -12,6 +12,8 @@ module.exports = {
    * @param {import('discord.js').ModalSubmitInteraction} interaction
    */
   async handle(interaction) {
+    await interaction.deferReply({ flags: MessageFlagsBitField.Flags.Ephemeral });
+
     const guildId = interaction.guildId;
     const username = interaction.user.username;
     const now = dayjs();
@@ -34,44 +36,11 @@ module.exports = {
         .filter(t => t)
         .map((t, i) => `・項目${i + 1}: ${t}`)
         .join('\n');
-
       const report = `📝 **凸スナ報告**\n組数: ${group}組\n名前: ${name}名\n${tableText ? `${tableText}\n` : ''}詳細: ${detail || 'なし'}`;
 
-      // ファイルの存在確認と読み込み
-      const dataPath = path.join(__dirname, '../../../data', guildId, `${guildId}.json`);
-      if (!fs.existsSync(dataPath)) {
-        if (!interaction.replied && !interaction.deferred) {
-          return await interaction.reply({
-            content: '⚠️ 設定ファイルが見つかりません。',
-            flags: MessageFlagsBitField.Ephemeral,
-          });
-        }
-        return;
-      }
-
-      let json;
-      try {
-        json = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
-      } catch (err) {
-        console.error('[reportModal] JSONパース失敗:', err);
-        if (!interaction.replied && !interaction.deferred) {
-          return await interaction.reply({
-            content: '❌ 設定ファイルの読み込みに失敗しました。',
-            flags: MessageFlagsBitField.Ephemeral,
-          });
-        }
-        return;
-      }
-
-      const instance = (json.totusuna?.instances || []).find(i => i.id === uuid);
+      const instance = await configManager.getTotusunaInstance(guildId, uuid);
       if (!instance) {
-        if (!interaction.replied && !interaction.deferred) {
-          return await interaction.reply({
-            content: '⚠️ 対応する凸スナ設置データが見つかりません。',
-            flags: MessageFlagsBitField.Ephemeral,
-          });
-        }
-        return;
+        return await interaction.editReply({ content: '⚠️ 対応する凸スナ設置データが見つかりません。' });
       }
 
       try {
@@ -100,21 +69,14 @@ module.exports = {
         ]);
       } catch (err) {
         console.error('[reportModal] CSV書き込み失敗:', err);
+        // This is a non-fatal error, so we just log it and continue.
       }
 
-      if (!interaction.replied && !interaction.deferred) {
-        await interaction.reply({
-          content: '✅ 報告を送信し、記録しました。',
-          flags: MessageFlagsBitField.Ephemeral,
-        });
-      }
+      await interaction.editReply({ content: '✅ 報告を送信し、記録しました。' });
     } catch (error) {
-      console.error('[reportModal] 処理中エラー:', error);
-      if (!interaction.replied && !interaction.deferred) {
-        await interaction.reply({
-          content: '❌ 凸スナ報告処理中にエラーが発生しました。',
-          flags: MessageFlagsBitField.Ephemeral,
-        });
+      console.error(`[reportModal] 処理中エラー (uuid: ${uuid}):`, error);
+      if (interaction.deferred) {
+        await interaction.editReply({ content: '❌ 凸スナ報告処理中にエラーが発生しました。' });
       }
     }
   },
