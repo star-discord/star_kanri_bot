@@ -3,6 +3,7 @@
 
 # Node.jsの依存パッケージフォルダ
 node_modules/
+package-lock.json
 
 # Google Cloud 認証ファイルを無視
 star-discord-bot-*.json
