@@ -6,6 +6,7 @@
  * @param {string} userMsg - ユーザー向けエラーメッセージ
  * @param {object} [opts] - interaction.reply追加オプション
  */
+
 const { MessageFlagsBitField } = require('discord.js');
 const fs = require('fs').promises;
 const path = require('path');
@@ -28,28 +29,39 @@ async function logToFile(message) {
   }
 }
 
+/**
+ * エラーハンドリングとユーザーへの安全なエラーメッセージ返信
+ * @param {import('discord.js').Interaction} interaction
+ * @param {string|Error} logMsg ログに出力するメッセージまたはエラーオブジェクト
+ * @param {string} userMsg ユーザーに表示するエラーメッセージ
+ * @param {object} [opts] interaction.replyに渡す追加オプション（flagsなど）
+ */
 async function logAndReplyError(interaction, logMsg, userMsg, opts = {}) {
   const sourceLabel = interaction.customId || interaction.commandName || 'unknown_interaction';
   const guildId = interaction.guildId ?? 'DM';
   const userId = interaction.user?.id ?? 'unknown_user';
   const errorMessage = logMsg instanceof Error ? logMsg.stack || logMsg.message : logMsg;
 
-  if (logMsg instanceof Error) {
-    console.error(`[${sourceLabel}]`, logMsg);
-  } else {
-    console.error(`[${sourceLabel}]`, logMsg);
-  }
-  // ファイルにもコンテキスト付きでログを記録
+  // コンソールにエラーを出力
+  console.error(`[${sourceLabel}]`, logMsg);
+
+  // ファイルにエラーログを追記（非同期）
   await logToFile(`[Guild: ${guildId}] [User: ${userId}] [Source: ${sourceLabel}]\n${errorMessage}`);
 
-  // 二重応答を避けつつ、安全にエラーメッセージを送信する
+  // 二重応答を避けつつ安全にユーザーにエラー通知
   try {
-    // safeReplyを使用して安全に応答
-    await safeReply(interaction, { content: userMsg, embeds: [], components: [], flags: MessageFlagsBitField.Flags.Ephemeral, ...opts });
+    await safeReply(interaction, {
+      content: userMsg,
+      embeds: [],
+      components: [],
+      ...opts,
+      // flagsはoptsで指定があればそちらを優先、なければEphemeralにする
+      flags: opts.flags ?? MessageFlagsBitField.Flags.Ephemeral,
+    });
   } catch (replyError) {
     const failMsg = `❌ エラー応答の送信に失敗しました (Interaction ID: ${interaction.id}) - ${replyError.message}`;
     console.error(failMsg);
-    await logToFile(failMsg); // こちらもファイルに記録
+    await logToFile(failMsg); // ファイルにも追記
   }
 }
 
