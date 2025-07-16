@@ -1,57 +1,58 @@
-# kpi_setti.js コマンド仕様書
+✅ あなたのKPI機能に関する現在の設計方針（記録より）
+1. KPIのコマンド
+/kpi_設置 コマンドはステップチャット方式に移行。
 
-## 概要
-KPI報告の案内メッセージを送信し、目標設定と実績申請のボタンUIを提供するコマンドです。
+店舗選択などの手順は省略。
 
-## コマンド情報
-- **コマンド名**: `/kpi_設定`
-- **説明**: KPI報告の案内メッセージを送信します
-- **権限**: 管理者専用（requireAdmin適用）
-- **応答形式**: Ephemeral（プライベートメッセージ）
+KPI目標や申請ボタンが直接表示される仕様。
 
-## 機能詳細
+2. 構造の分割方針
+utils/kpi_setti/modals/：中継ハンドラ
 
-### 主な機能
-1. KPI目標設定ボタンの提供
-2. KPI実績申請ボタンの提供
-3. 管理者向けUI表示
+utils/kpi_setti/modal/：個別モーダル処理
 
-### ボタン構成
-```javascript
-const targetButton = new ButtonBuilder()
-  .setCustomId('kpi_target_start_button')
-  .setLabel('KPI目標')
-  .setStyle(ButtonStyle.Primary);
+utils/kpi_setti/buttons/：中継ボタンハンドラ
 
-const reportButton = new ButtonBuilder()
-  .setCustomId('kpi_report_start_button')
-  .setLabel('KPI申請')
-  .setStyle(ButtonStyle.Success);
-```
+utils/kpi_setti/button/：個別ボタン処理
 
-## 依存関係
-- `discord.js`: SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle
-- `../utils/permissions/requireAdmin`: 管理者権限チェック
+3. ファイル削除方針
+以下のファイルは削除対象として整理：
 
-## 実行フロー
-1. 管理者権限チェック
-2. ボタンUI作成
-3. メッセージ送信
+kpi_target.js
 
-## 連携するハンドラ
-- `utils/kpi_setti/buttons/kpi_target_start_button.js`: 目標設定開始
-- `utils/kpi_setti/buttons/kpi_report_start_button.js`: 実績申請開始
+kpi_input.js
 
-## エラーハンドリング
-- 権限不足時: requireAdminによる自動拒否
-- ボタン作成失敗: Discord.jsの内部エラーハンドリング
+open_target_modal.js
 
-## 使用例
-```
-/kpi_設定
-→ 「KPI報告　目標設定・申請ボタン」メッセージとボタンを表示
-```
+4. エラーハンドリング
+全てのインタラクションで logAndReplyError() を使用。
 
-## 注意事項
-- 管理者ロールが設定されていない場合は使用不可
-- ボタン押下後はstepChatHandlerによる対話式入力に移行
+safeReply, safeDefer, safeShowModal を活用し、3秒ルールと応答一回制限に対応。
+
+5. 今後の方針
+buttonsHandler.js に kpi_setti/buttons.js を中継ハンドラとして追加。
+
+各 customId にファイル名ヒントを含め、識別性を強化。
+
+必要であれば、これに関連するコード（例：ボタンやモーダルの実装）や構造の見直し、改善案も提示可能です。
+
+🔍 具体的に知りたい内容ありますか？
+例: /kpi_設置 コマンドの最新コード
+
+KPI申請のボタンのcustomId命名規則
+
+KPI関連ファイル一覧
+
+ステップチャット処理の流れ
+
+必要な情報を教えていただければ、該当箇所を詳しく提示します。
+
+
+
+
+
+
+
+
+
+ChatGPT に質問する

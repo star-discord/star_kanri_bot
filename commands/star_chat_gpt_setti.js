@@ -9,7 +9,7 @@ module.exports = {
 
   async execute(interaction) {
     try {
-      // 3秒ルールを回避するため、ephemeralフラグ付きで応答を遅延させる
+      // 3秒ルール回避のため、ephemeralフラグ付きで遅延応答
       await interaction.deferReply({ flags: MessageFlagsBitField.Flags.Ephemeral });
 
       const isAdmin = await checkAdmin(interaction);
@@ -18,15 +18,22 @@ module.exports = {
           embeds: [createAdminEmbed('❌ 権限がありません', 'このコマンドは管理者専用です。')],
         });
       }
-      
+
+      // ボタンの customId を明確に統一
       const row = new ActionRowBuilder().addComponents(
-        new ButtonBuilder().setCustomId('star_chat_gpt_setti_button').setLabel('🤖 今日のChatGPT').setStyle(ButtonStyle.Primary),
-        new ButtonBuilder().setCustomId('chatgpt_config_button').setLabel('⚙️ 設定').setStyle(ButtonStyle.Secondary)
+        new ButtonBuilder()
+          .setCustomId('star_chat_gpt_setti_button')
+          .setLabel('🤖 今日のChatGPT')
+          .setStyle(ButtonStyle.Primary),
+        new ButtonBuilder()
+          .setCustomId('chatgpt_config_button')
+          .setLabel('⚙️ 設定')
+          .setStyle(ButtonStyle.Secondary)
       );
 
       const content = `🤖 **ChatGPT案内**\n以下のボタンを押すと、「天気」「ニュース」「豆知識」などの情報が届きます。`;
 
-      await interaction.editReply({ content, components: [row] }); // 修正:  await を追加
+      await interaction.editReply({ content, components: [row] });
 
     } catch (error) {
       console.error('star_chat_gpt_setti 実行エラー:', error);
