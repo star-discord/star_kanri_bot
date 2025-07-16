@@ -29,7 +29,7 @@ module.exports = {
     }
 
     const json = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
-    const instance = json.tousuna?.instances?.find(i => i.id === uuid);
+    const instance = json.totusuna?.instances?.find(i => i.id === uuid);
 
     if (!instance) {
       return await interaction.reply({
@@ -39,7 +39,7 @@ module.exports = {
     }
 
     const modal = new ModalBuilder()
-      .setCustomId(`tousuna_config_edit_modal_${uuid}`)
+      .setCustomId(`toutsuna_config_edit_modal_${uuid}`)
       .setTitle('📄 本文の修正');
 
     const bodyInput = new TextInputBuilder()
