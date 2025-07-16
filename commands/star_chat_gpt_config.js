@@ -11,11 +11,13 @@ module.exports = {
 
   async execute(interaction) {
     try {
-      await interaction.deferReply({ flags: MessageFlagsBitField.Flags.Ephemeral });
+      // モーダル表示は即時応答であり、deferReply() とは併用不可。
+      // したがって、deferReply() は削除し、先に権限チェックを行います。
 
       const isAdmin = await checkAdmin(interaction);
       if (!isAdmin) {
-        return interaction.editReply({ content: '❌ 権限がありません。管理者のみ使用可能です。' });
+        // deferReply() をしていないため、editReply() ではなく reply() で応答します。
+        return interaction.reply({ content: '❌ 権限がありません。管理者のみ使用可能です。', flags: MessageFlagsBitField.Flags.Ephemeral });
       }
 
       const modal = new ModalBuilder()
@@ -41,6 +43,7 @@ module.exports = {
         new ActionRowBuilder().addComponents(maxTokensInput)
       );
 
+      // deferReply() を削除したため、showModal() は安全に実行できます。
       await interaction.showModal(modal);
     } catch (error) {
       console.error('star_chat_gpt_config 実行エラー:', error);
