@@ -1,7 +1,7 @@
 // utils/openai.js
 
 const OpenAI = require('openai');
-const { ensureGuildJSON, readJSON } = require('../fileHelper');
+const { ensureGuildJSON, readJSON } = require('./fileHelper');
 
 /**
  * OpenAI API呼び出しの安全なラッパー

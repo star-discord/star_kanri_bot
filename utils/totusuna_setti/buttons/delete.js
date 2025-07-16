@@ -1,3 +1,5 @@
+// utils/totusuna_setti/buttons/delete.js
+
 const { configManager } = require('../../configManager');
 const {
   createSuccessEmbed,
