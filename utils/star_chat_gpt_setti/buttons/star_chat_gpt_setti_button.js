@@ -48,15 +48,19 @@ module.exports = {
 
     try {
       // 先に defer して応答期限（3秒ルール）をクリア
-      await safeDefer(interaction, { ephemeral: false });
+      // publicな応答のため、ephemeralは指定しない
+      await safeDefer(interaction);
 
       // 元メッセージを削除（権限があれば）
       if (interaction.message?.deletable) {
         try {
           await interaction.message.delete();
         } catch (deleteError) {
-          console.warn('メッセージ削除失敗:', deleteError);
-          // 削除失敗は続行
+          if (deleteError.code === 10008) { // DiscordAPIError.Codes.UnknownMessage
+            console.log(`[${this.customId}] メッセージは既に削除済みでした: ${interaction.message.id}`);
+          } else {
+            console.warn(`[${this.customId}] 元メッセージの削除に失敗しました:`, deleteError);
+          }
         }
       }
 

@@ -2,49 +2,44 @@
 const { MessageFlagsBitField } = require('discord.js');
 
 /**
- * 安全なインタラクション応答（reply または editReply を自動判定）
+ * 安全にインタラクションに応答する（二重応答を回避）
  * @param {import('discord.js').Interaction} interaction
- * @param {import('discord.js').InteractionReplyOptions | import('discord.js').WebhookEditMessageOptions} options
- * @returns {Promise<import('discord.js').Message | import('discord.js').InteractionResponse>}
+ * @param {import('discord.js').InteractionReplyOptions} options
  */
 async function safeReply(interaction, options) {
-  if (interaction.replied || interaction.deferred) {
-    return interaction.editReply(options);
-  } else {
-    return interaction.reply(options);
+  try {
+    if (interaction.replied || interaction.deferred) {
+      await interaction.editReply(options);
+    } else {
+      await interaction.reply(options);
+    }
+  } catch (error) {
+    console.error(`[safeReply] 応答失敗: ${error.message}`, {
+      interactionId: interaction.id,
+      customId: interaction.customId,
+    });
   }
 }
 
 /**
- * 安全な応答遅延（deferReply が未実行のときのみ呼び出す）
- * デフォルトで ephemeral 応答になります。
+ * 安全にインタラクションを遅延させる（二重遅延を回避）
  * @param {import('discord.js').Interaction} interaction
- * @param {import('discord.js').InteractionDeferReplyOptions} [options={}]
- * @returns {Promise<void | import('discord.js').InteractionResponse>}
+ * @param {object} [options] - `ephemeral` (boolean) または `flags`
  */
 async function safeDefer(interaction, options = {}) {
-  const defaultOptions = { flags: MessageFlagsBitField.Flags.Ephemeral };
-  const finalOptions = { ...defaultOptions, ...options };
-
-  if (!interaction.deferred && !interaction.replied) {
-    return interaction.deferReply(finalOptions);
+  if (interaction.deferred || interaction.replied) {
+    return;
   }
-  // すでに defer or reply 済みなら何もしない
-  return;
+
+  const deferOptions = {};
+  // v14で推奨の `flags` を優先しつつ、古い `ephemeral` もサポート
+  if (options.flags) {
+    deferOptions.flags = options.flags;
+  } else if (options.ephemeral === true) {
+    deferOptions.flags = MessageFlagsBitField.Flags.Ephemeral;
+  }
+
+  await interaction.deferReply(deferOptions);
 }
 
-/**
- * 安全なモーダル表示（showModal）
- * showModal は deferReply と併用不可のため状態チェックなし
- * @param {import('discord.js').Interaction} interaction
- * @param {import('discord.js').ModalBuilder} modal
- * @returns {Promise<void>}
- */
-async function safeShowModal(interaction, modal) {
-  if (!interaction.isModalSubmit() && !interaction.isChatInputCommand() && !interaction.isContextMenuCommand() && !interaction.isAutocomplete()) {
-    throw new Error(`safeShowModal はコマンド系インタラクションにのみ使用可能です。`);
-  }
-  return interaction.showModal(modal);
-}
-
-module.exports = { safeReply, safeDefer, safeShowModal };
+module.exports = { safeReply, safeDefer };
