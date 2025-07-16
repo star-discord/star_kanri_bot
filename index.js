@@ -10,12 +10,12 @@ const { StartupDiagnostics } = require('./utils/startupDiagnostics');
 async function runStartupDiagnostics() {
   const diagnostics = new StartupDiagnostics();
   const isHealthy = await diagnostics.runDiagnostics();
-  
+
   if (!isHealthy) {
     console.log('❌ 重要なエラーによりBot起動を中止します。');
     process.exit(1);
   }
-  
+
   console.log('🚀 診断完了 - Bot初期化を継続します...\n');
 }
 
@@ -94,13 +94,13 @@ if (fs.existsSync(eventsPath)) {
 
 // ======== インタラクションハンドラー ========
 const { handleButton } = require('./utils/buttonsHandler');
-const { handleModal } = require('./utils/modalsHandler');
 const { handleSelect } = require('./utils/selectsHandler');
+// モーダル関連の読み込みは削除しました
 
 client.on('interactionCreate', async interaction => {
   const startTime = Date.now();
   const interactionId = interaction.id;
-  
+
   console.log('🔔 [interactionCreate] 受信:', {
     type: interaction.type,
     commandName: interaction.commandName || interaction.customId || 'unknown',
@@ -117,8 +117,6 @@ client.on('interactionCreate', async interaction => {
         return;
       }
 
-      // `凸スナ設置`は軽量なため、予防的デファーの対象外とします。
-      // 重い処理を行うコマンドのみをここに追加してください。
       const shouldDefer = ['kpi_設定'].includes(interaction.commandName);
       if (shouldDefer && !interaction.deferred && !interaction.replied) {
         try {
@@ -133,11 +131,10 @@ client.on('interactionCreate', async interaction => {
 
     } else if (interaction.isButton()) {
       await handleButton(interaction);
-    } else if (interaction.isAnySelectMenu()) { // isStringSelectMenu() から isAnySelectMenu() に変更
+    } else if (interaction.isAnySelectMenu()) {
       await handleSelect(interaction);
-    } else if (interaction.isModalSubmit()) {
-      await handleModal(interaction);
     }
+    // モーダル関連の処理は削除しました
 
     const duration = Date.now() - startTime;
     console.log(`✅ [interactionCreate] 処理完了: ${interaction.commandName || interaction.customId} (${duration}ms)`);
