@@ -93,6 +93,7 @@ if (fs.existsSync(eventsPath)) {
 }
 
 // ======== ハンドラ読み込み ========
+const { unifiedHandler } = require('./utils/unifiedInteractionHandler');
 client.on('interactionCreate', async interaction => {
   const startTime = Date.now();
   const interactionId = interaction.id;
@@ -125,12 +126,9 @@ client.on('interactionCreate', async interaction => {
 
       await command.execute(interaction);
 
-    } else if (interaction.isButton()) {
-      await handleButton(interaction);
-    } else if (interaction.isAnySelectMenu()) {
-      await handleSelect(interaction);
+    } else {
+      await unifiedHandler.handleInteraction(interaction);
     }
-    // モーダル関連の処理は削除しました
 
     const duration = Date.now() - startTime;
     console.log(`✅ [interactionCreate] 処理完了: ${interaction.commandName || interaction.customId} (${duration}ms)`);

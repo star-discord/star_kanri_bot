@@ -2,7 +2,6 @@
 const { MessageFlagsBitField } = require('discord.js');
 const { logAndReplyError } = require('./errorHelper');
 const { loadHandlers } = require('./handlerLoader');
-const { findHandler } = require('./findHandler'); // ← 追加
 const path = require('path');
 
 /**
@@ -91,9 +90,15 @@ class UnifiedInteractionHandler {
    */
   resolveHandler(interactionType, customId) {
     const category = this.getCategoryFromCustomId(customId);
-    if (!category || !this.handlerCategories[interactionType]?.[category]) return null;
+    if (!category) return null;
 
-    return findHandler(customId, this.handlerCategories[interactionType][category]);
+    // カテゴリに対応するハンドラローダー（find関数）を取得
+    const find = this.handlerCategories[interactionType]?.[category];
+    if (typeof find !== 'function') {
+      return null;
+    }
+
+    return find(customId); // 各カテゴリのハンドラローダーを実行
   }
 
   async handleButton(interaction) {
@@ -162,7 +167,6 @@ class UnifiedInteractionHandler {
   }
 
   async handleSelect(interaction) {
-    if (!interaction.isStringSelectMenu()) return;
     const customId = interaction.customId;
     const handler = this.resolveHandler('selects', customId);
 
@@ -199,7 +203,7 @@ class UnifiedInteractionHandler {
         await this.handleButton(interaction);
       } else if (interaction.isModalSubmit()) {
         await this.handleModal(interaction);
-      } else if (interaction.isStringSelectMenu()) {
+      } else if (interaction.isAnySelectMenu()) {
         await this.handleSelect(interaction);
       } else {
         console.warn(`未対応のinteractionタイプ: ${interaction.type}`);
