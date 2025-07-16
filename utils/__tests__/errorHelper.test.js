@@ -98,6 +98,7 @@ describe('logAndReplyError', () => {
     guildId: 'test_guild',
     user: { id: 'test_user' },
     reply: jest.fn(),
+    customId: null, // customIdがない場合を想定
     followUp: jest.fn(),
   };
 
@@ -116,14 +117,26 @@ describe('logAndReplyError', () => {
   it('logError と safeReplyToUser が適切に呼ばれること', async () => {
     await errorHelper.logAndReplyError(mockInteraction, 'ログだけ', '表示メッセージ');
 
-    expect(logErrorSpy).toHaveBeenCalled();
-    expect(safeReplyToUserSpy).toHaveBeenCalled();
+    expect(logErrorSpy).toHaveBeenCalledWith(
+      'test_cmd [Guild:test_guild] [User:test_user]',
+      'ログだけ',
+      undefined
+    );
+    expect(safeReplyToUserSpy).toHaveBeenCalledWith(
+      mockInteraction,
+      '表示メッセージ',
+      {}
+    );
   });
 
   it('Error オブジェクトを渡した場合に正しく処理されること', async () => {
     const err = new Error('スタック確認');
     await errorHelper.logAndReplyError(mockInteraction, err, '表示メッセージ');
 
-    expect(logErrorSpy).toHaveBeenCalled();
+    expect(logErrorSpy).toHaveBeenCalledWith(
+      'test_cmd [Guild:test_guild] [User:test_user]',
+      'スタック確認',
+      err
+    );
   });
 });
