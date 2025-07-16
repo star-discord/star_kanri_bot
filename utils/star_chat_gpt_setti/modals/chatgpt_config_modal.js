@@ -39,9 +39,10 @@ module.exports = {
           maxTokens <= 0 ||
           maxTokens > 8192 // OpenAI APIのモデル上限を考慮
         ) {
-          return await interaction.editReply({
+          await interaction.editReply({
             content: '❌ 「1回の最大返答文字数」は **1〜8192の範囲の整数** で入力してください。',
           });
+          return;
         }
       }
 
@@ -49,10 +50,12 @@ module.exports = {
       let temperature = null;
       if (temperatureRaw !== '') {
         if (isNaN(temperatureRaw))
-          return await interaction.editReply({ content: '❌ 「ChatGPTの曖昧さ」は **数値を入力してください**。' });
+          await interaction.editReply({ content: '❌ 「ChatGPTの曖昧さ」は **数値を入力してください**。' });
+          return;
         temperature = Number(temperatureRaw);
         if (Number.isNaN(temperature) || temperature < 0 || temperature > 1) {
-          return await interaction.editReply({ content: '❌ 「ChatGPTの曖昧さ」は **0〜1の範囲で入力してください**。' });
+          await interaction.editReply({ content: '❌ 「ChatGPTの曖昧さ」は **0〜1の範囲で入力してください**。' });
+          return;
         }
       }
 
@@ -78,8 +81,22 @@ module.exports = {
       }
 
     } catch (error) {
-      await logAndReplyError(interaction, error, '設定の保存中にエラーが発生しました。しばらくしてから再試行してください。');
-      return;
+      // エラーログはコンソールに詳細を出力
+      console.error('[chatgpt_config_modal] モーダル処理中にエラーが発生しました:', error);
+
+      // ユーザーへの応答を試みる
+      const userErrorMessage = { content: '❌ 設定の保存中にエラーが発生しました。', ephemeral: true, embeds: [], components: [] };
+      try {
+        if (interaction.replied || interaction.deferred) {
+          // deferReplyなどが成功した後のエラーならfollowUpで追加メッセージを送る
+          await interaction.followUp(userErrorMessage);
+        } else {
+          // deferReply自体が失敗した場合、replyを試みる
+          await interaction.reply(userErrorMessage);
+        }
+      } catch (replyError) {
+        console.error('[chatgpt_config_modal] エラー応答の送信にも失敗しました:', replyError.message);
+      }
     }
   },
 };
