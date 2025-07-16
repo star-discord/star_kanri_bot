@@ -1,10 +1,9 @@
-const { EmbedBuilder } = require('discord.js');
-const { getChatCompletion } = require('../../openai');
-const { createErrorEmbed, createBaseEmbed, COLORS } = require('../../embedHelper');
-const { configManager } = require('../../configManager');
-const { getOpenAIUsage } = require('../../openaiUsage');
+// utils/star_chat_gpt_setti/buttons/star_chat_gpt_setti_button.js
 
-// プロンプトとエラーメッセージを集中管理
+const { ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
+const { createBaseEmbed, createErrorEmbed, COLORS } = require('../../embedHelper');
+const { getChatCompletion } = require('../../openai');
+
 const INFO_CONFIG = {
   weather: {
     prompt: '今日の東京の天気は？',
@@ -20,11 +19,6 @@ const INFO_CONFIG = {
   },
 };
 
-/**
- * OpenAIから指定された情報を取得する汎用関数
- * @param {'weather' | 'news' | 'trivia'} type - 取得する情報の種類
- * @returns {Promise<string>}
- */
 async function fetchInfo(type, guildId) {
   const config = INFO_CONFIG[type];
   if (!config) return '不明な情報タイプです。';
@@ -42,43 +36,73 @@ async function fetchInfo(type, guildId) {
 
 module.exports = {
   customId: 'star_chat_gpt_setti_button',
+
   /**
-   * ChatGPT情報ボタンのインタラクションを処理します。
+   * ボタン押下時の処理
    * @param {import('discord.js').ButtonInteraction} interaction
    */
   async handle(interaction) {
     const guildId = interaction.guildId;
-
-    // タイムアウトを防ぐために、すぐに応答を遅延させます。
-    await interaction.deferReply();
+    const channel = interaction.channel;
 
     try {
-      // 全てのデータを並行して取得します。
-      const [weather, news, trivia, usageInfo] = await Promise.all([
+      // 元メッセージを削除（権限があれば）
+      if (interaction.message.deletable) {
+        await interaction.message.delete();
+      }
+
+      // 情報を並列取得
+      const [weather, news, trivia] = await Promise.all([
         fetchInfo('weather', guildId),
         fetchInfo('news', guildId),
         fetchInfo('trivia', guildId),
-        // fetchUsageInfo(guildId),  // 使用量表示は一旦削除
       ]);
 
+      // Embed作成
       const embed = createBaseEmbed({
         title: '🤖 今日のChatGPT情報',
         color: COLORS.SUCCESS,
       })
         .addFields(
           { name: '☀️ 天気', value: weather.slice(0, 1024) },
-          { name: '📰 ニュース', value: news.slice(0, 1024) },  
-          { name: '💡 豆知識', value: trivia.slice(0, 1024) },  
-          // { name: '📊 使用量', value: usageInfo.slice(0, 1024) } // 使用量表示は一旦削除
+          { name: '📰 ニュース', value: news.slice(0, 1024) },
+          { name: '💡 豆知識', value: trivia.slice(0, 1024) },
         )
-        .setFooter({ text: 'Powered by OpenAI' }); // フッターを上書き
+        .setFooter({ text: 'Powered by OpenAI' });
 
-      await interaction.editReply({ embeds: [embed] });
+      // ボタンを再作成
+      const infoButton = new ButtonBuilder()
+        .setCustomId('star_chat_gpt_setti_button')
+        .setLabel('🤖 今日のChatGPT')
+        .setStyle(ButtonStyle.Primary);
+
+      const configButton = new ButtonBuilder()
+        .setCustomId('chatgpt_config_button')
+        .setLabel('⚙️ 設定')
+        .setStyle(ButtonStyle.Secondary);
+
+      const row = new ActionRowBuilder().addComponents(infoButton, configButton);
+
+      // 新メッセージをチャンネルに送信
+      await channel.send({ embeds: [embed], components: [row] });
+
+      // ボタン押下応答は更新なしでACKのみ（重複応答回避）
+      await interaction.deferUpdate();
+
     } catch (error) {
-      console.error('ChatGPTボタン処理エラー:', error);
-      await interaction.editReply({
-        embeds: [createErrorEmbed('処理エラー', 'ChatGPTからの情報取得中に予期せぬエラーが発生しました。')]
-      });
+      console.error('star_chat_gpt_setti_button エラー:', error);
+
+      // エラー時は可能なら返信
+      if (interaction.deferred || interaction.replied) {
+        await interaction.editReply({
+          embeds: [createErrorEmbed('処理エラー', 'ChatGPTから情報取得中にエラーが発生しました。')],
+        });
+      } else {
+        await interaction.reply({
+          embeds: [createErrorEmbed('処理エラー', 'ChatGPTから情報取得中にエラーが発生しました。')],
+          ephemeral: true,
+        });
+      }
     }
-  }
+  },
 };

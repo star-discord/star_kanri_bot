@@ -1,7 +1,7 @@
 {
   "name": "star-kanri-bot",
   "version": "0.2.0",
-  "description": "STARクラン運営を支援する多機能Discordボット。凸スナ報告、ロール管理、各種設定機能などを提供します。",
+  "description": "STAR管理bot",
   "main": "index.js",
   "type": "commonjs",
   "scripts": {
@@ -18,12 +18,15 @@
   },
   "dependencies": {
     "@google-cloud/storage": "^7.16.0",
+    "async-mutex": "^0.4.0",
+    "axios": "^1.4.0",
     "csv-writer": "^1.6.0",
     "discord.js": "^14.21.0",
     "dotenv": "^16.4.5",
     "exceljs": "^4.3.0",
     "openai": "^4.24.0",
-    "pm2": "^6.0.8"
+    "pm2": "^6.0.8",
+    "winston": "^3.9.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.0"

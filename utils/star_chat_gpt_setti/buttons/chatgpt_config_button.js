@@ -19,28 +19,28 @@ module.exports = {
 
       const maxTokensInput = new TextInputBuilder()
         .setCustomId('chatgpt_max_tokens')
-        .setLabel('最大トークン数')
+        .setLabel('1回の最大返答文字数')
         .setStyle(TextInputStyle.Short)
-        .setPlaceholder('例: 150')
+        .setPlaceholder('例: 500')
         .setRequired(false);
 
       const temperatureInput = new TextInputBuilder()
         .setCustomId('chatgpt_temperature')
-        .setLabel('温度設定 (0.0-2.0)')
+        .setLabel('ChatGPTの曖昧さ (0〜1)')
         .setStyle(TextInputStyle.Short)
         .setPlaceholder('例: 0.7')
         .setRequired(false);
 
-      const row1 = new ActionRowBuilder().addComponents(apiKeyInput);
-      const row2 = new ActionRowBuilder().addComponents(maxTokensInput);
-      const row3 = new ActionRowBuilder().addComponents(temperatureInput);
-
-      modal.addComponents(row1, row2, row3);
+      modal.addComponents(
+        new ActionRowBuilder().addComponents(apiKeyInput),
+        new ActionRowBuilder().addComponents(maxTokensInput),
+        new ActionRowBuilder().addComponents(temperatureInput)
+      );
 
       await interaction.showModal(modal);
     } catch (error) {
       console.error('ChatGPT設定ボタン処理エラー:', error);
-      // エラーを再スローして、中央の buttonsHandler.js で一元的に処理させる
+      // エラーを再スローし、中央の buttonsHandler.js で一元管理
       throw error;
     }
   }

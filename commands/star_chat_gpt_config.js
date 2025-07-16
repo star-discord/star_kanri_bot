@@ -1,85 +1,50 @@
 // commands/star_chat_gpt_config.js
 
-const {
-  SlashCommandBuilder,
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  MessageFlagsBitField,
-} = require('discord.js');
-const { configManager } = require('../utils/configManager');
+const { SlashCommandBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, MessageFlagsBitField } = require('discord.js');
 const { checkAdmin } = require('../utils/permissions/checkAdmin');
-const { createAdminEmbed } = require('../utils/embedHelper');
+const { logAndReplyError } = require('../utils/errorHelper');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('star_chat_gpt_config')
-    .setDescription('STAR ChatGPT の設定を表示または変更します'),
+    .setDescription('ChatGPTの応答設定をモーダルで行います'),
 
-  /**
-   * @param {import('discord.js').ChatInputCommandInteraction} interaction
-   */
   async execute(interaction) {
     try {
-      await interaction.deferReply({ ephemeral: true });
+      await interaction.deferReply({ flags: MessageFlagsBitField.Flags.Ephemeral });
 
       const isAdmin = await checkAdmin(interaction);
       if (!isAdmin) {
-        return await interaction.editReply({
-          embeds: [
-            createAdminEmbed(
-              '❌ 権限がありません',
-              'このコマンドはサーバー管理者のみが実行できます。'
-            )
-          ]
-        });
+        return interaction.editReply({ content: '❌ 権限がありません。管理者のみ使用可能です。' });
       }
 
-      const config = await configManager.getChatGPTConfig(interaction.guildId);
+      const modal = new ModalBuilder()
+        .setCustomId('chatgpt_config_modal')
+        .setTitle('ChatGPT設定');
 
-      const embed = createAdminEmbed(
-        '🤖 ChatGPT設定管理',
-        'ChatGPTの各種設定を以下の通り表示しています。'
-      ).addFields(
-        {
-          name: '🔧 設定項目',
-          value: '• APIキー\n• 最大トークン数\n• 温度設定\n• プロンプト（未表示）',
-        },
-        {
-          name: '📋 現在の状態',
-          value: [
-            `APIキー: ${config.apiKey ? '✅ 設定済み' : '❌ 未設定'}`,
-            `最大トークン数: ${config.maxTokens ?? '未設定'}`,
-            `温度: ${config.temperature ?? '未設定'}`,
-          ].join('\n'),
-        }
+      const personalityInput = new TextInputBuilder()
+        .setCustomId('personality')
+        .setLabel('ChatGPTの性格設定')
+        .setStyle(TextInputStyle.Paragraph)
+        .setPlaceholder('例: 優しく丁寧に回答してください')
+        .setRequired(true);
+
+      const maxTokensInput = new TextInputBuilder()
+        .setCustomId('max_tokens')
+        .setLabel('最大応答文字数')
+        .setStyle(TextInputStyle.Short)
+        .setPlaceholder('例: 500')
+        .setRequired(true);
+
+      modal.addComponents(
+        new ActionRowBuilder().addComponents(personalityInput),
+        new ActionRowBuilder().addComponents(maxTokensInput)
       );
 
-      const configButton = new ButtonBuilder()
-        .setCustomId('star_chat_gpt:config')  // 名前空間風に明示
-        .setLabel('⚙️ 設定を変更する')
-        .setStyle(ButtonStyle.Primary);
-
-      const row = new ActionRowBuilder().addComponents(configButton);
-
-      await interaction.editReply({
-        embeds: [embed],
-        components: [row],
-      });
-
+      await interaction.showModal(modal);
     } catch (error) {
-      console.error('[star_chat_gpt_config] コマンド実行エラー:', error);
-
-      const errorMessage = {
-        content: '❌ 設定の取得中にエラーが発生しました。',
-        flags: MessageFlagsBitField.Flags.Ephemeral,
-      };
-
-      if (interaction.deferred || interaction.replied) {
-        await interaction.editReply(errorMessage);
-      } else {
-        await interaction.reply(errorMessage);
-      }
+      console.error('star_chat_gpt_config 実行エラー:', error);
+      await logAndReplyError(interaction, error, 'エラーが発生しました。しばらくしてから再試行してください。');
     }
   },
 };
