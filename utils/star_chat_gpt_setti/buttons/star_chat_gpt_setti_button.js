@@ -48,7 +48,6 @@ module.exports = {
 
     try {
       // 先に defer して応答期限（3秒ルール）をクリア
-      // publicな応答のため、ephemeralは指定しない
       await safeDefer(interaction);
 
       // 元メッセージを削除（権限があれば）
@@ -56,7 +55,7 @@ module.exports = {
         try {
           await interaction.message.delete();
         } catch (deleteError) {
-          if (deleteError.code === 10008) { // DiscordAPIError.Codes.UnknownMessage
+          if (deleteError.code === 10008) {
             console.log(`[${this.customId}] メッセージは既に削除済みでした: ${interaction.message.id}`);
           } else {
             console.warn(`[${this.customId}] 元メッセージの削除に失敗しました:`, deleteError);
@@ -99,20 +98,18 @@ module.exports = {
       // 新規メッセージをチャンネルに送信
       await channel.send({ embeds: [embed], components: [row] });
 
-      // defer済みのためここでは応答不要（処理終了）
+      // defer済みのためここでは応答不要
 
     } catch (error) {
       console.error('star_chat_gpt_setti_button エラー:', error);
 
       try {
-        // まだ応答していなければ safeReply でエラーを通知
         await safeReply(interaction, {
           embeds: [createErrorEmbed('処理エラー', 'ChatGPTから情報取得中にエラーが発生しました。')],
           flags: MessageFlagsBitField.Flags.Ephemeral,
         });
       } catch (replyError) {
         console.error('エラー応答の送信に失敗しました:', replyError);
-        // ここでの失敗はログのみで終了
       }
     }
   },

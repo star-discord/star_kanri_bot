@@ -4,6 +4,18 @@ const { v4: uuidv4 } = require('uuid');
 const { Mutex, withTimeout, E_TIMEOUT } = require('async-mutex');
 
 /**
+ * 排他制御付きラップ関数
+ */
+async function withLock(mutex, taskFn) {
+  const release = await mutex.acquire();
+  try {
+    return await taskFn();
+  } finally {
+    release();
+  }
+}
+
+/**
  * 統合設定管理クラス
  * 全ての機能の設定を一元管理
  */
@@ -17,7 +29,7 @@ class ConfigManager {
         notifyChannelId: null,
       },
       chatgpt: {
-        apiKey: '', // 初期値は空文字列
+        apiKey: '',
         maxTokens: 150,
         temperature: 0.7
       },
@@ -65,22 +77,19 @@ class ConfigManager {
     const jsonPath = await this.getJsonPath(guildId);
     let mutex = this.mutexes.get(jsonPath);
     if (!mutex) {
-      mutex = new Mutex();
+      mutex = withTimeout(new Mutex(), 10000);
       this.mutexes.set(jsonPath, mutex);
     }
 
-    let release;
     try {
-      // 10秒のタイムアウト付きでロックを取得
-      release = await withTimeout(mutex.acquire(), 10000)
-        .catch(e => {
-          if (e === E_TIMEOUT) throw new Error(`ファイルロックの取得がタイムアウトしました (Context: ${context})`);
-          throw e;
-        });
-      await writeJSON(jsonPath, config);
-    } finally {
-      // ロックが取得できた場合のみ解放
-      if (release) release();
+      await withLock(mutex, async () => {
+        await writeJSON(jsonPath, config);
+      });
+    } catch (e) {
+      if (e === E_TIMEOUT) {
+        throw new Error(`ファイルロックの取得がタイムアウトしました (Context: ${context})`);
+      }
+      throw e;
     }
   }
 
@@ -100,7 +109,6 @@ class ConfigManager {
    * @param {string} guildId 
    * @param {string} section 
    * @param {object} sectionConfig 
-   * @param {object} sectionConfig
    * @returns {Promise<void>}
    */
   async updateSectionConfig(guildId, section, sectionConfig) {
@@ -147,7 +155,7 @@ class ConfigManager {
   /**
    * totusuna インスタンスを追加
    * @param {string} guildId 
-   * @param {object} instance 
+   * @param {object} instanceData 
    */
   async addTotusunaInstance(guildId, instanceData) {
     const config = await this.getGuildConfig(guildId);
@@ -175,7 +183,6 @@ class ConfigManager {
    * @param {string} guildId 
    * @param {string} uuid 
    * @param {object} updates 
-   * @param {object} updates
    * @returns {Promise<boolean>}
    */
   async updateTotusunaInstance(guildId, uuid, updates) {
@@ -195,7 +202,6 @@ class ConfigManager {
    * totusuna インスタンスを削除
    * @param {string} guildId 
    * @param {string} uuid 
-   * @param {string} uuid
    * @returns {Promise<boolean>}
    */
   async removeTotusunaInstance(guildId, uuid) {
