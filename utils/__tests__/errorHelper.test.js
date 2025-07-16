@@ -113,17 +113,17 @@ describe('logAndReplyError', () => {
     safeReplyToUserSpy.mockRestore();
   });
 
- it('logError と safeReplyToUser が適切に呼ばれること', async () => {
-  await errorHelper.logAndReplyError(mockInteraction, 'ログだけ', '表示メッセージ');
+  it('logError と safeReplyToUser が適切に呼ばれること', async () => {
+    await errorHelper.logAndReplyError(mockInteraction, 'ログだけ', '表示メッセージ');
 
-  expect(logErrorSpy).toHaveBeenCalled();
-  expect(safeReplyToUserSpy).toHaveBeenCalled();
-});
+    expect(logErrorSpy).toHaveBeenCalled();
+    expect(safeReplyToUserSpy).toHaveBeenCalled();
+  });
 
-it('Error オブジェクトを渡した場合に正しく処理されること', async () => {
-  const err = new Error('スタック確認');
-  await errorHelper.logAndReplyError(mockInteraction, err, '表示メッセージ');
+  it('Error オブジェクトを渡した場合に正しく処理されること', async () => {
+    const err = new Error('スタック確認');
+    await errorHelper.logAndReplyError(mockInteraction, err, '表示メッセージ');
 
-  expect(logErrorSpy).toHaveBeenCalled();
-});
+    expect(logErrorSpy).toHaveBeenCalled();
+  });
 });
