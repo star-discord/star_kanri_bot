@@ -1,68 +1,81 @@
 // utils/errorHelper.js
-/**
- * 共通エラーハンドリング・ユーザー通知
- * @param {import('discord.js').Interaction} interaction
- * @param {string|Error} logMsg - ログ出力内容
- * @param {string} userMsg - ユーザー向けエラーメッセージ
- * @param {object} [opts] - interaction.reply追加オプション
- */
-
 const { MessageFlagsBitField } = require('discord.js');
-const fs = require('fs').promises;
+const fs = require('fs/promises');
 const path = require('path');
-const { safeReply } = require('./safeReply'); // safeReplyをインポート
 
 /**
- * ログをファイルに追記する
- * @param {string} message
+ * エラーログを出力（コンソール + ファイル）
+ * @param {string} source - エラー発生源識別子
+ * @param {string} message - エラーメッセージ
+ * @param {Error} [error] - スタック情報を含む Error オブジェクト（省略可能）
  */
-async function logToFile(message) {
+async function logError(source, message, error) {
+  const timestamp = new Date().toISOString();
+  const stack = error?.stack || error?.message || '';
+  const fullMessage = `[${timestamp}] [${source}] ${message}${stack ? `\n${stack}` : ''}`;
+
+  console.error(fullMessage); // コンソール出力
+
   try {
     const logDir = path.join(__dirname, '..', 'logs');
-    await fs.mkdir(logDir, { recursive: true }); // logsディレクトリがなければ作成
+    await fs.mkdir(logDir, { recursive: true });
     const logPath = path.join(logDir, 'error.log');
-    const timestamp = new Date().toISOString();
-    const formattedMessage = `[${timestamp}] ${message}\n`;
-    await fs.appendFile(logPath, formattedMessage, 'utf8');
+    await fs.appendFile(logPath, `${fullMessage}\n`, 'utf8');
   } catch (fileError) {
-    console.error('❌ ログファイルへの書き込みに失敗:', fileError);
+    console.error('[logError] ログファイルへの書き込みに失敗:', fileError);
   }
 }
 
 /**
- * エラーハンドリングとユーザーへの安全なエラーメッセージ返信
+ * 応答済みかどうかを判断してユーザーに安全にエラーメッセージを返す
  * @param {import('discord.js').Interaction} interaction
- * @param {string|Error} logMsg ログに出力するメッセージまたはエラーオブジェクト
- * @param {string} userMsg ユーザーに表示するエラーメッセージ
- * @param {object} [opts] interaction.replyに渡す追加オプション（flagsなど）
+ * @param {string} content - メッセージ内容
+ * @param {object} [options] - flags, embeds, components など
  */
-async function logAndReplyError(interaction, logMsg, userMsg, opts = {}) {
-  const sourceLabel = interaction.customId || interaction.commandName || 'unknown_interaction';
-  const guildId = interaction.guildId ?? 'DM';
-  const userId = interaction.user?.id ?? 'unknown_user';
-  const errorMessage = logMsg instanceof Error ? logMsg.stack || logMsg.message : logMsg;
+async function safeReplyToUser(interaction, content, options = {}) {
+  const replyOptions = {
+    content,
+    embeds: [],
+    components: [],
+    flags: MessageFlagsBitField.Flags.Ephemeral,
+    ...options,
+  };
 
-  // コンソールにエラーを出力
-  console.error(`[${sourceLabel}]`, logMsg);
-
-  // ファイルにエラーログを追記（非同期）
-  await logToFile(`[Guild: ${guildId}] [User: ${userId}] [Source: ${sourceLabel}]\n${errorMessage}`);
-
-  // 二重応答を避けつつ安全にユーザーにエラー通知
   try {
-    await safeReply(interaction, {
-      content: userMsg,
-      embeds: [],
-      components: [],
-      ...opts,
-      // flagsはoptsで指定があればそちらを優先、なければEphemeralにする
-      flags: opts.flags ?? MessageFlagsBitField.Flags.Ephemeral,
+    if (interaction.replied || interaction.deferred) {
+      await interaction.followUp(replyOptions);
+    } else {
+      await interaction.reply(replyOptions);
+    }
+  } catch (err) {
+    console.error('[safeReplyToUser] 応答失敗:', err.message, {
+      interactionId: interaction.id,
+      customId: interaction.customId,
     });
-  } catch (replyError) {
-    const failMsg = `❌ エラー応答の送信に失敗しました (Interaction ID: ${interaction.id}) - ${replyError.message}`;
-    console.error(failMsg);
-    await logToFile(failMsg); // ファイルにも追記
   }
 }
 
-module.exports = { logAndReplyError };
+/**
+ * ログ記録とユーザーへの通知をまとめて行う
+ * @param {import('discord.js').Interaction} interaction
+ * @param {string|Error} logMsg - エラーメッセージか Error オブジェクト
+ * @param {string} userMsg - ユーザーへの表示内容
+ * @param {object} [options] - embeds や flags などの応答オプション
+ */
+async function logAndReplyError(interaction, logMsg, userMsg, options = {}) {
+  const source = interaction.customId || interaction.commandName || 'unknown_interaction';
+  const guildId = interaction.guildId || 'DM';
+  const userId = interaction.user?.id || 'unknown_user';
+
+  const logMessage = logMsg instanceof Error ? logMsg.message : logMsg;
+  const errorObject = logMsg instanceof Error ? logMsg : undefined;
+
+  await logError(`${source} [Guild:${guildId}] [User:${userId}]`, logMessage, errorObject);
+  await safeReplyToUser(interaction, userMsg, options);
+}
+
+module.exports = {
+  logError,
+  safeReplyToUser,
+  logAndReplyError,
+};

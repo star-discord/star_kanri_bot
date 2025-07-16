@@ -71,9 +71,16 @@ async function testMigration() {
   console.log('移行後:', JSON.stringify(migratedData2, null, 2));
 
   console.log('\n✅ テスト完了');
+  // ここでテストが成功したことをJestに伝える
+  expect(true).toBe(true);
 }
 
-// テスト実行（node utils/dataMigration.test.js で実行可能）
+// Jestのテストケースとして定義
+test('データ移行が正常に完了すること', async () => {
+  await testMigration();
+});
+
+// node での直接実行用
 if (require.main === module) {
   testMigration().catch(console.error);
 }

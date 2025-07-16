@@ -8,6 +8,7 @@
     "start": "node index.js",
     "dev": "nodemon index.js",
     "deploy": "node deploy-commands.js",
+    "test": "npx jest",
     "pm2:start": "pm2 start ecosystem.config.js",
     "pm2:logs": "pm2 logs star-kanri-bot",
     "pm2:restart": "pm2 restart star-kanri-bot",
@@ -29,7 +30,8 @@
     "winston": "^3.9.0"
   },
   "devDependencies": {
-    "nodemon": "^3.1.0"
+    "nodemon": "^3.1.0",
+    "jest": "^29.7.0"
   },
   "author": "RedStar HR <redstar.hoshir@gmail.com>",
   "license": "MIT"

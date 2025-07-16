@@ -1,5 +1,5 @@
 const path = require('path');
-const fs = require('fs');
+const fs = require('fs/promises');
 
 /**
  * 凸スナ報告をCSVファイルに追記します
@@ -11,9 +11,8 @@ async function writeTotusunaReport(guildId, yearMonth, entry) {
   const dir = path.join(__dirname, `../data/${guildId}`);
   const csvPath = path.join(dir, `${guildId}-${yearMonth}-凸スナ報告.csv`);
 
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
+  // 非同期にディレクトリを作成
+  await fs.mkdir(dir, { recursive: true });
 
   // 日付が未定義なら現在時刻で補完
   const dateStr = entry.date || new Date().toISOString();
@@ -34,13 +33,20 @@ async function writeTotusunaReport(guildId, yearMonth, entry) {
   const csvLine = `${values.map(v => `"${v}"`).join(',')}
 `;
 
-  // ファイルがなければヘッダー行を追加して作成
-  if (!fs.existsSync(csvPath)) {
-    fs.writeFileSync(csvPath, `${headers.join(',')}
-`, 'utf8');
+  try {
+    // ファイルの存在確認を非同期で行い、なければヘッダーを書き込む
+    await fs.access(csvPath);
+  } catch (error) {
+    // ファイルが存在しない場合(ENOENT)のみヘッダーを書き込む
+    if (error.code === 'ENOENT') {
+      await fs.writeFile(csvPath, `${headers.join(',')}\n`, 'utf8');
+    } else {
+      throw error; // その他のエラーは再スロー
+    }
   }
 
-  fs.appendFileSync(csvPath, csvLine, 'utf8');
+  // 非同期に追記
+  await fs.appendFile(csvPath, csvLine, 'utf8');
 }
 
 module.exports = {
