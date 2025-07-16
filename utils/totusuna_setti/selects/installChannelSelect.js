@@ -7,7 +7,7 @@ const {
   ButtonBuilder,
   ButtonStyle,
   ChannelType,
-
+  MessageFlagsBitField
 } = require('discord.js');
 
 const { tempStore } = require('../../tempStore');
@@ -22,7 +22,6 @@ const { idManager } = require('../../idManager');
 async function actualHandler(interaction) {
   await interaction.deferReply({ flags: MessageFlagsBitField.Flags.Ephemeral });
 
-  await safeDefer(interaction, { ephemeral: true });
 
   const guildId = interaction.guildId;
   const userId = interaction.user.id;
@@ -79,6 +78,5 @@ async function actualHandler(interaction) {
 
 module.exports = {
  customId: 'totusuna_channel_select:install',
-
   handle: requireAdmin(actualHandler),
 };

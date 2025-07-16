@@ -3,6 +3,7 @@ const requireAdmin = require('../../permissions/requireAdmin');
 const { configManager } = require('../../configManager');
 const {
   EmbedBuilder,
+  MessageFlagsBitField,
   ActionRowBuilder,
   RoleSelectMenuBuilder,
   ChannelSelectMenuBuilder,
@@ -17,6 +18,7 @@ const {
  */
 
 async function actualHandler(interaction) {
+  await safeDefer(interaction, { flags: MessageFlagsBitField.Flags.Ephemeral });
   const { guild } = interaction;
   const guildId = guild.id;
   const selectedIds = interaction.values;

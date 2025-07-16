@@ -1,6 +1,5 @@
 // utils/safeReply.js
 const { MessageFlagsBitField } = require('discord.js');
-const { Error } = require('joi');
 
 /**
  * 安全なインタラクション応答（reply or editReplyを自動判定）
@@ -46,4 +45,4 @@ async function safeShowModal(interaction, modal) {
   return interaction.showModal(modal);
 }
 
-module.exports = { safeReply, safeDefer };
+module.exports = { safeReply, safeDefer, safeShowModal };

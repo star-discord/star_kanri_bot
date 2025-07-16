@@ -4,6 +4,7 @@ const { configManager } = require('../../configManager');
 const { createSuccessEmbed, createErrorEmbed, createAdminRejectEmbed } = require('../../embedHelper');
 const { MessageFlagsBitField } = require('discord.js');
 const { checkAdmin } = require('../../permissions/checkAdmin');
+const { safeReply, safeDefer } = require('../../safeReply');
 
 module.exports = {
   customIdStart: 'totusuna_setti:delete:',
@@ -14,7 +15,7 @@ module.exports = {
    */
   async handle(interaction) {
     await interaction.deferReply({ flags: MessageFlagsBitField.Flags.Ephemeral });
-
+ await safeDefer(interaction, { ephemeral: true });
     const isAdmin = await checkAdmin(interaction);
     if (!isAdmin) {
       return await interaction.editReply({ embeds: [createAdminRejectEmbed()] });

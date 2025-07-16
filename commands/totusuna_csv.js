@@ -3,6 +3,7 @@ const {
   AttachmentBuilder,
   MessageFlagsBitField,
 } = require('discord.js');
+const { safeReply, safeDefer } = require('../utils/safeReply');
 const fs = require('fs').promises;
 const path = require('path');
 const { createAdminEmbed } = require('../utils/embedHelper');
@@ -14,7 +15,7 @@ module.exports = {
     .setDescription('今月の凸スナ報告CSVをダウンロードします（管理者専用）'),
 
   execute: requireAdmin(async (interaction) => {
-    await interaction.deferReply({ flags: MessageFlagsBitField.Flags.Ephemeral });
+    await safeDefer(interaction, { flags: MessageFlagsBitField.Flags.Ephemeral });
 
     try {
       const guildId = interaction.guild.id;
@@ -36,7 +37,7 @@ module.exports = {
 
       const attachment = new AttachmentBuilder(filePath, { name: fileName });
 
-      await interaction.editReply({
+      await safeReply(interaction, {
         embeds: [embed],
         files: [attachment],
       });
