@@ -5,7 +5,8 @@ const {
   MessageFlagsBitField,
 } = require('discord.js');
 const { tempStore } = require('../../tempStore');
-const requireAdmin = require('../../permissions/requireAdmin');
+const { checkAdmin } = require('../../permissions/checkAdmin');
+const { createAdminRejectEmbed } = require('../../embedHelper');
 
 /**
  * Handles the submission of the "Totsuna Install" modal.
@@ -13,9 +14,14 @@ const requireAdmin = require('../../permissions/requireAdmin');
  */
 async function actualHandler(interaction) {
   try {
-    // 1. Acknowledge the interaction immediately to prevent timeouts.
-    // Use deferReply to get a 15-minute window for processing.
+    // 1. 【重要】タイムアウトを回避するため、他の処理より先に必ず応答を遅延させます。
     await interaction.deferReply({ flags: MessageFlagsBitField.Flags.Ephemeral });
+
+    // 2. 応答遅延の後で、時間のかかる可能性のある管理者チェックを実行します。
+    const isAdmin = await checkAdmin(interaction);
+    if (!isAdmin) {
+      return await interaction.editReply({ embeds: [createAdminRejectEmbed()] });
+    }
 
     const guildId = interaction.guildId;
     const userId = interaction.user.id;
@@ -62,6 +68,6 @@ async function actualHandler(interaction) {
 }
 
 module.exports = {
-  customId: 'totusuna_modal_body_input:install', // From the error log and analysis
-  handle: requireAdmin(actualHandler),
+  customId: 'totusuna_install_modal',
+  handle: actualHandler,
 };
