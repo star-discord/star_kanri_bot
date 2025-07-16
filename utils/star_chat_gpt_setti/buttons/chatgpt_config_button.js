@@ -1,5 +1,5 @@
 // utils/star_chat_gpt_setti/buttons/chatgpt_config_button.js
-const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
+const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, MessageFlagsBitField } = require('discord.js');
 const { safeReply } = require('../../safeReply');
 
 module.exports = {
@@ -52,7 +52,7 @@ module.exports = {
       try {
         await safeReply(interaction, {
           content: '⚠️ 設定モーダルの表示中にエラーが発生しました。',
-          ephemeral: true,
+          flags: MessageFlagsBitField.Flags.Ephemeral,
         });
       } catch (replyError) {
         console.error('エラー通知送信失敗:', replyError);

@@ -1,6 +1,6 @@
 // utils/star_chat_gpt_setti/buttons/star_chat_gpt_setti_button.js
 
-const { ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
+const { ButtonBuilder, ButtonStyle, ActionRowBuilder, MessageFlagsBitField } = require('discord.js');
 const { createBaseEmbed, createErrorEmbed, COLORS } = require('../../embedHelper');
 const { getChatCompletion } = require('../../openai');
 const { safeReply, safeDefer } = require('../../safeReply');
@@ -104,7 +104,7 @@ module.exports = {
         // まだ応答していなければ safeReply でエラーを通知
         await safeReply(interaction, {
           embeds: [createErrorEmbed('処理エラー', 'ChatGPTから情報取得中にエラーが発生しました。')],
-          ephemeral: true,
+          flags: MessageFlagsBitField.Flags.Ephemeral,
         });
       } catch (replyError) {
         console.error('エラー応答の送信に失敗しました:', replyError);

@@ -1,6 +1,6 @@
 // utils/interactionHandler.js
 
-const { Collection } = require('discord.js');
+const { Collection, MessageFlagsBitField } = require('discord.js');
 
 /**
  * 統合インタラクションハンドラー
@@ -81,10 +81,10 @@ class InteractionHandler {
 
         if (!interaction.deferred && !interaction.replied) {
           try {
-            await interaction.deferReply({ ephemeral: true });
+            await interaction.deferReply({ flags: MessageFlagsBitField.Flags.Ephemeral });
             await interaction.editReply({
               content: `⚠️ この操作 (${customId}) に対応する処理がありません。開発者にお問い合わせください。`,
-              ephemeral: true,
+              flags: MessageFlagsBitField.Flags.Ephemeral,
             });
           } catch (deferError) {
             console.error(`[InteractionHandler] 未発見時デファー失敗: ${deferError.message}`);
@@ -96,7 +96,7 @@ class InteractionHandler {
       // 予防的デファー判定
       if (this.shouldDeferInteraction(customId) && !interaction.deferred && !interaction.replied) {
         try {
-          await interaction.deferReply({ ephemeral: true });
+          await interaction.deferReply({ flags: MessageFlagsBitField.Flags.Ephemeral });
           console.log(`[${new Date().toISOString()}] ✅ [InteractionHandler] 予防的デファー完了: ${customId}`);
         } catch (deferError) {
           console.error(`[InteractionHandler] 予防的デファー失敗: ${deferError.message}`);
@@ -136,9 +136,9 @@ class InteractionHandler {
       try {
         const errorMessage = '⚠️ 処理中にエラーが発生しました。しばらく時間をおいて再試行してください。';
         if (interaction.deferred) {
-          await interaction.editReply({ content: errorMessage, ephemeral: true });
+          await interaction.editReply({ content: errorMessage, flags: MessageFlagsBitField.Flags.Ephemeral });
         } else if (!interaction.replied) {
-          await interaction.reply({ content: errorMessage, ephemeral: true });
+          await interaction.reply({ content: errorMessage, flags: MessageFlagsBitField.Flags.Ephemeral });
         }
       } catch (replyError) {
         console.error(`[InteractionHandler] エラーレスポンス送信失敗: ${replyError.message}`);
