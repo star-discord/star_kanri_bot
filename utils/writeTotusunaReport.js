@@ -8,7 +8,7 @@ const fs = require('fs');
  * @param {object} entry 報告内容
  */
 async function writeTotusunaReport(guildId, yearMonth, entry) {
-  const dir = path.join(__dirname, `../../../data/${guildId}`);
+  const dir = path.join(__dirname, `../data/${guildId}`);
   const csvPath = path.join(dir, `${guildId}-${yearMonth}-凸スナ報告.csv`);
 
   if (!fs.existsSync(dir)) {

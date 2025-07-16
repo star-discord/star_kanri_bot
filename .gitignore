@@ -9,3 +9,6 @@ package-lock.json
 star-discord-bot-*.json
 data/star-discord-bot-*.json
 data/
+
+# chat gpt
+copilot_chatgpt/

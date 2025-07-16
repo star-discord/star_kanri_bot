@@ -1,7 +1,7 @@
 const { MessageFlagsBitField } = require('discord.js');
 const { logAndReplyError } = require('../../../utils/errorHelper');
-const { ensureGuildJSON, readJSON, writeJSON } = require('../../utils/fileHelper');
-const { createSuccessEmbed } = require('../../utils/embedHelper');
+const { ensureGuildJSON, readJSON, writeJSON } = require('../../../utils/fileHelper');
+const { createSuccessEmbed } = require('../../../utils/embedHelper');
 
 module.exports = {
   customId: 'chatgpt_config_modal',
