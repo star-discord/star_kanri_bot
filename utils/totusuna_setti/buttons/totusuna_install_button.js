@@ -8,6 +8,7 @@ const requireAdmin = require('../../permissions/requireAdmin');
  */
 async function actualHandler(interaction) {
   try {
+
     const modal = new ModalBuilder()
       .setCustomId('totusuna_install_modal') // このモーダルのハンドラも必要
       .setTitle('凸スナ 新規設置');

@@ -3,28 +3,31 @@
 const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlagsBitField } = require('discord.js');
 const { checkAdmin } = require('../utils/permissions/checkAdmin');
 const { createAdminEmbed, createAdminRejectEmbed } = require('../utils/embedHelper');
-const { logAndReplyError } = require('../utils/errorHelper');
+const { safeReply, safeDefer } = require('../utils/safeReply');
+const { logAndReplyError } = require('../utils/errorHelper'); // logAndReplyErrorも必要
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('凸スナ設置')
-    .setDescription('指定チャンネルに凸スナ案内メッセージとボタンを設置します（管理者専用）'),
+    .setDescription('凸スナの設置・管理メニューを表示します'),
 
   async execute(interaction) {
     try {
-      // 軽量コマンドなので deferReply は行わない（中央ハンドラが defer していない前提）
+      // 先に遅延応答を確保
+      await safeDefer(interaction, { flags: MessageFlagsBitField.Flags.Ephemeral });
+
+      // 管理者権限チェック
       const isAdmin = await checkAdmin(interaction);
       if (!isAdmin) {
-        return await interaction.reply({
+        return await safeReply(interaction, {
           embeds: [createAdminRejectEmbed()],
-          flags: MessageFlagsBitField.Flags.Ephemeral
         });
       }
 
-      // 凸スナ設置用のボタンを作成
+      // ボタン定義
       const installButton = new ButtonBuilder()
         .setCustomId('totusuna_install_button')
-        .setLabel('新規設置')
+        .setLabel('📝 新規設置')
         .setStyle(ButtonStyle.Primary);
 
       const configButton = new ButtonBuilder()
@@ -34,45 +37,23 @@ module.exports = {
 
       const row = new ActionRowBuilder().addComponents(installButton, configButton);
 
-      // 管理者向けの案内メッセージ
+      // Embed生成
       const embed = createAdminEmbed(
         '📝 凸スナ設置・管理メニュー',
         '以下のボタンから凸スナの設置・管理を行うことができます。'
       ).addFields(
-        { name: '📝 新規設置',
-          value: 'モーダルから本文やタイトルを細かく設定して、新しい凸スナをチャンネルに設置します。',
-          inline: true },
-        {
-          name: '⚙️ 設定管理',
-          value: '既存の凸スナの確認、本文の編集、または削除を行います。',
-          inline: false
-        }
+        { name: '📝 新規設置', value: 'モーダルから本文やタイトルを細かく設定して、新しい凸スナをチャンネルに設置します。', inline: true },
+        { name: '⚙️ 設定管理', value: '既存の凸スナの確認、本文の編集、または削除を行います。', inline: false }
       );
 
-      await interaction.reply({
+      // 最終応答
+      await safeReply(interaction, {
         embeds: [embed],
         components: [row],
-        flags: MessageFlagsBitField.Flags.Ephemeral
       });
 
     } catch (error) {
-      console.error('凸スナ設置コマンドエラー:', error);
-      try {
-        const errorMessage = {
-          content: '❌ 処理中にエラーが発生しました。',
-          embeds: [],
-          components: [],
-          flags: MessageFlagsBitField.Flags.Ephemeral
-        };
-
-        if (interaction.replied || interaction.deferred) {
-          await interaction.editReply(errorMessage);
-        } else {
-          await interaction.reply(errorMessage);
-        }
-      } catch (replyError) {
-        console.error('❌ エラー応答の送信に失敗:', replyError);
-      }
+      await logAndReplyError(interaction, error, '❌ コマンドの実行中にエラーが発生しました。');
     }
   }
 };
