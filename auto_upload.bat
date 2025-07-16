@@ -21,23 +21,19 @@ echo.
 echo 📋 現在の変更状況:
 git status --porcelain
 
-:: --- コミットする変更があるか確認 ---
-git diff --quiet --exit-code --cached
-if %errorlevel% equ 0 (
-    git diff --quiet --exit-code
-    if %errorlevel% equ 0 (
-        echo.
-        echo ✅ コミットする変更はありません。
-        pause
-        exit /b 0
-    )
-)
-echo.
-
 :: --- ステージング ---
 echo 📂 すべての変更をステージングします...
 git add .
 echo.
+
+:: --- コミットする変更があるか確認 ---
+git diff --cached --quiet
+if %errorlevel% equ 0 (
+    echo.
+    echo ✅ コミットする変更はありません。
+    pause
+    exit /b 0
+)
 
 :: --- コミットメッセージの取得 ---
 set "COMMIT_MESSAGE=%~1"
@@ -55,18 +51,16 @@ if "%COMMIT_MESSAGE%"=="" (
 :: --- コミット実行 ---
 echo 💾 コミットを実行中...
 git commit -m "%COMMIT_MESSAGE%"
-
 if %errorlevel% neq 0 (
     echo ⚠️ コミットに失敗しました。コミットする変更がないか、他のエラーが発生した可能性があります。
     pause
-    exit /b 0
+    exit /b 1
 )
 echo.
 
 :: --- プッシュ実行 ---
 echo 📤 GitHub (%CURRENT_BRANCH% ブランチ) にプッシュ中...
 git push origin %CURRENT_BRANCH%
-
 if %errorlevel% neq 0 (
     echo ❌ プッシュに失敗しました。
     echo 🔍 以下を確認してください:

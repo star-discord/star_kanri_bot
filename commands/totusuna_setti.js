@@ -1,59 +1,81 @@
 // commands/totusuna_setti.js
 
-const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlagsBitField } = require('discord.js');
-const { checkAdmin } = require('../utils/permissions/checkAdmin');
-const { createAdminEmbed, createAdminRejectEmbed } = require('../utils/embedHelper');
+const {
+  SlashCommandBuilder,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  EmbedBuilder,
+  MessageFlagsBitField,
+} = require('discord.js');
 const { safeReply, safeDefer } = require('../utils/safeReply');
-const { logAndReplyError } = require('../utils/errorHelper'); // logAndReplyErrorも必要
+const { checkAdmin } = require('../utils/permissions/checkAdmin');
+const { logAndReplyError } = require('../utils/errorHelper');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('凸スナ設置')
-    .setDescription('凸スナの設置・管理メニューを表示します'),
+    .setDescription('凸スナ報告メッセージを新規設置・管理する（管理者専用）'),
 
   async execute(interaction) {
     try {
-      // 先に遅延応答を確保
+      // 遅延応答を確保（Unknown interaction対策）
       await safeDefer(interaction, { flags: MessageFlagsBitField.Flags.Ephemeral });
 
-      // 管理者権限チェック
+      // 管理者チェック
       const isAdmin = await checkAdmin(interaction);
       if (!isAdmin) {
         return await safeReply(interaction, {
-          embeds: [createAdminRejectEmbed()],
+          content: '❌ このコマンドは管理者のみ使用可能です。',
+          flags: MessageFlagsBitField.Flags.Ephemeral,
         });
       }
 
-      // ボタン定義
-      const installButton = new ButtonBuilder()
-        .setCustomId('totusuna_install_button')
-        .setLabel('📝 新規設置')
-        .setStyle(ButtonStyle.Primary);
+      // Embed作成
+      const embed = new EmbedBuilder()
+        .setTitle('📌 凸スナ設置・管理メニュー')
+        .setDescription([
+          '🆕 新しい凸スナ報告メッセージを設置するには、「新規設置」ボタンを押してください。',
+          '🛠️ 既存の投稿を管理する場合は、「管理」ボタンをご利用ください。',
+          '❓ 操作方法の確認や、📄 CSV出力もこちらから可能です。'
+        ].join('\n'))
+        .setColor(0x2ecc71);
 
-      const configButton = new ButtonBuilder()
-        .setCustomId('totusuna_config_button')
-        .setLabel('⚙️ 設定管理')
-        .setStyle(ButtonStyle.Secondary);
-
-      const row = new ActionRowBuilder().addComponents(installButton, configButton);
-
-      // Embed生成
-      const embed = createAdminEmbed(
-        '📝 凸スナ設置・管理メニュー',
-        '以下のボタンから凸スナの設置・管理を行うことができます。'
-      ).addFields(
-        { name: '📝 新規設置', value: 'モーダルから本文やタイトルを細かく設定して、新しい凸スナをチャンネルに設置します。', inline: true },
-        { name: '⚙️ 設定管理', value: '既存の凸スナの確認、本文の編集、または削除を行います。', inline: false }
+      // ボタン構成（2列）
+      const row1 = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setCustomId('totusuna_install_button')
+          .setLabel('新規設置')
+          .setEmoji('🆕')
+          .setStyle(ButtonStyle.Primary),
+        new ButtonBuilder()
+          .setCustomId('totusuna_manage_button')
+          .setLabel('管理')
+          .setEmoji('🛠️')
+          .setStyle(ButtonStyle.Secondary)
       );
 
-      // 最終応答
+      const row2 = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setCustomId('totusuna_help_button')
+          .setLabel('ヘルプ')
+          .setEmoji('❓')
+          .setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder()
+          .setCustomId('totusuna_csv_button')
+          .setLabel('CSV出力')
+          .setEmoji('📄')
+          .setStyle(ButtonStyle.Success)
+      );
+
+      // 応答送信
       await safeReply(interaction, {
         embeds: [embed],
-        components: [row],
+        components: [row1, row2],
       });
 
     } catch (error) {
-      await logAndReplyError(interaction, error, '❌ コマンドの実行中にエラーが発生しました。');
+      await logAndReplyError(interaction, error, '❌ 処理中にエラーが発生しました。');
     }
   }
 };

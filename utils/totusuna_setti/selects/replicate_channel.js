@@ -2,21 +2,19 @@
 const { MessageFlagsBitField } = require('discord.js');
 const { checkAdmin } = require('../../permissions/checkAdmin');
 const tempState = require('../state/totusunaTemp');
+const { configManager } = require('../../configManager');
 
 module.exports = {
   customId: 'totusuna_setti:select_replicate',
 
   /**
-   * 複製先チャンネルの選択を処理し、一時状態に保存します。
-   * 選択結果を一時状態に保存し、選択内容をフィードバックします。
-   * @param {import('discord.js').StringSelectMenuInteraction | import('discord.js').ChannelSelectMenuInteraction} interaction
+   * 複製先チャンネルの選択を処理し、一時状態＆永続化します。
+   * @param {import('discord.js').ChannelSelectMenuInteraction} interaction
    */
   async handle(interaction) {
     try {
-      // Defer immediately to prevent timeouts
       await interaction.deferReply({ flags: MessageFlagsBitField.Flags.Ephemeral });
 
-      // Then, check for admin permissions
       const isAdmin = await checkAdmin(interaction);
       if (!isAdmin) {
         return await interaction.editReply({ content: '❌ この操作には管理者権限が必要です。' });
@@ -30,6 +28,15 @@ module.exports = {
       const state = tempState.get(guildId, userId) || {};
       state.replicateChannelIds = selectedChannelIds;
       tempState.set(guildId, userId, state);
+
+      // インスタンスIDを一時状態から取得
+      const instanceId = state.instanceId;
+      if (instanceId) {
+        // 永続化：複製チャンネルIDを保存
+        await configManager.updateTotusunaInstance(guildId, instanceId, {
+          replicateChannelIds: selectedChannelIds,
+        });
+      }
 
       if (selectedChannelIds.length > 0) {
         await interaction.editReply({

@@ -13,6 +13,7 @@ const { tempStore } = require('../../tempStore');
 const { configManager } = require('../../configManager');
 const requireAdmin = require('../../permissions/requireAdmin');
 const { idManager } = require('../../idManager');
+const tempState = require('../state/totusunaTemp');
 
 /**
  * チャンネル選択後の実際の設置処理
@@ -20,7 +21,6 @@ const { idManager } = require('../../idManager');
  */
 async function actualHandler(interaction) {
   await interaction.deferReply({ flags: MessageFlagsBitField.Flags.Ephemeral });
-
 
   const guildId = interaction.guildId;
   const userId = interaction.user.id;
@@ -33,14 +33,14 @@ async function actualHandler(interaction) {
   }
 
   // 2. 選択されたチャンネルIDを取得し検証
- const selectedChannelId = interaction.values[0];
+  const selectedChannelId = interaction.values[0];
   const channel = await interaction.guild.channels.fetch(selectedChannelId).catch(() => null);
 
   if (!channel || channel.type !== ChannelType.GuildText) {
     return interaction.editReply({ content: '❌ テキストチャンネルを選択してください。' });
   }
 
-  // ★★★ 二重投稿防止のキモ: 処理を行う前に一時データを削除する ★★★
+  // 二重投稿防止: 処理を行う前に一時データを削除
   tempStore.delete(key);
 
   try {
@@ -52,7 +52,7 @@ async function actualHandler(interaction) {
     const reportButton = new ButtonBuilder().setCustomId(idManager.createButtonId('totusuna_report', null, instanceId)).setLabel('凸スナ報告').setStyle(ButtonStyle.Primary);
     const row = new ActionRowBuilder().addComponents(reportButton);
 
-    // 4.【唯一の投稿箇所】チャンネルにメッセージを送信
+    // 4. チャンネルにメッセージを送信
     const sentMessage = await channel.send({ embeds: [embed], components: [row] });
 
     // 5. 設定を永続化
@@ -66,9 +66,27 @@ async function actualHandler(interaction) {
       createdAt: new Date().toISOString(),
     });
 
+    // インスタンスIDを一時保存（複製チャンネル選択用）
+    tempState.set(guildId, userId, { instanceId });
+
     // 6. ユーザーに完了を通知
     await interaction.editReply({ content: `✅ 凸スナを <#${sentMessage.channel.id}> に設置しました。`, components: [] });
 
+    // 複製チャンネル選択メニューを表示
+    const replicateMenu = new (require('discord.js').ChannelSelectMenuBuilder)()
+      .setCustomId('totusuna_setti:select_replicate')
+      .setPlaceholder('複製テキスト送信チャンネルを選択（複数可）')
+      .setMinValues(0)
+      .setMaxValues(5)
+      .addChannelTypes(ChannelType.GuildText);
+
+    const replicateRow = new ActionRowBuilder().addComponents(replicateMenu);
+
+    await interaction.followUp({
+      content: '次に、複製先チャンネルを選択してください（任意）',
+      components: [replicateRow],
+      flags: MessageFlagsBitField.Flags.Ephemeral,
+    });
   } catch (error) {
     console.error('❌ [installChannelSelect] 設置処理エラー:', error);
     await interaction.editReply({ content: '❌ 凸スナの設置中にエラーが発生しました。', components: [] });
@@ -76,6 +94,6 @@ async function actualHandler(interaction) {
 }
 
 module.exports = {
- customId: 'totusuna_channel_select:install',
+  customId: 'totusuna_channel_select:install',
   handle: requireAdmin(actualHandler),
 };
