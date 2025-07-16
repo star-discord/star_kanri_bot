@@ -10,18 +10,18 @@ const { configManager } = require('../../configManager');
 const { createAdminEmbed } = require('../../embedHelper');
 
 async function actualHandler(interaction) {
-  // This is a select menu, so deferUpdate is appropriate to acknowledge
-  // the interaction without sending a new message.
+  // セレクトメニューの場合は deferUpdate で応答
   await interaction.deferUpdate();
 
   const selectedId = interaction.values[0];
   const instance = await configManager.getTotusunaInstance(interaction.guildId, selectedId);
 
   if (!instance) {
-    return interaction.followUp({
+    await interaction.followUp({
       content: '❌ 選択された凸スナが見つかりませんでした。データが古い可能性があります。',
       flags: MessageFlagsBitField.Flags.Ephemeral,
     });
+    return;
   }
 
   const detailEmbed = createAdminEmbed(
@@ -48,7 +48,7 @@ async function actualHandler(interaction) {
 
   const actionRow = new ActionRowBuilder().addComponents(editButton, deleteButton);
 
-  // Use editReply on the original message to update the UI.
+  // editReplyでUIを更新
   await interaction.editReply({
     embeds: [detailEmbed],
     components: [actionRow],

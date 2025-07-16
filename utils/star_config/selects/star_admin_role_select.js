@@ -9,13 +9,13 @@ const {
   ChannelSelectMenuBuilder,
   ChannelType,
 } = require('discord.js');
+const { safeDefer } = require('../../safeReply'); // 追加
 
 /**
  * 実際の処理を行う関数
  * @param {import('discord.js').StringSelectMenuInteraction} interaction
  * @returns {Promise<void>}
  */
-
 async function actualHandler(interaction) {
   await safeDefer(interaction, { flags: MessageFlagsBitField.Flags.Ephemeral });
   const { guild } = interaction;
@@ -32,15 +32,8 @@ async function actualHandler(interaction) {
     const added = [...nextIds].filter(id => !prevIds.has(id));
     const removed = [...prevIds].filter(id => !nextIds.has(id));
 
-    console.log(`[admin_role_select] guildId=${guildId}`);
-    console.log(`  currentRoles:`, [...prevIds]);
-    console.log(`  selected:`, selectedIds);
-    console.log(`  added:`, added);
-    console.log(`  removed:`, removed);
-
     // 設定を更新
     await configManager.updateSectionConfig(guildId, 'star', { adminRoleIds: [...nextIds] });
-    console.log(`[configManager] ✅ adminRoleIds updated for ${guildId}`);
 
     // 表示整形関数
     const formatRoleMentions = (ids) =>
@@ -89,7 +82,7 @@ async function actualHandler(interaction) {
       .setCustomId('notify_channel_select')
       .setPlaceholder('通知チャンネルを選択')
       .addChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement)
-      .setMinValues(0)  // ← 未設定許容
+      .setMinValues(0)
       .setMaxValues(1);
 
     await interaction.update({

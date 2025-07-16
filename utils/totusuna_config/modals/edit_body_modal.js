@@ -1,12 +1,14 @@
 // utils/totusuna_config ディレクトリのmodals/edit_body_modal.js
 const fs = require('fs');
 const path = require('path');
+const { MessageFlagsBitField } = require('discord.js');
 
 module.exports = {
   customIdStart: 'edit_body_modal_',
 
   /**
-   * 本文編集モーダル送信後の処理   * @param {import('discord.js').ModalSubmitInteraction} interaction
+   * 本文編集モーダル送信後の処理
+   * @param {import('discord.js').ModalSubmitInteraction} interaction
    */
   async handle(interaction) {
     const guildId = interaction.guildId;
@@ -17,17 +19,18 @@ module.exports = {
     if (!fs.existsSync(filePath)) {
       return await interaction.reply({
         content: '設定ファイルが存在しません。',
-        flags: 1 << 6 // ephemeral
+        flags: MessageFlagsBitField.Flags.Ephemeral
       });
     }
 
     const json = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-    const instance = json.totsusuna?.[uuid];
+    // インスタンス取得方法を配列検索に修正
+    const instance = json.totusuna?.instances?.find(i => i.id === uuid);
 
     if (!instance) {
       return await interaction.reply({
         content: '対象の凸スナ設置情報が見つかりません。',
-        flags: 1 << 6 // ephemeral
+        flags: MessageFlagsBitField.Flags.Ephemeral
       });
     }
 
@@ -36,7 +39,7 @@ module.exports = {
 
     await interaction.reply({
       content: '本文を更新しました。',
-      flags: 1 << 6 // ephemeral
+      flags: MessageFlagsBitField.Flags.Ephemeral
     });
   }
 };

@@ -1,5 +1,5 @@
 // チャンネル選択完了ハンドラー
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder, MessageFlagsBitField } = require('discord.js');
 const fileHelper = require('../../fileHelper');
 
 module.exports = {
@@ -16,7 +16,7 @@ module.exports = {
         try {
             // 即座にデファー
             if (!interaction.deferred && !interaction.replied) {
-                await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+                await interaction.deferReply({ flags: MessageFlagsBitField.Flags.Ephemeral });
                 console.log('✅ [totusuna_channel_selected] インタラクションデファー完了');
             }
 
@@ -59,7 +59,7 @@ module.exports = {
             const response = {
                 embeds: [successEmbed],
                 components: [],
-                flags: MessageFlags.Ephemeral
+                flags: MessageFlagsBitField.Flags.Ephemeral
             };
 
             if (interaction.deferred) {
@@ -82,9 +82,9 @@ module.exports = {
 
             try {
                 if (interaction.deferred) {
-                    await interaction.editReply({ content: errorMessage, flags: MessageFlags.Ephemeral });
+                    await interaction.editReply({ content: errorMessage, flags: MessageFlagsBitField.Flags.Ephemeral });
                 } else if (!interaction.replied) {
-                    await interaction.reply({ content: errorMessage, flags: MessageFlags.Ephemeral });
+                    await interaction.reply({ content: errorMessage, flags: MessageFlagsBitField.Flags.Ephemeral });
                 }
             } catch (replyError) {
                 console.error('❌ [totusuna_channel_selected] レスポンス送信エラー:', replyError.message);

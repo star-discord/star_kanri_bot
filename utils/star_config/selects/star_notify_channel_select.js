@@ -60,7 +60,7 @@ async function actualHandler(interaction) {
       .setCustomId('notify_channel_select')
       .setPlaceholder('通知チャンネルを再選択できます')
       .addChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement)
-      .setMinValues(0) // ← 未設定許容に変更
+      .setMinValues(0)
       .setMaxValues(1);
 
     await interaction.update({

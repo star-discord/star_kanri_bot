@@ -3,6 +3,7 @@
 const { getChatGPTConfig, saveChatGPTConfig } = require('../configManager');
 const { validateMaxTokens, validateTemperature } = require('../validators');
 const { safeReply } = require('../../safeReply');
+const { MessageFlagsBitField } = require('discord.js');
 
 module.exports = {
   customId: 'star_chat_gpt_config_modal',
@@ -19,14 +20,14 @@ module.exports = {
     if (!validateMaxTokens(maxTokens)) {
       return await safeReply(interaction, {
         content: '❌ 「1回の最大返答文字数」は正の整数で入力してください。',
-        ephemeral: true,
+        flags: MessageFlagsBitField.Flags.Ephemeral,
       });
     }
 
     if (!validateTemperature(temperature)) {
       return await safeReply(interaction, {
         content: '❌ 「ChatGPTの曖昧さ」は0〜1の数値で入力してください。',
-        ephemeral: true,
+        flags: MessageFlagsBitField.Flags.Ephemeral,
       });
     }
 
@@ -38,7 +39,7 @@ module.exports = {
 
     await safeReply(interaction, {
       content: '✅ ChatGPTの設定を更新しました。',
-      ephemeral: true,
+      flags: MessageFlagsBitField.Flags.Ephemeral,
     });
   },
 };

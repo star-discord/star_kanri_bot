@@ -6,7 +6,8 @@ const {
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
-  ActionRowBuilder
+  ActionRowBuilder,
+  MessageFlagsBitField
 } = require('discord.js');
 
 module.exports = {
@@ -24,22 +25,31 @@ module.exports = {
     if (!fs.existsSync(dataPath)) {
       return await interaction.reply({
         content: '⚠️ データファイルが見つかりません。',
-        flags: 1 << 6 // ephemeralに対応
+        flags: MessageFlagsBitField.Flags.Ephemeral
       });
     }
 
-    const json = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
+    let json;
+    try {
+      json = JSON.parse(fs.readFileSync(dataPath, 'utf8'));
+    } catch (e) {
+      return await interaction.reply({
+        content: '⚠️ データファイルの読み込みに失敗しました。',
+        flags: MessageFlagsBitField.Flags.Ephemeral
+      });
+    }
+
     const instance = json.totusuna?.instances?.find(i => i.id === uuid);
 
     if (!instance) {
       return await interaction.reply({
         content: '⚠️ 指定された設置が見つかりません。',
-        flags: 1 << 6
+        flags: MessageFlagsBitField.Flags.Ephemeral
       });
     }
 
     const modal = new ModalBuilder()
-      .setCustomId(`toutsuna_config_edit_modal_${uuid}`)
+      .setCustomId(`totusuna_config_edit_modal_${uuid}`)
       .setTitle('📄 本文の修正');
 
     const bodyInput = new TextInputBuilder()

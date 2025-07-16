@@ -20,7 +20,7 @@ module.exports = {
   async handle(interaction) {
     console.log(`[${__filename.split('/').pop()}] 開始: ${interaction.customId} by ${interaction.user.tag}`);
     // safeDeferで3秒ルール回避
-    await safeDefer(interaction, { ephemeral: true });
+    await safeDefer(interaction, { flags: MessageFlagsBitField.Flags.Ephemeral });
 
     const isAdmin = await checkAdmin(interaction);
     if (!isAdmin) {

@@ -27,7 +27,7 @@ module.exports = {
       .setStyle(TextInputStyle.Short)
       .setPlaceholder('例: 500')
       .setRequired(true)
-      .setValue(config.maxTokens ? config.maxTokens.toString() : '');
+      .setValue(config.maxTokens !== undefined ? config.maxTokens.toString() : '');
 
     const temperatureInput = new TextInputBuilder()
       .setCustomId('temperature')
@@ -35,7 +35,7 @@ module.exports = {
       .setStyle(TextInputStyle.Short)
       .setPlaceholder('例: 0.7')
       .setRequired(true)
-      .setValue(config.temperature ? config.temperature.toString() : '');
+      .setValue(config.temperature !== undefined ? config.temperature.toString() : '');
 
     modal.addComponents(
       new ActionRowBuilder().addComponents(maxTokensInput),

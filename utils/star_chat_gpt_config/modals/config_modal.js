@@ -2,6 +2,7 @@
 
 const { getChatGPTConfig, saveChatGPTConfig } = require('../configManager');
 const { safeReply } = require('../../safeReply');
+const { MessageFlagsBitField } = require('discord.js');
 
 module.exports = {
   customId: 'select_chat_gpt_channels',
@@ -18,7 +19,7 @@ module.exports = {
 
     await safeReply(interaction, {
       content: '✅ ChatGPT応答対象チャンネルを更新しました。',
-      ephemeral: true,
+      flags: MessageFlagsBitField.Flags.Ephemeral,
     });
   },
 };

@@ -19,10 +19,8 @@ module.exports = {
    * @param {import('discord.js').ButtonInteraction} interaction
    */
   async handle(interaction) {
-    let uuid; // Declare uuid here to make it accessible in the catch block
+    let uuid;
     try {
-      // Since showing a modal is a reply, we don't defer.
-      // Instead, we check permissions first.
       const isAdmin = await checkAdmin(interaction);
       if (!isAdmin) {
         return await interaction.reply({
@@ -33,10 +31,9 @@ module.exports = {
 
       uuid = interaction.customId.substring(module.exports.customIdStart.length);
 
-      // Use the safe configManager to get instance data
       const instance = await configManager.getTotusunaInstance(interaction.guildId, uuid);
 
-      if (!instance || !instance.body) { 
+      if (!instance) {
         return await interaction.reply({
           content: '⚠️ 指定された設定情報が見つかりません。',
           flags: MessageFlagsBitField.Flags.Ephemeral,
@@ -59,7 +56,6 @@ module.exports = {
       await interaction.showModal(modal);
     } catch (err) {
       console.error(`[edit.js] モーダル表示失敗 (uuid: ${uuid}):`, err);
-      // If showing the modal fails, we can attempt a text-based reply.
       if (!interaction.replied) {
         await interaction.reply({ content: '❌ モーダルの表示に失敗しました。', flags: MessageFlagsBitField.Flags.Ephemeral });
       }

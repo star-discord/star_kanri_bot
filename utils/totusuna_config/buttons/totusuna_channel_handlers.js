@@ -1,5 +1,5 @@
 // チャンネル選択用ボタンハンドラー
-const { EmbedBuilder, ActionRowBuilder, ChannelSelectMenuBuilder, ChannelType } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ChannelSelectMenuBuilder, ChannelType, MessageFlagsBitField } = require('discord.js');
 const fileHelper = require('../../fileHelper');
 
 module.exports = {
@@ -16,7 +16,7 @@ module.exports = {
         try {
             // 即座にデファー
             if (!interaction.deferred && !interaction.replied) {
-                await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+                await interaction.deferReply({ flags: MessageFlagsBitField.Flags.Ephemeral });
                 console.log('✅ [totusuna_select_channel] インタラクションデファー完了');
             }
 
@@ -37,7 +37,7 @@ module.exports = {
             const channelSelect = new ChannelSelectMenuBuilder()
                 .setCustomId(`totusuna_channel_selected_${instanceId}`)
                 .setPlaceholder('投稿先チャンネルを選択してください')
-                .setChannelTypes(ChannelType.GuildText);
+                .addChannelTypes(ChannelType.GuildText);
 
             const selectRow = new ActionRowBuilder().addComponents(channelSelect);
 
@@ -54,7 +54,7 @@ module.exports = {
             const response = {
                 embeds: [embed],
                 components: [selectRow],
-                flags: MessageFlags.Ephemeral
+                flags: MessageFlagsBitField.Flags.Ephemeral
             };
 
             if (interaction.deferred) {
@@ -76,9 +76,9 @@ module.exports = {
 
             try {
                 if (interaction.deferred) {
-                    await interaction.editReply({ content: errorMessage, flags: MessageFlags.Ephemeral });
+                    await interaction.editReply({ content: errorMessage, flags: MessageFlagsBitField.Flags.Ephemeral });
                 } else if (!interaction.replied) {
-                    await interaction.reply({ content: errorMessage, flags: MessageFlags.Ephemeral });
+                    await interaction.reply({ content: errorMessage, flags: MessageFlagsBitField.Flags.Ephemeral });
                 }
             } catch (replyError) {
                 console.error('❌ [totusuna_select_channel] レスポンス送信エラー:', replyError.message);

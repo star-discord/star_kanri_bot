@@ -1,4 +1,4 @@
-// utils/totusuna_setti/index.js
+// utils/totusuna_config/index.js
 
 const path = require('path');
 const { loadHandlers } = require('../handlerLoader');

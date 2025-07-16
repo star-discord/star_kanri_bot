@@ -27,7 +27,7 @@ module.exports = {
       // 設定編集画面を表示
       await interaction.reply({
         content: `**${totusuna.body || '本文未設定'}** の設定を編集できます。\n` +
-                 `**メインチャンネル:** <#${totusuna.mainChannelId}>\n` +
+                 `**メインチャンネル:** <#${totusuna.mainChannelId || '未設定'}>\n` +
                  `**複製チャンネル:** ${totusuna.replicateChannelIds?.length ? totusuna.replicateChannelIds.map(id => `<#${id}>`).join(', ') : '未設定'}`,
         flags: MessageFlagsBitField.Flags.Ephemeral
       });
