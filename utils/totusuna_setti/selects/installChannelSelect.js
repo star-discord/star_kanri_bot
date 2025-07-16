@@ -8,6 +8,7 @@ const {
   ButtonStyle,
   ChannelType,
 } = require('discord.js');
+
 const { tempStore } = require('../../tempStore');
 const { configManager } = require('../../configManager');
 const requireAdmin = require('../../permissions/requireAdmin');
@@ -31,7 +32,7 @@ async function actualHandler(interaction) {
   }
 
   // 2. 選択されたチャンネルIDを取得し検証
-  const selectedChannelId = interaction.values[0];
+ const selectedChannelId = interaction.values[0];
   const channel = await interaction.guild.channels.fetch(selectedChannelId).catch(() => null);
 
   if (!channel || channel.type !== ChannelType.GuildText) {
@@ -74,6 +75,6 @@ async function actualHandler(interaction) {
 }
 
 module.exports = {
-  customId: 'totusuna_channel_select:install',
+ customId: 'totusuna_channel_select:install',
   handle: requireAdmin(actualHandler),
 };
