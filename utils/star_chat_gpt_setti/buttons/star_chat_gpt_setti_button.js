@@ -3,6 +3,7 @@
 const { ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js');
 const { createBaseEmbed, createErrorEmbed, COLORS } = require('../../embedHelper');
 const { getChatCompletion } = require('../../openai');
+const { safeReply, safeDefer } = require('../../safeReply');
 
 const INFO_CONFIG = {
   weather: {
@@ -46,12 +47,20 @@ module.exports = {
     const channel = interaction.channel;
 
     try {
+      // 先に defer して応答期限（3秒ルール）をクリア
+      await safeDefer(interaction, { ephemeral: false });
+
       // 元メッセージを削除（権限があれば）
-      if (interaction.message.deletable) {
-        await interaction.message.delete();
+      if (interaction.message?.deletable) {
+        try {
+          await interaction.message.delete();
+        } catch (deleteError) {
+          console.warn('メッセージ削除失敗:', deleteError);
+          // 削除失敗は続行
+        }
       }
 
-      // 情報を並列取得
+      // ChatGPTから情報を並列取得
       const [weather, news, trivia] = await Promise.all([
         fetchInfo('weather', guildId),
         fetchInfo('news', guildId),
@@ -83,25 +92,23 @@ module.exports = {
 
       const row = new ActionRowBuilder().addComponents(infoButton, configButton);
 
-      // 新メッセージをチャンネルに送信
+      // 新規メッセージをチャンネルに送信
       await channel.send({ embeds: [embed], components: [row] });
 
-      // ボタン押下応答は更新なしでACKのみ（重複応答回避）
-      await interaction.deferUpdate();
+      // defer済みのためここでは応答不要（処理終了）
 
     } catch (error) {
       console.error('star_chat_gpt_setti_button エラー:', error);
 
-      // エラー時は可能なら返信
-      if (interaction.deferred || interaction.replied) {
-        await interaction.editReply({
-          embeds: [createErrorEmbed('処理エラー', 'ChatGPTから情報取得中にエラーが発生しました。')],
-        });
-      } else {
-        await interaction.reply({
+      try {
+        // まだ応答していなければ safeReply でエラーを通知
+        await safeReply(interaction, {
           embeds: [createErrorEmbed('処理エラー', 'ChatGPTから情報取得中にエラーが発生しました。')],
           ephemeral: true,
         });
+      } catch (replyError) {
+        console.error('エラー応答の送信に失敗しました:', replyError);
+        // ここでの失敗はログのみで終了
       }
     }
   },

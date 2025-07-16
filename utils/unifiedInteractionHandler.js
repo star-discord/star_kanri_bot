@@ -103,10 +103,18 @@ class UnifiedInteractionHandler {
 
     if (!handler) {
       console.warn(`⚠️ 未対応のボタン: ${customId}`);
-      return await interaction.reply({
-        content: '⚠️ このボタンは現在利用できません。',
-        flags: MessageFlags.Ephemeral,
-      });
+      if (interaction.deferred || interaction.replied) {
+        await interaction.editReply({
+          content: '⚠️ このボタンは現在利用できません。',
+          flags: MessageFlags.Ephemeral,
+        });
+      } else {
+        await interaction.reply({
+          content: '⚠️ このボタンは現在利用できません。',
+          flags: MessageFlags.Ephemeral,
+        });
+      }
+      return;
     }
 
     try {
@@ -127,10 +135,18 @@ class UnifiedInteractionHandler {
     const handler = this.resolveHandler('modals', customId);
 
     if (!handler) {
-      return await interaction.reply({
-        content: '❌ モーダルに対応する処理が見つかりませんでした。',
-        flags: MessageFlags.Ephemeral,
-      });
+      if (interaction.deferred || interaction.replied) {
+        await interaction.editReply({
+          content: '❌ モーダルに対応する処理が見つかりませんでした。',
+          flags: MessageFlags.Ephemeral,
+        });
+      } else {
+        await interaction.reply({
+          content: '❌ モーダルに対応する処理が見つかりませんでした。',
+          flags: MessageFlags.Ephemeral,
+        });
+      }
+      return;
     }
 
     try {
@@ -151,10 +167,18 @@ class UnifiedInteractionHandler {
     const handler = this.resolveHandler('selects', customId);
 
     if (!handler) {
-      return await interaction.reply({
-        content: '❌ セレクトメニューに対応する処理が見つかりませんでした。',
-        flags: MessageFlags.Ephemeral,
-      });
+      if (interaction.deferred || interaction.replied) {
+        await interaction.editReply({
+          content: '❌ セレクトメニューに対応する処理が見つかりませんでした。',
+          flags: MessageFlags.Ephemeral,
+        });
+      } else {
+        await interaction.reply({
+          content: '❌ セレクトメニューに対応する処理が見つかりませんでした。',
+          flags: MessageFlags.Ephemeral,
+        });
+      }
+      return;
     }
 
     try {
@@ -177,6 +201,8 @@ class UnifiedInteractionHandler {
         await this.handleModal(interaction);
       } else if (interaction.isStringSelectMenu()) {
         await this.handleSelect(interaction);
+      } else {
+        console.warn(`未対応のinteractionタイプ: ${interaction.type}`);
       }
     } catch (err) {
       console.error('統合ハンドラーエラー:', err);

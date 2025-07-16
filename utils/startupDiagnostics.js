@@ -152,6 +152,7 @@ class StartupDiagnostics {
 
   /**
    * 診断実行
+   * @returns {Promise<{success: boolean, hasWarnings: boolean, errors: string[], warnings: string[], info: string[]}>}
    */
   async runDiagnostics() {
     console.log('🔬 STAR管理Bot 起動時診断を開始します...\n');
@@ -161,7 +162,6 @@ class StartupDiagnostics {
     this.checkCommandFiles();
     this.checkDependencies();
 
-    // レポート出力
     console.log('📋 診断レポート');
     console.log('='.repeat(50));
 
@@ -185,14 +185,19 @@ class StartupDiagnostics {
     const hasErrors = this.errors.length > 0;
     if (hasErrors) {
       console.log('🚨 重要なエラーが検出されました。Bot起動前に修正してください。');
-      return false;
     } else if (this.warnings.length > 0) {
       console.log('⚡ 警告はありますが、Botは起動可能です。');
-      return true;
     } else {
       console.log('✨ 診断完了 - すべて正常です！');
-      return true;
     }
+
+    return {
+      success: !hasErrors,
+      hasWarnings: this.warnings.length > 0,
+      errors: this.errors,
+      warnings: this.warnings,
+      info: this.info,
+    };
   }
 }
 

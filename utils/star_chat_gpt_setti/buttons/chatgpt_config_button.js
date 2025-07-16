@@ -1,9 +1,14 @@
 // utils/star_chat_gpt_setti/buttons/chatgpt_config_button.js
-const { MessageFlagsBitField, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
+const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
+const { safeReply } = require('../../safeReply');
 
 module.exports = {
   customId: 'chatgpt_config_button',
 
+  /**
+   * ボタン押下時の処理（モーダル表示）
+   * @param {import('discord.js').ButtonInteraction} interaction
+   */
   async handle(interaction) {
     try {
       const modal = new ModalBuilder()
@@ -37,11 +42,21 @@ module.exports = {
         new ActionRowBuilder().addComponents(temperatureInput)
       );
 
+      // モーダル表示は即時応答なので await で呼び出し
       await interaction.showModal(modal);
+      
     } catch (error) {
       console.error('ChatGPT設定ボタン処理エラー:', error);
-      // エラーを再スローし、中央の buttonsHandler.js で一元管理
-      throw error;
+
+      // 何らかの理由でモーダル表示失敗時に安全に通知を返す
+      try {
+        await safeReply(interaction, {
+          content: '⚠️ 設定モーダルの表示中にエラーが発生しました。',
+          ephemeral: true,
+        });
+      } catch (replyError) {
+        console.error('エラー通知送信失敗:', replyError);
+      }
     }
   }
 };
