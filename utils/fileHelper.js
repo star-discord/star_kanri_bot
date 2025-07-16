@@ -6,14 +6,20 @@ const path = require('path');
 /**
  * 指定されたJSONファイルを読み込んでオブジェクトとして返す
  * @param {string} filePath
- * @param {object | null} initialData - パースエラー時のフォールバックデータ
+ * @param {object} initialData - パースエラー/読込エラー時のフォールバックデータ
  * @returns {Promise<Object>}
  */
-function readJSON(filePath, initialData = null) {
+function readJSON(filePath, initialData = {}) {
   return new Promise((resolve, reject) => {
     fs.readFile(filePath, 'utf8', (err, data) => {
       if (err) {
         console.error(`❌ readJSON: ファイル読み込みエラー - ${filePath}`, err);
+
+        // ファイルが存在しない場合は初期データでフォールバック
+        if (err.code === 'ENOENT') {
+          console.warn(`[readJSON] ファイル未発見のため初期データでフォールバックします: ${filePath}`);
+          return resolve(initialData);
+        }
         return reject(err);
       }
       try {
@@ -35,12 +41,8 @@ function readJSON(filePath, initialData = null) {
           console.error(`❌ 破損ファイルのバックアップに失敗しました: ${filePath}`, backupErr);
         }
 
-        if (initialData) {
-          console.warn(`[readJSON] パースエラーのため初期データでフォールバックします: ${filePath}`);
-          resolve(initialData);
-        } else {
-          reject(parseErr);
-        }
+        console.warn(`[readJSON] パースエラーのため初期データでフォールバックします: ${filePath}`);
+        resolve(initialData);
       }
     });
   });
@@ -89,11 +91,21 @@ async function ensureGuildJSON(guildId) {
     } catch {
       // ファイルが存在しない場合のみ新規作成
       const initialData = {
-        star_config: {
+        star: {
           adminRoleIds: [],
           notifyChannelId: null
         },
-        // 他の初期設定項目をここに追加
+        chatgpt: {
+          apiKey: '',
+          maxTokens: 150,
+          temperature: 0.7
+        },
+        totusuna: {
+          instances: []
+        },
+        kpi: {
+          settings: {}
+        }
       };
       await fs.promises.writeFile(filePath, JSON.stringify(initialData, null, 2), 'utf8');
       console.log(`✅ 初期JSONファイルを作成しました: ${filePath}`);

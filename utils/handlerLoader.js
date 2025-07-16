@@ -18,7 +18,7 @@ const EXCLUDED_FILES = new Set(['index.js', 'handleSelect.js', 'install_channel.
  * 各ハンドラは { customId, handle } または { customIdStart, handle } をエクスポートする必要がある
  * 
  * @param {string} dirPath - 読み込むディレクトリの絶対パス
- * @returns {Promise<(customId: string) => Handler|null>} - 対応するハンドラを返す関数を解決するPromise
+ * @returns {(customId: string) => Handler|null} - 対応するハンドラを返す関数
  */
 function loadHandlers(dirPath) {
   const handlers = {};              // 完全一致用ハンドラ格納
@@ -75,7 +75,15 @@ function loadHandlers(dirPath) {
   // 前方一致ハンドラはキー長の降順でソートし、より長いプレフィックスを優先
   startsWithHandlers.sort((a, b) => b.key.length - a.key.length);
 
-  // [追加] 読み込んだハンドラの総数をログに出力
+  // [追加] 読み込んだハンドラのcustomId一覧をログ出力
+  if (Object.keys(handlers).length > 0) {
+    console.log(`[handlerLoader] 読み込まれた customId 一覧 (${path.basename(dirPath)}):`, Object.keys(handlers));
+  }
+  if (startsWithHandlers.length > 0) {
+    console.log(`[handlerLoader] 読み込まれた customIdStart 一覧 (${path.basename(dirPath)}):`, startsWithHandlers.map(h => h.key));
+  }
+
+  // [既存] 読み込んだハンドラの総数をログ出力
   const totalLoaded = Object.keys(handlers).length + startsWithHandlers.length;
   if (totalLoaded > 0) {
     console.log(`[handlerLoader] ✅ ${path.basename(dirPath)}: ${totalLoaded}個のハンドラを読み込みました。`);
