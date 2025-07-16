@@ -1,7 +1,7 @@
 // index-unified.js (統合後のindex.jsの例)
 const fs = require('fs');
 const path = require('path');
-const { Client, Collection, GatewayIntentBits } = require('discord.js');
+const { Client, Collection, GatewayIntentBits, MessageFlagsBitField } = require('discord.js');
 
 // 設定読み込み
 const config = require('./config.json');
@@ -92,7 +92,7 @@ client.on('interactionCreate', async interaction => {
     
     const errorMessage = {
       content: '❌ 処理中にエラーが発生しました。管理者に報告してください。',
-      flags: MessageFlags.Ephemeral
+      flags: MessageFlagsBitField.Flags.Ephemeral
     };
 
     try {

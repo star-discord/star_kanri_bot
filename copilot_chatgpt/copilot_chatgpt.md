@@ -156,10 +156,13 @@ Discordのインタラクションは、ユーザーのアクションから3秒
 
     **良い例:**
     ```javascript
+    const { MessageFlagsBitField } = require('discord.js');
+
     const isAdmin = await checkAdmin(interaction);
     if (!isAdmin) {
       // deferしていないので、初回応答は.reply()
-      return interaction.reply({ content: '権限がありません。', ephemeral: true });
+      // ephemeral: true の代わりに flags を使用
+      return interaction.reply({ content: '権限がありません。', flags: MessageFlagsBitField.Flags.Ephemeral });
     }
     await interaction.showModal(modal); // 即時応答としてモーダルを表示
     ```

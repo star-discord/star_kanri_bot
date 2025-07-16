@@ -93,7 +93,7 @@ module.exports = {
         if (interaction.deferred || interaction.replied) {
           await interaction.editReply({ content: '❌ コマンドの実行中に予期せぬエラーが発生しました。' });
         } else {
-          await interaction.reply({ content: '❌ コマンドの実行中に予期せぬエラーが発生しました。', ephemeral: true });
+          await interaction.reply({ content: '❌ コマンドの実行中に予期せぬエラーが発生しました。', flags: MessageFlagsBitField.Flags.Ephemeral });
         }
       } catch (replyError) {
         // フォールバックの応答すら失敗した場合

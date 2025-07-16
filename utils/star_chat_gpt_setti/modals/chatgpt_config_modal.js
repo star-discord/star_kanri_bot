@@ -1,3 +1,4 @@
+const { MessageFlagsBitField } = require('discord.js');
 const { logAndReplyError } = require('../../utils/errorHelper');
 const { ensureGuildJSON, readJSON, writeJSON } = require('../../utils/fileHelper');
 const { createSuccessEmbed } = require('../../utils/embedHelper');
@@ -12,13 +13,13 @@ module.exports = {
     if (!guildId) {
       return interaction.reply({
         content: '⚠️ この操作はサーバー内でのみ実行してください。',
-        ephemeral: true,
+        flags: MessageFlagsBitField.Flags.Ephemeral,
       });
     }
 
     try {
       // 応答タイムアウト回避のため、まずdefer
-      await interaction.deferReply({ ephemeral: true });
+      await interaction.deferReply({ flags: MessageFlagsBitField.Flags.Ephemeral });
 
       const filePath = await ensureGuildJSON(guildId);
       const data = await readJSON(filePath);
@@ -64,7 +65,7 @@ module.exports = {
 
         await interaction.editReply({ embeds: [embed] });
       } else {
-        await interaction.reply({ embeds: [embed], ephemeral: true });
+        await interaction.reply({ embeds: [embed], flags: MessageFlagsBitField.Flags.Ephemeral });
       }
 
     } catch (error) {

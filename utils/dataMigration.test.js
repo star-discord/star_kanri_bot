@@ -10,7 +10,7 @@ const sampleOldData = {
   adminRoleIds: ["123456789", "987654321"],
   notifyChannelId: "555666777",
 
-  // 旧式形式: totsunaが配列
+  // 旧式形式: totusunaが配列
   totsuna: [
     {
       id: "uuid-1",

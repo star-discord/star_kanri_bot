@@ -1,5 +1,5 @@
 // utils/unifiedInteractionHandler.js
-const { MessageFlags } = require('discord.js');
+const { MessageFlagsBitField } = require('discord.js');
 const { logAndReplyError } = require('./errorHelper');
 const { loadHandlers } = require('./handlerLoader');
 const { findHandler } = require('./findHandler'); // ← 追加
@@ -106,12 +106,12 @@ class UnifiedInteractionHandler {
       if (interaction.deferred || interaction.replied) {
         await interaction.editReply({
           content: '⚠️ このボタンは現在利用できません。',
-          flags: MessageFlags.Ephemeral,
+          flags: MessageFlagsBitField.Flags.Ephemeral,
         });
       } else {
         await interaction.reply({
           content: '⚠️ このボタンは現在利用できません。',
-          flags: MessageFlags.Ephemeral,
+          flags: MessageFlagsBitField.Flags.Ephemeral,
         });
       }
       return;
@@ -124,7 +124,7 @@ class UnifiedInteractionHandler {
         interaction,
         `❌ ボタン処理エラー: ${customId}\n${err?.stack || err}`,
         '❌ ボタン処理中にエラーが発生しました。',
-        { flags: MessageFlags.Ephemeral }
+        { flags: MessageFlagsBitField.Flags.Ephemeral }
       );
     }
   }
@@ -138,12 +138,12 @@ class UnifiedInteractionHandler {
       if (interaction.deferred || interaction.replied) {
         await interaction.editReply({
           content: '❌ モーダルに対応する処理が見つかりませんでした。',
-          flags: MessageFlags.Ephemeral,
+          flags: MessageFlagsBitField.Flags.Ephemeral,
         });
       } else {
         await interaction.reply({
           content: '❌ モーダルに対応する処理が見つかりませんでした。',
-          flags: MessageFlags.Ephemeral,
+          flags: MessageFlagsBitField.Flags.Ephemeral,
         });
       }
       return;
@@ -156,7 +156,7 @@ class UnifiedInteractionHandler {
         interaction,
         `❌ モーダル処理エラー: ${customId}\n${err?.stack || err}`,
         '❌ モーダル処理中にエラーが発生しました。',
-        { flags: MessageFlags.Ephemeral }
+        { flags: MessageFlagsBitField.Flags.Ephemeral }
       );
     }
   }
@@ -170,12 +170,12 @@ class UnifiedInteractionHandler {
       if (interaction.deferred || interaction.replied) {
         await interaction.editReply({
           content: '❌ セレクトメニューに対応する処理が見つかりませんでした。',
-          flags: MessageFlags.Ephemeral,
+          flags: MessageFlagsBitField.Flags.Ephemeral,
         });
       } else {
         await interaction.reply({
           content: '❌ セレクトメニューに対応する処理が見つかりませんでした。',
-          flags: MessageFlags.Ephemeral,
+          flags: MessageFlagsBitField.Flags.Ephemeral,
         });
       }
       return;
@@ -188,7 +188,7 @@ class UnifiedInteractionHandler {
         interaction,
         `❌ セレクトエラー (${customId})\n${err?.stack || err}`,
         '❌ エラーが発生しました。',
-        { flags: MessageFlags.Ephemeral }
+        { flags: MessageFlagsBitField.Flags.Ephemeral }
       );
     }
   }
