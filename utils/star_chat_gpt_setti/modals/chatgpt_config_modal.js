@@ -33,14 +33,18 @@ module.exports = {
       let maxTokens = null;
       if (maxTokensRaw !== '') {
         maxTokens = Number(maxTokensRaw);
-        if (!Number.isInteger(maxTokens) || maxTokens <= 0) {
-          return await interaction.editReply({ content: '❌ 「1回の最大返答文字数」は正の整数で入力してください。' });
+        if (!Number.isInteger(maxTokens) || maxTokens <= 0 || !Number.isSafeInteger(maxTokens)) {
+          return await interaction.editReply({
+            content: '❌ 「1回の最大返答文字数」は1以上の整数で入力してください。',
+          });
         }
       }
 
       // temperatureのバリデーション（0以上1以下の範囲で許容）
       let temperature = null;
       if (temperatureRaw !== '') {
+        // 数値変換に失敗した場合もエラーとする
+        if (isNaN(temperatureRaw)) return await interaction.editReply({ content: '❌ 「ChatGPTの曖昧さ」は数値を入力してください。' });
         temperature = Number(temperatureRaw);
         if (Number.isNaN(temperature) || temperature < 0 || temperature > 1) {
           return await interaction.editReply({ content: '❌ 「ChatGPTの曖昧さ」は0〜1の範囲で入力してください。' });
