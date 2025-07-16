@@ -133,9 +133,40 @@ OpenAI API呼び出しは `utils/openai.js` の `safeOpenAICall` でラップさ
 
 新しいAPI呼び出しを実装する場合も、このラッパー関数を利用することが推奨されます。
 
-#### インタラクションのタイムアウト対策
+#### インタラクション応答の原則とタイムアウト対策
 
-API呼び出しには時間がかかるため、Discordのインタラクションが3秒以内に応答できずタイムアウトする可能性があります。これを防ぐため、`utils/interactionHandler.js` では `chatgpt_` や `openai_` で始まる `customId` を持つインタラクションに対して、**予防的デファー** (`interaction.deferReply()`) を自動的に行います。
+Discordのインタラクションは、ユーザーのアクションから3秒以内に何らかの応答を返す必要があります。この「3秒ルール」と、応答の重複による `InteractionAlreadyReplied` エラーを避けるため、以下のパターンを遵守してください。
+
+1.  **時間のかかる処理を行う場合（ファイルI/O、API呼び出しなど）**
+    -   処理の最初に `await interaction.deferReply()` または `await safeDefer(interaction)` を呼び出します。
+    -   これにより応答が「遅延」状態になり、3秒のタイムアウトを回避できます。
+    -   処理完了後、`interaction.editReply()` を使って最終的な応答を返します。
+
+2.  **モーダルを表示する場合（最重要）**
+    -   `interaction.showModal()` は「即時応答」です。**`deferReply` とは絶対に併用できません。**
+    -   モーダル表示前に `deferReply` を呼び出すと、`InteractionAlreadyReplied` エラーが **必ず** 発生します。
+    -   モーダルを表示するハンドラでは、権限チェックなどの軽量な処理のみを行い、直接 `interaction.showModal()` を呼び出してください。
+
+    **悪い例（エラー発生）:**
+    ```javascript
+    await interaction.deferReply();
+    // ...その他の処理...
+    await interaction.showModal(modal); // Error: InteractionAlreadyReplied
+    ```
+
+    **良い例:**
+    ```javascript
+    const isAdmin = await checkAdmin(interaction);
+    if (!isAdmin) {
+      // deferしていないので、初回応答は.reply()
+      return interaction.reply({ content: '権限がありません。', ephemeral: true });
+    }
+    await interaction.showModal(modal); // 即時応答としてモーダルを表示
+    ```
+
+3.  **モーダル送信後の処理 (`ModalSubmitInteraction`)**
+    -   ユーザーがモーダルを送信すると、新しいインタラクションが発生します。
+    -   このハンドラ内では、ファイル書き込みなどの時間のかかる処理を行う可能性があるため、こちらは逆に `deferReply()` を実行することが推奨されます。
 
 ### 8.2. コーディング規約と設計パターン
 

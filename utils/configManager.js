@@ -186,6 +186,7 @@ class ConfigManager {
     if (instanceIndex === -1) return false;
 
     config.totusuna.instances[instanceIndex] = { ...config.totusuna.instances[instanceIndex], ...updates };
+    console.log(`[ConfigManager] updateTotusunaInstance: インスタンスを更新 (guild: ${guildId}, uuid: ${uuid})`);
     await this.saveGuildConfig(guildId, config, `updateTotusunaInstance: ${uuid}`);
     return true;
   }
@@ -205,6 +206,7 @@ class ConfigManager {
     config.totusuna.instances = config.totusuna.instances.filter(instance => instance.id !== uuid);
 
     if (config.totusuna.instances.length < originalLength) {
+      console.log(`[ConfigManager] removeTotusunaInstance: インスタンスを削除 (guild: ${guildId}, uuid: ${uuid})`);
       await this.saveGuildConfig(guildId, config, `removeTotusunaInstance: ${uuid}`);
       return true;
     }

@@ -36,7 +36,7 @@ module.exports = {
       // Use the safe configManager to get instance data
       const instance = await configManager.getTotusunaInstance(interaction.guildId, uuid);
 
-      if (!instance) {
+      if (!instance || !instance.body) { 
         return await interaction.reply({
           content: '⚠️ 指定された設定情報が見つかりません。',
           flags: MessageFlagsBitField.Flags.Ephemeral,

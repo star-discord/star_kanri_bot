@@ -6,6 +6,8 @@ module.exports = {
   customId: 'chatgpt_config_modal',
 
   async handle(interaction) {
+    console.log('[chatgpt_config_modal] 処理開始:', { user: interaction.user.tag, guild: interaction.guildId });
+
     const guildId = interaction.guildId;
     if (!guildId) {
       return interaction.reply({
@@ -51,12 +53,15 @@ module.exports = {
         temperature,
       };
 
-      await writeJSON(filePath, data);
+      await writeJSON(filePath, data); // ファイル書き込み
 
       const embed = createSuccessEmbed('ChatGPT設定', '設定を保存しました。');
 
       // deferred済みならeditReply、そうでなければreply
       if (interaction.deferred || interaction.replied) {
+        console.log('[chatgpt_config_modal] 処理完了 - 設定更新 (editReply):',
+          { apiKey: data.chatgpt.apiKey, maxTokens: data.chatgpt.maxTokens, temperature: data.chatgpt.temperature });
+
         await interaction.editReply({ embeds: [embed] });
       } else {
         await interaction.reply({ embeds: [embed], ephemeral: true });

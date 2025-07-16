@@ -6,9 +6,10 @@ const path = require('path');
 /**
  * 指定されたJSONファイルを読み込んでオブジェクトとして返す
  * @param {string} filePath
+ * @param {object | null} initialData - パースエラー時のフォールバックデータ
  * @returns {Promise<Object>}
  */
-function readJSON(filePath) {
+function readJSON(filePath, initialData = null) {
   return new Promise((resolve, reject) => {
     fs.readFile(filePath, 'utf8', (err, data) => {
       if (err) {
@@ -20,7 +21,26 @@ function readJSON(filePath) {
         resolve(json);
       } catch (parseErr) {
         console.error(`❌ readJSON: JSONパースエラー - ${filePath}`, parseErr);
-        reject(parseErr);
+
+        // パースエラー時に破損ファイルをバックアップ
+        try {
+          const backupDir = path.join(path.dirname(filePath), 'backup_errors');
+          if (!fs.existsSync(backupDir)) {
+            fs.mkdirSync(backupDir, { recursive: true });
+          }
+          const backupPath = path.join(backupDir, `${path.basename(filePath)}.${Date.now()}.corrupted`);
+          fs.renameSync(filePath, backupPath); // 同期的にリネーム
+          console.log(`💾 破損ファイルをバックアップしました: ${backupPath}`);
+        } catch (backupErr) {
+          console.error(`❌ 破損ファイルのバックアップに失敗しました: ${filePath}`, backupErr);
+        }
+
+        if (initialData) {
+          console.warn(`[readJSON] パースエラーのため初期データでフォールバックします: ${filePath}`);
+          resolve(initialData);
+        } else {
+          reject(parseErr);
+        }
       }
     });
   });
