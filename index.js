@@ -92,11 +92,7 @@ if (fs.existsSync(eventsPath)) {
   console.log(`🔔 合計 ${eventFiles.length} 個のイベントを登録しました。`);
 }
 
-// ======== インタラクションハンドラー ========
-const { handleButton } = require('./utils/buttonsHandler');
-const { handleSelect } = require('./utils/selectsHandler');
-// モーダル関連の読み込みは削除しました
-
+// ======== ハンドラ読み込み ========
 client.on('interactionCreate', async interaction => {
   const startTime = Date.now();
   const interactionId = interaction.id;
