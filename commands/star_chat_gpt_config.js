@@ -5,7 +5,7 @@ const { checkAdmin } = require('../utils/permissions/checkAdmin');
 const { logAndReplyError } = require('../utils/errorHelper');
 
 module.exports = {
-  data: new SlashCommandBuilder()
+    data: new SlashCommandBuilder()
     .setName('star_chat_gpt_config')
     .setDescription('ChatGPTの応答設定をモーダルで行います'),
 
@@ -21,7 +21,7 @@ module.exports = {
       }
 
       const modal = new ModalBuilder()
-        .setCustomId('star_chat_gpt_config_modal') // 修正: ハンドラ側のIDに合わせる
+        .setCustomId('star_chat_gpt_config_modal')
         .setTitle('ChatGPT設定');
 
       const apiKeyInput = new TextInputBuilder()
@@ -30,7 +30,7 @@ module.exports = {
         .setStyle(TextInputStyle.Short)
         .setPlaceholder('sk-********************************')
         .setRequired(false);
-
+        
       const maxTokensInput = new TextInputBuilder()
         .setCustomId('max_tokens')
         .setLabel('最大応答文字数')
@@ -44,11 +44,10 @@ module.exports = {
         .setStyle(TextInputStyle.Short)
         .setPlaceholder('例: 0.7')
         .setRequired(true);
-
+        
       modal.addComponents(
-        new ActionRowBuilder().addComponents(apiKeyInput),
+         new ActionRowBuilder().addComponents(apiKeyInput),
         new ActionRowBuilder().addComponents(maxTokensInput),
-        new ActionRowBuilder().addComponents(temperatureInput)
       );
 
       // deferReply() を削除したため、showModal() は安全に実行できます。
