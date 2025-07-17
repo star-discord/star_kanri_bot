@@ -75,7 +75,7 @@ async function logAndReplyError(interaction, logMsg, userMsg, options = {}) {
   const errorObject = logMsg instanceof Error ? logMsg : undefined;
 
   await errorHelper.logError(`${source} [Guild:${guildId}] [User:${userId}]`, logMessage, errorObject);
-  await safeReplyToUser(interaction, userMsg, options);
+  await errorHelper.safeReplyToUser(interaction, userMsg, options);
 }
  // module.exportsを再割り当てすると、ファイルの先頭で定義された`errorHelper`の参照が古くなってしまいます。
  // 代わりに、既存のexportsオブジェクトにプロパティを割り当てることで参照を維持します。
