@@ -4,7 +4,7 @@ const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, Messag
 const { safeReply } = require('../../safeReply');
 
 module.exports = {
-  // ボタンのcustomIdはプレフィックス形式に統一
+  // ボタンのcustomIdはコロン付きのプレフィックス形式で統一
   customId: 'star_chat_gpt_setti:open_config',
 
   /**
@@ -13,27 +13,31 @@ module.exports = {
    */
   async handle(interaction) {
     try {
+      // モーダル作成
       const modal = new ModalBuilder()
-        // モーダルのcustomIdも統一
-        .setCustomId('star_chat_gpt_setti_modal')
+        .setCustomId('star_chat_gpt_setti_modal') // モーダルのcustomIdはプレフィックス無しの固定文字列に
+
         .setTitle('⚙️ ChatGPT設定');
 
+      // APIキー入力
       const apiKeyInput = new TextInputBuilder()
-        .setCustomId('api_key')  // モーダルハンドラー側のIDに合わせて変更
-        .setLabel('ChatGPT APIキー')
+        .setCustomId('api_key') // モーダル側での取得IDと一致させる
+        .setLabel('ChatGPT APIキー (任意)')
         .setStyle(TextInputStyle.Short)
         .setPlaceholder('sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
         .setRequired(false);
 
+      // 最大トークン数入力
       const maxTokensInput = new TextInputBuilder()
-        .setCustomId('max_tokens')  // モーダルハンドラー側のIDに合わせて変更
+        .setCustomId('max_tokens')
         .setLabel('1回の最大返答文字数')
         .setStyle(TextInputStyle.Short)
         .setPlaceholder('例: 500')
         .setRequired(false);
 
+      // 曖昧さ入力
       const temperatureInput = new TextInputBuilder()
-        .setCustomId('temperature')  // モーダルハンドラー側のIDに合わせて変更
+        .setCustomId('temperature')
         .setLabel('ChatGPTの曖昧さ (0〜1)')
         .setStyle(TextInputStyle.Short)
         .setPlaceholder('例: 0.7')
@@ -42,7 +46,7 @@ module.exports = {
       modal.addComponents(
         new ActionRowBuilder().addComponents(apiKeyInput),
         new ActionRowBuilder().addComponents(maxTokensInput),
-        new ActionRowBuilder().addComponents(temperatureInput)
+        new ActionRowBuilder().addComponents(temperatureInput),
       );
 
       // モーダルを表示（即時応答）

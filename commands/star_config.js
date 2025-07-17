@@ -8,6 +8,7 @@ const {
   ChannelType,
   MessageFlagsBitField
 } = require('discord.js');
+const { idManager } = require('../utils/idManager');
 const { PermissionFlagsBits } = require('discord.js');
 const { configManager } = require('../utils/configManager');
 
@@ -66,13 +67,13 @@ module.exports = {
       };
 
       const roleSelect = new RoleSelectMenuBuilder()
-        .setCustomId('admin_role_select')
+        .setCustomId(idManager.createButtonId('star_config', 'admin_role_select'))
         .setPlaceholder('管理者として許可するロールを選択')
         .setMinValues(0)
         .setMaxValues(25);
 
       const channelSelect = new ChannelSelectMenuBuilder()
-        .setCustomId('notify_channel_select')
+        .setCustomId(idManager.createButtonId('star_config', 'notify_channel_select'))
         .setPlaceholder('通知チャンネルを選択')
         .addChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement)
         .setMinValues(1)

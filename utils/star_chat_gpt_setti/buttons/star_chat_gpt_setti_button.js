@@ -20,6 +20,12 @@ const INFO_CONFIG = {
   },
 };
 
+/**
+ * 指定されたタイプの情報をChatGPTから取得
+ * @param {string} type - weather, news, trivia のいずれか
+ * @param {string} guildId
+ * @returns {Promise<string>} 応答テキスト
+ */
 async function fetchInfo(type, guildId) {
   const config = INFO_CONFIG[type];
   if (!config) return '不明な情報タイプです。';
@@ -36,7 +42,8 @@ async function fetchInfo(type, guildId) {
 }
 
 module.exports = {
-  customId: 'star_chat_gpt_setti:main', // プレフィックス形式に統一
+  // ボタンのcustomIdはプレフィックス形式に統一
+  customId: 'star_chat_gpt_setti:main',
 
   /**
    * ボタン押下時の処理
@@ -47,10 +54,10 @@ module.exports = {
     const channel = interaction.channel;
 
     try {
-      // 先に defer して応答期限（3秒ルール）をクリア
+      // 応答期限をクリアするために defer する
       await safeDefer(interaction);
 
-      // 元メッセージを削除（権限があれば）
+      // 元のメッセージを削除（可能なら）
       if (interaction.message?.deletable) {
         try {
           await interaction.message.delete();
@@ -63,14 +70,14 @@ module.exports = {
         }
       }
 
-      // ChatGPTから情報を並列取得
+      // ChatGPTから複数情報を並列取得
       const [weather, news, trivia] = await Promise.all([
         fetchInfo('weather', guildId),
         fetchInfo('news', guildId),
         fetchInfo('trivia', guildId),
       ]);
 
-      // Embed作成
+      // Embedを作成
       const embed = createBaseEmbed({
         title: '🤖 今日のChatGPT情報',
         color: COLORS.SUCCESS,
@@ -82,14 +89,14 @@ module.exports = {
         )
         .setFooter({ text: 'Powered by OpenAI' });
 
-      // ボタンを再作成
+      // ボタンを作成（再利用可能な形式で）
       const infoButton = new ButtonBuilder()
-        .setCustomId('star_chat_gpt_setti:main') // プレフィックス形式に統一
+        .setCustomId('star_chat_gpt_setti:main')
         .setLabel('🤖 今日のChatGPT')
         .setStyle(ButtonStyle.Primary);
 
       const configButton = new ButtonBuilder()
-        .setCustomId('star_chat_gpt_setti:open_config') // プレフィックス形式に統一
+        .setCustomId('star_chat_gpt_setti:open_config')
         .setLabel('⚙️ 設定')
         .setStyle(ButtonStyle.Secondary);
 
@@ -98,7 +105,7 @@ module.exports = {
       // 新規メッセージをチャンネルに送信
       await channel.send({ embeds: [embed], components: [row] });
 
-      // defer済みのためここでは応答不要
+      // defer済みなのでここでは応答不要
 
     } catch (error) {
       console.error('star_chat_gpt_setti_button エラー:', error);

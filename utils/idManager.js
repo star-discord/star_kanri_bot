@@ -55,9 +55,8 @@ class IdManager {
     switch (category) {
       case 'star_config':
         return `star_config:${action}`;
-          case 'star_chat_gpt_setti':
+      case 'star_chat_gpt_setti':
         return `star_chat_gpt_setti:${action}`;
-
       case 'star_chat_gpt_config':
         return `star_chat_gpt_config:${action}`;
       case 'totusuna_setti':
@@ -89,7 +88,7 @@ class IdManager {
       case 'totusuna_config':
         return `totusuna_config_edit_modal_${uuid}`;
       case 'totusuna_report':
-          return `totusuna_modal:${uuid}`;
+        return `totusuna_modal:${uuid}`;
       case 'kpi':
         return `kpi_modal_${action}`;
       default:

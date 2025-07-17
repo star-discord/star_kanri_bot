@@ -5,6 +5,7 @@ const {
   EmbedBuilder,
   MessageFlagsBitField,
 } = require('discord.js');
+const { idManager } = require('../utils/idManager.js');
 const { configManager } = require('../utils/configManager.js');
 const { checkAdmin } = require('../utils/permissions/checkAdmin.js');
 const { createAdminEmbed } = require('../utils/embedHelper.js');
@@ -60,7 +61,7 @@ module.exports = {
       }
 
       const selectMenu = new StringSelectMenuBuilder()
-        .setCustomId('totusuna_config_select')
+        .setCustomId(idManager.createButtonId('totusuna_config', 'select'))
         .setPlaceholder('設定を変更する凸スナを選択してください')
         .addOptions(options);
 
