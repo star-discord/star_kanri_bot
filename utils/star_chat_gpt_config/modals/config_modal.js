@@ -1,8 +1,7 @@
 // utils/star_chat_gpt_config/modals/config_modal.js
 
 const { getChatGPTConfig, saveChatGPTConfig } = require('../configManager');
-const { validateMaxTokens, validateTemperature } = require('../validators');
-const { safeReply } = require('../../safeReply');
+const { safeReply, safeDefer } = require('../../safeReply');
 const { MessageFlagsBitField, ActionRowBuilder, StringSelectMenuBuilder } = require('discord.js');
 
 module.exports = {
@@ -10,62 +9,65 @@ module.exports = {
 
   async handle(interaction) {
     try {
-      const apiKey = interaction.fields.getTextInputValue('star_chat_gpt_config_api_key')?.trim();
-      const maxTokensStr = interaction.fields.getTextInputValue('max_tokens');
-      const temperatureStr = interaction.fields.getTextInputValue('temperature');
+      // 応答を遅延
+      await safeDefer(interaction, { flags: MessageFlagsBitField.Flags.Ephemeral });
+
+      const apiKey = interaction.fields.getTextInputValue('star_chat_gpt_config_api_key')?.trim() || null;
+      const maxTokensStr = interaction.fields.getTextInputValue('max_tokens')?.trim();
+      const temperatureStr = interaction.fields.getTextInputValue('temperature')?.trim();
 
       const maxTokens = Number(maxTokensStr);
       const temperature = Number(temperatureStr);
 
-      if (!validateMaxTokens(maxTokens)) {
-        return await safeReply(interaction, {
-          content: '❌ 「1回の最大返答文字数」は正の整数で入力してください。',
-          flags: MessageFlagsBitField.Flags.Ephemeral,
-        });
-      }
-
-      if (!validateTemperature(temperature)) {
-        return await safeReply(interaction, {
-          content: '❌ 「ChatGPTの曖昧さ」は0〜1の数値で入力してください。',
-          flags: MessageFlagsBitField.Flags.Ephemeral,
-        });
-      }
-
       const config = await getChatGPTConfig(interaction.guildId);
-      config.maxTokens = maxTokens;
-      config.temperature = temperature;
-      if (apiKey) {
-        config.apiKey = apiKey;
+      config.apiKey = apiKey;  // APIキーが空の場合もnullとして保存
+
+      // maxTokensのバリデーション
+      if (maxTokensStr === '' || isNaN(maxTokens) || !Number.isInteger(maxTokens) || maxTokens <= 0 || maxTokens > 4096) {
+        await interaction.editReply({ content: '❌ 1回の最大返答文字数（max_tokens）は、1〜4096の整数で入力してください。'});
+        return;
+      } else {
+        config.maxTokens = maxTokens;
       }
+
+      // temperatureのバリデーション
+      if (temperatureStr === '' || isNaN(temperature) || temperature < 0 || temperature > 1) {
+        await interaction.editReply({ content: '❌ 応答のランダム性（temperature）は、0〜1の範囲の数値で入力してください。'});
+        return;
+      } else {
+        config.temperature = temperature;
+      }
+
       await saveChatGPTConfig(interaction.guildId, config);
 
-      // ログメッセージ作成
-      const logMessage = `🤖 ChatGPT設定が更新されました\n- 最大トークン数: ${maxTokens}\n- 曖昧さ: ${temperature}\n- APIキー: ${apiKey ? '設定済み（非表示）' : '未設定'}`;
+      console.log(`[star_chat_gpt_config_modal] 設定更新 (Guild: ${interaction.guildId})`, {
+        apiKey: apiKey ? '設定' : '未設定',  // APIキーは表示しない
+        maxTokens: config.maxTokens,
+        temperature: config.temperature,
+      });
 
-      // テキストチャンネル一覧から選択用のセレクトメニュー作成
-      const textChannels = interaction.guild.channels.cache
-        .filter(c => c.isTextBased())
-        .map(c => ({
-          label: c.name,
-          description: `ID: ${c.id}`,
-          value: c.id,
-        })).slice(0, 25); // Discordの選択肢は最大25件
-
-      const selectMenu = new StringSelectMenuBuilder()
-        .setCustomId('select_chat_channels')
-        .setPlaceholder('ChatGPTを有効にするチャンネルを選択 (複数可)')
-        .setMinValues(1)
-        .setMaxValues(Math.min(textChannels.length, 25))
-        .addOptions(textChannels);
-
-      const row = new ActionRowBuilder().addComponents(selectMenu);
-
-      // モーダル送信チャンネルにログ＋セレクトメニュー付きメッセージ送信
-      await interaction.channel.send({ content: logMessage, components: [row] });
-
-      // ユーザーにはエフェメラルで完了通知
-      await safeReply(interaction, {
-        content: '✅ 設定を受け付けました。下のメッセージからチャンネルを選択してください。',
+      const embed = {
+        title: '✅ ChatGPT設定を更新しました',
+        fields: [
+          {
+            name: 'APIキー',
+            value: apiKey ? '設定済み（セキュリティのため表示されません）' : '未設定',
+            inline: false
+          },
+          {
+            name: '1回の最大返答文字数（max_tokens）',
+            value: `${config.maxTokens}文字`,
+            inline: false
+          },
+          {
+            name: '応答のランダム性（temperature）',
+            value: `${config.temperature}`,
+            inline: false
+          }
+        ],
+        color: 0x00FF00,
+      };
+      await interaction.editReply({ embeds: [embed],
         flags: MessageFlagsBitField.Flags.Ephemeral,
       });
 
@@ -77,4 +79,4 @@ module.exports = {
       });
     }
   },
-};
+}
