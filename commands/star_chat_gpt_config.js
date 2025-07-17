@@ -1,3 +1,5 @@
+// commands/star_chat_gpt_config.js
+
 const { SlashCommandBuilder, EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, MessageFlagsBitField } = require('discord.js');
 const { checkAdmin } = require('../utils/permissions/checkAdmin');
 const { logAndReplyError } = require('../utils/errorHelper');
@@ -13,7 +15,10 @@ module.exports = {
     try {
       const isAdmin = await checkAdmin(interaction);
       if (!isAdmin) {
-        return interaction.reply({ content: '❌ 権限がありません。管理者のみ使用可能です。', flags: MessageFlagsBitField.Flags.Ephemeral });
+        return await interaction.reply({
+          content: '❌ 権限がありません。管理者のみ使用可能です。',
+          flags: MessageFlagsBitField.Flags.Ephemeral,
+        });
       }
 
       const config = await getChatGPTConfig(interaction.guildId);
@@ -44,7 +49,22 @@ module.exports = {
 
     } catch (error) {
       console.error('star_chat_gpt_config 実行エラー:', error);
-      await logAndReplyError(interaction, error, 'エラーが発生しました。しばらくしてから再試行してください。');
+
+      try {
+        if (interaction.replied || interaction.deferred) {
+          await interaction.followUp({
+            content: 'エラーが発生しました。しばらくしてから再試行してください。',
+            ephemeral: true,
+          });
+        } else {
+          await interaction.reply({
+            content: 'エラーが発生しました。しばらくしてから再試行してください。',
+            ephemeral: true,
+          });
+        }
+      } catch (replyError) {
+        console.error('エラー応答の送信に失敗しました:', replyError);
+      }
     }
   },
 };
