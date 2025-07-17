@@ -3,6 +3,8 @@ const { MessageFlagsBitField } = require('discord.js');
 const fs = require('fs/promises');
 const path = require('path');
 
+const errorHelper = module.exports;
+
 /**
  * エラーログを出力（コンソール + ファイル）
  * @param {string} source - エラー発生源識別子
@@ -13,7 +15,9 @@ async function logError(source, message, error) {
   const timestamp = new Date().toISOString();
   const stack = error?.stack || error?.message || '';
   const fullMessage = `[${timestamp}] [${source}] ${message}${stack ? `\n${stack}` : ''}`;
+  
 
+  
   console.error(fullMessage); // コンソール出力
 
   try {
@@ -70,12 +74,9 @@ async function logAndReplyError(interaction, logMsg, userMsg, options = {}) {
   const logMessage = logMsg instanceof Error ? logMsg.message : logMsg;
   const errorObject = logMsg instanceof Error ? logMsg : undefined;
 
-  await logError(`${source} [Guild:${guildId}] [User:${userId}]`, logMessage, errorObject);
+  await errorHelper.logError(`${source} [Guild:${guildId}] [User:${userId}]`, logMessage, errorObject);
   await safeReplyToUser(interaction, userMsg, options);
 }
-
-module.exports = {
-  logError,
-  safeReplyToUser,
-  logAndReplyError,
-};
+ // module.exportsを再割り当てすると、ファイルの先頭で定義された`errorHelper`の参照が古くなってしまいます。
+ // 代わりに、既存のexportsオブジェクトにプロパティを割り当てることで参照を維持します。
+Object.assign(module.exports, { logError, safeReplyToUser, logAndReplyError });

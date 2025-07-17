@@ -80,4 +80,50 @@ module.exports = { logError, logAndReplyError };
     });
     ```
 
+---
+
+# Jestテストにおける同一モジュール内関数のSpy失敗と対策 (最終解決策)
+
+## 概要
+以前から発生していた `utils/__tests__/errorHelper.test.js` のテスト失敗は、`jest.spyOn` が同一モジュール内の関数呼び出しを正しく捕捉できないというJestの典型的な問題に起因していた。
+
+## 根本原因
+`errorHelper.js` 内で `logAndReplyError` 関数が、同じファイルで定義された `logError` 関数を直接呼び出していた (`await logError(...)`)。
+一方、テストコード (`errorHelper.test.js`) では `jest.spyOn(errorHelper, 'logError')` を使って、`require('../errorHelper')` でインポートした **モジュールオブジェクト (`errorHelper`)** の `logError` メソッドをスパイしていた。
+
+この2つの `logError` は参照が異なるため、スパイは呼び出しを検知できず、「`Number of calls: 0`」という結果になっていた。
+
+## 最終的な解決策
+この参照の不一致を解決するため、`errorHelper.js` 自身が自分自身の `exports` オブジェクトを経由して内部関数を呼び出すように修正する。
+
+### 修正ステップ (errorHelper.js)
+
+1.  **ファイルの先頭で `module.exports` への参照を保持する**
+    ```javascript
+    // utils/errorHelper.js の先頭
+    const errorHelper = module.exports;
+    ```
+2.  **内部関数呼び出しを、保持した参照経由に変更する**
+    `logAndReplyError` 関数内の呼び出しを修正。
+    ```diff
+    // 修正前
+    - await logError(`${source} [Guild:${guildId}] [User:${userId}]`, logMessage, errorObject);
+
+    // 修正後
+    + await errorHelper.logError(`${source} [Guild:${guildId}] [User:${userId}]`, logMessage, errorObject);
+    ```
+
+3.  **`module.exports` の再代入を避ける**
+    ファイルの末尾で `module.exports = { ... }` のように新しいオブジェクトを代入すると、ステップ1で保持した参照が無効になる。代わりに `Object.assign` を使い、既存のオブジェクトにプロパティを追加する。
+    ```javascript
+    // utils/errorHelper.js の末尾
+    Object.assign(module.exports, { logError, safeReplyToUser, logAndReplyError });
+    ```
+
+## なぜこれで解決するのか
+-   `const errorHelper = module.exports;` により、モジュール内の `errorHelper` 変数は、外部から `require` される際と同じ `exports` オブジェクトを指すようになる。
+-   `await errorHelper.logError(...)` という呼び出しは、この共有されたオブジェクトのメソッドを実行することになる。
+-   テストコードの `jest.spyOn(errorHelper, 'logError')` も同じオブジェクトの同じメソッドを監視するため、呼び出しを正確に捕捉できる。
+
+この修正により、テストコードを変更することなく、`errorHelper.js` 側の実装を修正するだけでテストが成功するようになった。
 この修正により、`errorHelper.logAndReplyError()` が呼び出された際に、その内部で呼び出される `errorHelper.logError()` も正しくモックされた関数が実行され、`toHaveBeenCalledWith` で呼び出しを検知できるようになります。

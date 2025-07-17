@@ -106,18 +106,17 @@ describe('logAndReplyError', () => {
     // spyOnを使用して、同じモジュール内の関数呼び出しを監視・モックする
     logErrorSpy = jest.spyOn(errorHelper, 'logError').mockImplementation(async () => {});
     safeReplyToUserSpy = jest.spyOn(errorHelper, 'safeReplyToUser').mockImplementation(async () => {});
-  });
+    });
 
-  afterEach(() => {
-    // テスト後にスパイを元に戻す
-    logErrorSpy.mockRestore();
-    safeReplyToUserSpy.mockRestore();
-  });
+    afterEach(() => {
+        logErrorSpy.mockRestore();
+        safeReplyToUserSpy.mockRestore();
+    });
 
   it('logError と safeReplyToUser が適切に呼ばれること', async () => {
     await errorHelper.logAndReplyError(mockInteraction, 'ログだけ', '表示メッセージ');
 
-    expect(logErrorSpy).toHaveBeenCalledWith(
+    expect(logErrorSpy).toHaveBeenCalledWith(  
       'test_cmd [Guild:test_guild] [User:test_user]',
       'ログだけ',
       undefined
@@ -137,6 +136,11 @@ describe('logAndReplyError', () => {
       'test_cmd [Guild:test_guild] [User:test_user]',
       'スタック確認',
       err
+    );
+    expect(safeReplyToUserSpy).toHaveBeenCalledWith(
+      mockInteraction,
+      '表示メッセージ',
+      {}
     );
   });
 });
