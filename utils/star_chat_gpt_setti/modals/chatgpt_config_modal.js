@@ -4,10 +4,10 @@ const { ensureGuildJSON, readJSON, writeJSON } = require('../../../utils/fileHel
 const { createSuccessEmbed } = require('../../../utils/embedHelper');
 
 module.exports = {
-  customId: 'star_chatgpt_setti_modal',
+  customId: 'star_chat_gpt_config_modal',
 
   async handle(interaction) {
-    console.log('[star_chatgpt_setti_modal] 処理開始:', { user: interaction.user.tag, guild: interaction.guildId });
+    console.log('[star_chat_gpt_config_modal] 処理開始:', { user: interaction.user.tag, guild: interaction.guildId });
 
     const guildId = interaction.guildId;
     if (!guildId) {
@@ -25,9 +25,9 @@ module.exports = {
       const data = await readJSON(filePath);
 
       // ユーザー入力を取得しtrim
-      const apiKeyRaw = interaction.fields.getTextInputValue('chatgpt_api_key')?.trim() ?? '';
-      const maxTokensRaw = interaction.fields.getTextInputValue('chatgpt_max_tokens')?.trim() ?? '';
-      const temperatureRaw = interaction.fields.getTextInputValue('chatgpt_temperature')?.trim() ?? '';
+      const apiKeyRaw = interaction.fields.getTextInputValue('star_chat_gpt_config_api_key')?.trim() ?? '';
+      const maxTokensRaw = interaction.fields.getTextInputValue('max_tokens')?.trim() ?? '';
+      const temperatureRaw = interaction.fields.getTextInputValue('temperature')?.trim() ?? '';
 
       // maxTokensのバリデーション（正の整数のみ許容、小数不可）
       let maxTokens = null;
@@ -73,7 +73,7 @@ module.exports = {
 
       // deferred済みならeditReply、そうでなければreply
       if (interaction.deferred || interaction.replied) {
-        console.log('[star_chatgpt_setti_modal] 処理完了 - 設定更新 (editReply):',
+        console.log('[star_chat_gpt_config_modal] 処理完了 - 設定更新 (editReply):',
           { apiKey: data.chatgpt.apiKey, maxTokens: data.chatgpt.maxTokens, temperature: data.chatgpt.temperature });
 
         await interaction.editReply({ embeds: [embed] });
