@@ -1,3 +1,5 @@
+// utils/star_chat_gpt_setti/modals/chatgpt_config_modal.js
+
 const { MessageFlagsBitField } = require('discord.js');
 const { logAndReplyError } = require('../../../utils/errorHelper');
 const { ensureGuildJSON, readJSON, writeJSON } = require('../../../utils/fileHelper');
