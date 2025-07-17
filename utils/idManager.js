@@ -53,8 +53,6 @@ class IdManager {
    */
   createButtonId(category, action, uuid = null) {
     switch (category) {
-      case 'star_config':
-        return `star_config:${action}`;
       case 'star_chat_gpt_config':
         return `star_chat_gpt_config:${action}`;
         return uuid ? `totusuna_setti:${action}:${uuid}` : `totusuna_setti:${action}`;
@@ -78,8 +76,6 @@ class IdManager {
    */
   createModalId(category, action, uuid = null) {
     switch (category) {
-      case 'star_config':
-        return `star_config_modal_${action}`;
       case 'star_chat_gpt_config':
         return 'star_chat_gpt_config_modal';
       case 'totusuna_setti':
