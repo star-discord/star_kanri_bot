@@ -6,7 +6,7 @@ const { safeReply } = require('../../safeReply');
 const { MessageFlagsBitField } = require('discord.js');
 
 module.exports = {
-  customId: 'star_chat_gpt_config_modal',
+  customId: 'star_chat_gpt_config:config_modal',
   /**
    * モーダル入力処理（最大トークン数・曖昧さ）
    */

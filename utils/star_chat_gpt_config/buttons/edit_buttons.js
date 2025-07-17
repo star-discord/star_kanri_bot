@@ -5,15 +5,15 @@ const { safeReply } = require('../../safeReply');
 const { idManager } = require('../../idManager');
 
 module.exports = {
-  customIdStart: 'star_chat_gpt_config:',
+  customId: 'star_chat_gpt_config:edit_buttons',
 
   async handle(interaction) {
     const customId = interaction.customId;
     const config = await getChatGPTConfig(interaction.guildId);
 
-    if (customId === idManager.createButtonId('star_chat_gpt_config', 'edit_basic_settings')) {
+    if (customId === 'star_chat_gpt_config:edit_basic_settings') {
       const modal = new ModalBuilder()
-        .setCustomId(idManager.createModalId('star_chat_gpt_config'))
+        .setCustomId('star_chat_gpt_config:edit_basic_settings_modal')
         .setTitle('ChatGPT 基本設定修正');
 
       const apiKeyInput = new TextInputBuilder()
@@ -57,7 +57,7 @@ module.exports = {
 
       await interaction.showModal(modal);
 
-    } else if (customId === idManager.createButtonId('star_chat_gpt_config', 'edit_channels')) {
+    } else if (customId === 'star_chat_gpt_config:edit_channels') {
       const botMember = await interaction.guild.members.fetchMe();
       const channels = interaction.guild.channels.cache.filter(ch =>
         ch.isTextBased() &&
@@ -89,3 +89,4 @@ module.exports = {
     }
   }
 };
+

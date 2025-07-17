@@ -7,12 +7,12 @@ const { MessageFlagsBitField } = require('discord.js');
 
 /**
  * 統合インタラクションハンドラー（完全一致のみ対応）
- * 部分一致(customIdStart)は廃止
  */
 const handlerFinders = {
   button: {
     star_config: loadHandlers(path.join(__dirname, 'star_config/buttons')),
     star_chat_gpt_config: loadHandlers(path.join(__dirname, 'star_chat_gpt_config/buttons')),
+    star_chat_gpt_setti: loadHandlers(path.join(__dirname, 'star_chat_gpt_setti/buttons')), // ✅ 追加
     totusuna_setti: loadHandlers(path.join(__dirname, 'totusuna_setti/buttons')),
     totusuna_config: loadHandlers(path.join(__dirname, 'totusuna_config/buttons')),
     kpi_setti: loadHandlers(path.join(__dirname, 'kpi_setti/buttons')),
@@ -21,6 +21,7 @@ const handlerFinders = {
   select: {
     star_config: loadHandlers(path.join(__dirname, 'star_config/selects')),
     star_chat_gpt_config: loadHandlers(path.join(__dirname, 'star_chat_gpt_config/selects')),
+    star_chat_gpt_setti: loadHandlers(path.join(__dirname, 'star_chat_gpt_setti/selects')), // ✅ 追加（あれば）
     totusuna_setti: loadHandlers(path.join(__dirname, 'totusuna_setti/selects')),
     totusuna_config: loadHandlers(path.join(__dirname, 'totusuna_config/selects')),
     kpi_setti: loadHandlers(path.join(__dirname, 'kpi_setti/selects')),
@@ -31,7 +32,7 @@ const handlerFinders = {
 const handlerCache = new Map();
 
 /**
- * customId に完全一致するハンドラを探す（type: button/select）
+ * customId に完全一致するハンドラを探す
  * @param {string} customId
  * @param {'button'|'select'} type
  * @returns {object|null}
@@ -44,18 +45,19 @@ function findHandler(customId, type) {
   for (const category in finders) {
     const find = finders[category];
     if (typeof find !== 'function') continue;
-    const handler = find(customId); // 完全一致のみ
+    const handler = find(customId);
     if (handler) {
       handlerCache.set(cacheKey, handler);
       return handler;
     }
   }
+
   handlerCache.set(cacheKey, null);
   return null;
 }
 
 /**
- * ボタン・セレクトインタラクションを処理（完全一致のみ）
+ * ボタン・セレクトインタラクションを処理
  * @param {import('discord.js').Interaction} interaction
  */
 async function handleInteraction(interaction) {
