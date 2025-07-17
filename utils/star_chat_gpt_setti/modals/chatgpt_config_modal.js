@@ -25,7 +25,7 @@ module.exports = {
       const data = await readJSON(filePath);
 
       // ユーザー入力を取得しtrim
-      const apiKeyRaw = interaction.fields.getTextInputValue('api_key')?.trim() ?? '';
+      const apiKeyRaw = interaction.fields.getTextInputValue('chatgpt_api_key')?.trim() ?? '';
       const maxTokensRaw = interaction.fields.getTextInputValue('chatgpt_max_tokens')?.trim() ?? '';
       const temperatureRaw = interaction.fields.getTextInputValue('chatgpt_temperature')?.trim() ?? '';
 
