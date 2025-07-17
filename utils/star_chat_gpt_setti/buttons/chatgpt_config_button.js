@@ -16,7 +16,7 @@ module.exports = {
         .setTitle('⚙️ ChatGPT設定');
 
       const apiKeyInput = new TextInputBuilder()
-        .setCustomId('chatgpt_api_key')
+        .setCustomId('star_chat_gpt_config_api_key')
         .setLabel('ChatGPT APIキー')
         .setStyle(TextInputStyle.Short)
         .setPlaceholder('sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx')
