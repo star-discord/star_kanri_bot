@@ -64,6 +64,7 @@ class ConfigManager {
    */
   async getGuildConfig(guildId) {
     if (this.configCache.has(guildId))  {
+
       return this.configCache.get(guildId);
     }
     const jsonPath = await this.getJsonPath(guildId);
@@ -74,17 +75,10 @@ class ConfigManager {
   }
 
   /**
-   * ギルド設定を保存
-   * 
+   * ギルド設定を保存（排他制御付き）
    * @param {string} guildId
    * @param {object} config
-   */
-  async saveGuildConfig(guildId, config) {
-    const jsonPath = await this.getJsonPath(guildId);
-    await writeJSON(jsonPath, config);
-   * @param {string} guildId
-   * @param {object} config
-   * @param {string} context - ロックエラー時のデバッグ用コンテキスト
+   * @param {string} [context='Unknown Context'] - ロックエラー時のデバッグ用コンテキスト
    * @returns {Promise<void>}
    */
   async saveGuildConfig(guildId, config, context = 'Unknown Context') {
@@ -155,7 +149,7 @@ class ConfigManager {
 
 
     for (const [key, value] of Object.entries(config)) {
-      if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+       if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
         merged[key] = { ...merged[key], ...value };
       } else {
         merged[key] = value;
@@ -167,8 +161,8 @@ class ConfigManager {
 
   /**
    * STAR管理者権限をチェック
-  * @param {string} guildId
    * @param {string} guildId 
+
    * @param {import('discord.js').GuildMember} member 
    * @returns {Promise<boolean>}
    */
