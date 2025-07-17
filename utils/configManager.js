@@ -63,7 +63,7 @@ class ConfigManager {
    * @returns {Promise<object>}
    */
   async getGuildConfig(guildId) {
-    if (this.configCache.has(guildId)) {
+    if (this.configCache.has(guildId))  {
       return this.configCache.get(guildId);
     }
     const jsonPath = await this.getJsonPath(guildId);
@@ -75,6 +75,13 @@ class ConfigManager {
 
   /**
    * ギルド設定を保存
+   * 
+   * @param {string} guildId
+   * @param {object} config
+   */
+  async saveGuildConfig(guildId, config) {
+    const jsonPath = await this.getJsonPath(guildId);
+    await writeJSON(jsonPath, config);
    * @param {string} guildId
    * @param {object} config
    * @param {string} context - ロックエラー時のデバッグ用コンテキスト
@@ -137,6 +144,7 @@ class ConfigManager {
   }
 
   /**
+  * @param {string} guildId
    * デフォルト値とマージ
    * @private
    * @param {object} config 
@@ -144,6 +152,7 @@ class ConfigManager {
    */
   _mergeWithDefaults(config) {
     const merged = { ...this.defaultConfig };
+
 
     for (const [key, value] of Object.entries(config)) {
       if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
@@ -158,6 +167,7 @@ class ConfigManager {
 
   /**
    * STAR管理者権限をチェック
+  * @param {string} guildId
    * @param {string} guildId 
    * @param {import('discord.js').GuildMember} member 
    * @returns {Promise<boolean>}

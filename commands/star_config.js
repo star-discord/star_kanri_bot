@@ -46,10 +46,10 @@ module.exports = {
       const currentNotifyChannelId = config.star?.notifyChannelId || null;
 
       const getSettingsEmbed = (roleIds, notifyId) => {
-        const roleMentions =
+      const roleMentions =
           roleIds.length > 0
             ? roleIds.map(id => {
-                const role = guild.roles.cache.get(id);
+            const role = guild.roles.cache.get(id);
                 return role ? `<@&${id}>` : `~~(削除済ロール: ${id})~~`;
               }).join('\n')
             : '*未設定*';
