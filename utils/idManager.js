@@ -55,6 +55,9 @@ class IdManager {
     switch (category) {
       case 'star_config':
         return `star_config:${action}`;
+          case 'star_chat_gpt_setti':
+        return `star_chat_gpt_setti:${action}`;
+
       case 'star_chat_gpt_config':
         return `star_chat_gpt_config:${action}`;
       case 'totusuna_setti':

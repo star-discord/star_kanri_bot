@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, MessageFlagsBitField } = require('discord.js');
 const { checkAdmin } = require('../utils/permissions/checkAdmin');
 const { createAdminEmbed } = require('../utils/embedHelper');
+const { idManager } = require('../utils/idManager');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -22,11 +23,11 @@ module.exports = {
       // ボタンの customId を明確に統一
       const row = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
-          .setCustomId('star_chat_gpt_setti_button')
+          .setCustomId(idManager.createButtonId('star_chat_gpt_setti', 'today_gpt'))
           .setLabel('🤖 今日のChatGPT')
           .setStyle(ButtonStyle.Primary),
         new ButtonBuilder()
-          .setCustomId('star_chatgpt_setti_config_button')
+          .setCustomId(idManager.createButtonId('star_chat_gpt_setti', 'open_config'))
           .setLabel('⚙️ 設定')
           .setStyle(ButtonStyle.Secondary)
       );
