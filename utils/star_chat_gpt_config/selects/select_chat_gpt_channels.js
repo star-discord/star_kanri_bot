@@ -12,7 +12,7 @@ module.exports = {
    */
   async handle(interaction) {
     try {
-      await interaction.deferReply({ ephemeral: true });
+      await interaction.deferReply({ flags: MessageFlagsBitField.Flags.Ephemeral });
 
       // 選択されたチャンネルID（複数選択可）
       const selectedChannels = interaction.values;

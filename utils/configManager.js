@@ -31,7 +31,8 @@ class ConfigManager {
       chatgpt: {
         apiKey: '',
         maxTokens: 150,
-        temperature: 0.7
+        temperature: 0.7,
+        persona: null,
       },
       totusuna: {
         instances: []

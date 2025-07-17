@@ -13,6 +13,7 @@ module.exports = {
       const apiKey = interaction.fields.getTextInputValue('star_chat_gpt_config_api_key')?.trim() || null;
       const maxTokensStr = interaction.fields.getTextInputValue('max_tokens')?.trim();
       const temperatureStr = interaction.fields.getTextInputValue('temperature')?.trim();
+      const persona = interaction.fields.getTextInputValue('persona')?.trim() || null;
 
       const maxTokens = Number(maxTokensStr); 
       const temperature = Number(temperatureStr); 
@@ -37,6 +38,7 @@ module.exports = {
       config.apiKey = apiKey;
       config.maxTokens = maxTokens;
       config.temperature = temperature;
+      config.persona = persona; // 🎯 ← 追加ポイント
 
       await saveChatGPTConfig(interaction.guildId, config);
 
@@ -45,14 +47,16 @@ module.exports = {
          apiKey: apiKey ? '設定' : '未設定',
         maxTokens: config.maxTokens,
         temperature: config.temperature,
+        persona: persona ? '設定済み' : '未設定',
        });
 
        const embed = {
          title: '✅ ChatGPT設定を更新しました',
          fields: [
-           { name: 'APIキー', value: apiKey ? '設定済み（セキュリティのため表示されません）' : '未設定', inline: false },
+           { name: 'APIキー', value: apiKey ? '✅ 設定済み（セキュリティのため表示されません）' : '⚠️ 未設定', inline: false },
           { name: '1回の最大返答文字数（max_tokens）', value: `${config.maxTokens}文字`, inline: true },
           { name: '応答のランダム性（temperature）', value: `${config.temperature}`, inline: true },
+          { name: '性格（プロンプト）', value: persona || '⚠️ 未設定', inline: false },
          ],
          color: 0x00FF00,
       };
@@ -79,7 +83,8 @@ module.exports = {
           .setPlaceholder('ChatGPTを有効にするチャンネルを選択 (複数可)')
           .setMinValues(1)
           .setMaxValues(Math.min(textChannels.length, 25))
-          .addOptions(textChannels);
+          .addOptions(textChannels)
+          .setDefaultValues(config.chat_gpt_channels || []);
 
         const row = new ActionRowBuilder().addComponents(selectMenu);
         await interaction.editReply({ embeds: [embed], components: [row] });

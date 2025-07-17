@@ -7,10 +7,9 @@ const {
   TextInputStyle,
 } = require('discord.js');
 const { getChatGPTConfig } = require('../configManager');
-const { safeShowModal } = require('../../safeReply');
 
 module.exports = {
-  customId: 'star_chat_gpt:open_config_modal',
+  customId: 'star_chat_gpt_config:open_config_modal',
   /**
    * ChatGPT設定用モーダルを表示
    */
@@ -37,11 +36,20 @@ module.exports = {
       .setRequired(true)
       .setValue(config.temperature !== undefined ? config.temperature.toString() : '');
 
+    const personaInput = new TextInputBuilder()
+      .setCustomId('persona')
+      .setLabel('性格（任意）')
+      .setStyle(TextInputStyle.Paragraph)
+      .setPlaceholder('例: あなたは礼儀正しい執事です。')
+      .setRequired(false)
+      .setValue(config.persona || '');
+
     modal.addComponents(
       new ActionRowBuilder().addComponents(maxTokensInput),
-      new ActionRowBuilder().addComponents(temperatureInput)
+      new ActionRowBuilder().addComponents(temperatureInput),
+      new ActionRowBuilder().addComponents(personaInput)
     );
-
-    await safeShowModal(interaction, modal);
+    
+    await interaction.showModal(modal);
   },
 };

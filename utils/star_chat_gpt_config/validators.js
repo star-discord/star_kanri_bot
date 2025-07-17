@@ -2,7 +2,7 @@
 
 function validateMaxTokens(value) {
   const n = Number(value);
-  return Number.isInteger(n) && n > 0;
+  return Number.isInteger(n) && n > 0 && n <= 4096;
 }
 
 function validateTemperature(value) {

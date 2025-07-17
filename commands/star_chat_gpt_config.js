@@ -4,7 +4,7 @@ const { logAndReplyError } = require('../utils/errorHelper');
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('star_chat_gpt_config')
+    .setName('star管理bot_chat_gpt設定')
     .setDescription('ChatGPTの応答設定をモーダルで行います'),
 
   async execute(interaction) {
@@ -43,7 +43,15 @@ module.exports = {
         new ActionRowBuilder().addComponents(apiKeyInput),
         new ActionRowBuilder().addComponents(maxTokensInput),
         new ActionRowBuilder().addComponents(temperatureInput),
+        new ActionRowBuilder().addComponents(personaInput)
       );
+
+      const personaInput = new TextInputBuilder()
+        .setCustomId('persona')
+        .setLabel('応答の性格・口調（任意）')
+        .setStyle(TextInputStyle.Paragraph)
+        .setPlaceholder('例: 優しい女性教師のように話してください。')
+        .setRequired(false);
 
       await interaction.showModal(modal);
 
