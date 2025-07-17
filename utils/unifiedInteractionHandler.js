@@ -56,18 +56,20 @@ class UnifiedInteractionHandler {
       'admin_role_select': 'star_config',
       'notify_channel_select': 'star_config',
 
-      // star_chat_gpt_setti - 機能実行とそれに付随する設定
+      // star_chat_gpt_setti - 機能実行・付随設定
       'star_chat_gpt_setti_button': 'star_chat_gpt_setti',
       'star_chatgpt_setti_config_button': 'star_chat_gpt_setti',
       'star_chatgpt_setti_modal': 'star_chat_gpt_setti',
 
-      // star_chat_gpt_config - 設定関連
+      // star_chat_gpt_config - Bot全体の設定関連
       'star_chat_gpt_config_modal': 'star_chat_gpt_config',
       'select_chat_gpt_channels': 'star_chat_gpt_config',
 
-      // totusuna
+      // totusuna_setti - 凸スナ受付・管理
       'totusuna_select_main': 'totusuna_setti',
       'totusuna_select_replicate': 'totusuna_setti',
+
+      // totusuna_config - 設置済み編集
       'totusuna_config_select': 'totusuna_config',
     };
   }
