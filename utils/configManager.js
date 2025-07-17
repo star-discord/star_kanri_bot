@@ -23,6 +23,7 @@ class ConfigManager {
   constructor() {
     this.pathCache = new Map(); // ギルドごとのJSONパスをキャッシュ
     this.mutexes = new Map(); // ファイルパスごとのMutexインスタンスをキャッシュ
+    this.configCache = new Map(); // ギルドごとの設定データをキャッシュ
     this.defaultConfig = {
       star: {
         adminRoleIds: [],
@@ -62,9 +63,14 @@ class ConfigManager {
    * @returns {Promise<object>}
    */
   async getGuildConfig(guildId) {
+    if (this.configCache.has(guildId)) {
+      return this.configCache.get(guildId);
+    }
     const jsonPath = await this.getJsonPath(guildId);
     const config = await readJSON(jsonPath);
-    return this._mergeWithDefaults(config);
+    const mergedConfig = this._mergeWithDefaults(config);
+    this.configCache.set(guildId, mergedConfig);
+    return mergedConfig;
   }
 
   /**
@@ -85,6 +91,7 @@ class ConfigManager {
     try {
       await withLock(mutex, async () => {
         await writeJSON(jsonPath, config);
+        this.invalidateCache(guildId); // 保存後にキャッシュを無効化
       });
     } catch (e) {
       if (e === E_TIMEOUT) {
@@ -116,6 +123,17 @@ class ConfigManager {
     const config = await this.getGuildConfig(guildId);
     config[section] = { ...(config[section] ?? {}), ...sectionConfig };
     await this.saveGuildConfig(guildId, config, `updateSectionConfig: ${section}`);
+  }
+
+  /**
+   * 指定されたギルドの設定キャッシュを無効化する
+   * @param {string} guildId
+   */
+  invalidateCache(guildId) {
+    if (this.configCache.has(guildId)) {
+      this.configCache.delete(guildId);
+      console.log(`[ConfigManager] Guild ${guildId} の設定キャッシュを無効化しました。`);
+    }
   }
 
   /**
