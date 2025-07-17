@@ -63,7 +63,7 @@ class UnifiedInteractionHandler {
 
       // star_chat_gpt_config - Bot全体の設定関連
       'star_chat_gpt_config_modal': 'star_chat_gpt_config',
-      'select_chat_gpt_channels': 'star_chat_gpt_config',
+      'star_chat_gpt_config_select_channels': 'star_chat_gpt_config',
 
       // totusuna_setti - 凸スナ受付・管理
       'totusuna_select_main': 'totusuna_setti',

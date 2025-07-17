@@ -4,7 +4,7 @@ const { safeReply } = require('../../safeReply');
 const { getChatGPTConfig, saveChatGPTConfig } = require('../configManager');
 
 module.exports = {
-  customId: 'select_chat_gpt_channels',
+  customId: 'star_chat_gpt_config_select_channels',
 
   /**
    * @param {import('discord.js').SelectMenuInteraction} interaction
@@ -25,7 +25,7 @@ module.exports = {
         flags: require('discord.js').MessageFlagsBitField.Flags.Ephemeral,
       });
     } catch (error) {
-      console.error('select_chat_gpt_channels処理中にエラー:', error);
+      console.error('star_chat_gpt_config_select_channels処理中にエラー:', error);
       await safeReply(interaction, {
         content: 'エラーが発生しました。もう一度お試しください。',
         flags: require('discord.js').MessageFlagsBitField.Flags.Ephemeral,
