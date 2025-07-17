@@ -36,7 +36,7 @@ async function fetchInfo(type, guildId) {
 }
 
 module.exports = {
-  customId: 'star_chat_gpt_setti_button',
+  customId: 'star_chat_gpt_setti:main', // プレフィックス形式に統一
 
   /**
    * ボタン押下時の処理
@@ -84,12 +84,12 @@ module.exports = {
 
       // ボタンを再作成
       const infoButton = new ButtonBuilder()
-        .setCustomId('star_chat_gpt_setti_button')
+        .setCustomId('star_chat_gpt_setti:main') // プレフィックス形式に統一
         .setLabel('🤖 今日のChatGPT')
         .setStyle(ButtonStyle.Primary);
 
       const configButton = new ButtonBuilder()
-        .setCustomId('star_chatgpt_setti_config_button')
+        .setCustomId('star_chat_gpt_setti:open_config') // プレフィックス形式に統一
         .setLabel('⚙️ 設定')
         .setStyle(ButtonStyle.Secondary);
 

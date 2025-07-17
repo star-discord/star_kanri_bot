@@ -15,8 +15,8 @@ module.exports = {
       const temperatureStr = interaction.fields.getTextInputValue('temperature')?.trim();
       const persona = interaction.fields.getTextInputValue('persona')?.trim() || null;
 
-      const maxTokens = Number(maxTokensStr); 
-      const temperature = Number(temperatureStr); 
+      const maxTokens = Number(maxTokensStr);
+      const temperature = Number(temperatureStr);
       
       // バリデーション
       if (
@@ -42,23 +42,23 @@ module.exports = {
 
       await saveChatGPTConfig(interaction.guildId, config);
 
-       // 設定更新のログ出力 (APIキーはマスク)
-       console.log(`[star_chat_gpt_config_modal] 設定更新 (Guild: ${interaction.guildId})`, {
-         apiKey: apiKey ? '設定' : '未設定',
+      // 設定更新のログ出力 (APIキーはマスク)
+      console.log(`[star_chat_gpt_config_modal] 設定更新 (Guild: ${interaction.guildId})`, {
+        apiKey: apiKey ? '設定' : '未設定',
         maxTokens: config.maxTokens,
         temperature: config.temperature,
         persona: persona ? '設定済み' : '未設定',
-       });
+      });
 
-       const embed = {
-         title: '✅ ChatGPT設定を更新しました',
-         fields: [
-           { name: 'APIキー', value: apiKey ? '✅ 設定済み（セキュリティのため表示されません）' : '⚠️ 未設定', inline: false },
+      const embed = {
+        title: '✅ ChatGPT設定を更新しました',
+        fields: [
+          { name: 'APIキー', value: apiKey ? '✅ 設定済み（セキュリティのため表示されません）' : '⚠️ 未設定', inline: false },
           { name: '1回の最大返答文字数（max_tokens）', value: `${config.maxTokens}文字`, inline: true },
           { name: '応答のランダム性（temperature）', value: `${config.temperature}`, inline: true },
           { name: '性格（プロンプト）', value: persona || '⚠️ 未設定', inline: false },
-         ],
-         color: 0x00FF00,
+        ],
+        color: 0x00FF00,
       };
 
       // Bot 自身の Member オブジェクトを取得

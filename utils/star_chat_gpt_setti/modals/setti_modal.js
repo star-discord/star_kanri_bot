@@ -6,7 +6,7 @@ const { ensureGuildJSON, readJSON, writeJSON } = require('../../../utils/fileHel
 const { createSuccessEmbed } = require('../../../utils/embedHelper');
 
 module.exports = {
- customId: 'star_chat_gpt_setti_modal',
+  customId: 'star_chat_gpt_setti_modal',
 
   async handle(interaction) {
     console.log('[star_chat_gpt_setti_modal] 処理開始:', { user: interaction.user.tag, guild: interaction.guildId });
