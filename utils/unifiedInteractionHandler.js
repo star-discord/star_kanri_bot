@@ -58,6 +58,7 @@ class UnifiedInteractionHandler {
 
       // star_chat_gpt_setti
       'chatgpt_config_button': 'star_chat_gpt_setti',
+      'star_chat_gpt_setti_button': 'star_chat_gpt_setti',
       'chatgpt_config_modal': 'star_chat_gpt_setti',
 
       // totusuna
