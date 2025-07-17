@@ -3,7 +3,7 @@ const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, Messag
 const { safeReply } = require('../../safeReply');
 
 module.exports = {
-  customId: 'star_chatgpt_setti_config_button',
+  customId: 'star_chat_gpt_setti:open_config', // プレフィックス形式に統一
 
   /**
    * ボタン押下時の処理（モーダル表示）
@@ -12,7 +12,7 @@ module.exports = {
   async handle(interaction) {
     try {
       const modal = new ModalBuilder()
-        .setCustomId('star_chatgpt_setti_modal')
+        .setCustomId('star_chat_gpt_setti_modal') // モーダルハンドラと一致させる
         .setTitle('⚙️ ChatGPT設定');
 
       const apiKeyInput = new TextInputBuilder()
@@ -23,14 +23,14 @@ module.exports = {
         .setRequired(false);
 
       const maxTokensInput = new TextInputBuilder()
-        .setCustomId('chatgpt_max_tokens')
+        .setCustomId('max_tokens') // モーダルハンドラと一致させる
         .setLabel('1回の最大返答文字数')
         .setStyle(TextInputStyle.Short)
         .setPlaceholder('例: 500')
         .setRequired(false);
 
       const temperatureInput = new TextInputBuilder()
-        .setCustomId('chatgpt_temperature')
+        .setCustomId('temperature') // モーダルハンドラと一致させる
         .setLabel('ChatGPTの曖昧さ (0〜1)')
         .setStyle(TextInputStyle.Short)
         .setPlaceholder('例: 0.7')
