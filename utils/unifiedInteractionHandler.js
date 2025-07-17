@@ -60,7 +60,6 @@ class UnifiedInteractionHandler {
       'star_chat_gpt_setti_button': 'star_chat_gpt_setti',
       'star_chatgpt_setti_config_button': 'star_chat_gpt_setti',
       'star_chatgpt_setti_modal': 'star_chat_gpt_setti',
-
       // star_chat_gpt_config - Bot全体の設定関連
       'star_chat_gpt_config_modal': 'star_chat_gpt_config',
       'star_chat_gpt_config_select_channels': 'star_chat_gpt_config',

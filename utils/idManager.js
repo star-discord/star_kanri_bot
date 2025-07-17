@@ -12,7 +12,7 @@ class IdManager {
       // ボタンID
       buttons: {
         star_config: 'star_config:{action}',
-        star_chat_gpt: 'star_chat_gpt_{action}',
+        star_chat_gpt_config: 'star_chat_gpt_config:{action}',
         totusuna_setti: 'totusuna_setti:{action}:{uuid?}',
         totusuna_config: 'totusuna_config:{action}:{uuid?}',
         totusuna_report: 'totusuna:report:{uuid}',
@@ -55,9 +55,8 @@ class IdManager {
     switch (category) {
       case 'star_config':
         return `star_config:${action}`;
-      case 'star_chat_gpt':
-        return `star_chat_gpt_${action}`;
-      case 'totusuna_setti':
+      case 'star_chat_gpt_config':
+        return `star_chat_gpt_config:${action}`;
         return uuid ? `totusuna_setti:${action}:${uuid}` : `totusuna_setti:${action}`;
       case 'totusuna_config':
         return uuid ? `totusuna_config:${action}:${uuid}` : `totusuna_config:${action}`;
@@ -81,8 +80,8 @@ class IdManager {
     switch (category) {
       case 'star_config':
         return `star_config_modal_${action}`;
-      case 'star_chat_gpt':
-        return 'chatgpt_config_modal';
+      case 'star_chat_gpt_config':
+        return 'star_chat_gpt_config_modal';
       case 'totusuna_setti':
         return uuid ? `totusuna_modal_${action}:${uuid}` : `totusuna_modal_${action}`;
       case 'totusuna_config':
@@ -218,6 +217,7 @@ class IdManager {
     return parsed;
   }
 }
+
 
 // シングルトンインスタンス
 const idManager = new IdManager();

@@ -1,11 +1,13 @@
-const { SlashCommandBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, MessageFlagsBitField } = require('discord.js');
+const { SlashCommandBuilder, EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, MessageFlagsBitField } = require('discord.js');
 const { checkAdmin } = require('../utils/permissions/checkAdmin');
 const { logAndReplyError } = require('../utils/errorHelper');
+const { getChatGPTConfig } = require('../utils/star_chat_gpt_config/configManager');
+const { idManager } = require('../utils/idManager');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('star管理bot_chat_gpt設定')
-    .setDescription('ChatGPTの応答設定をモーダルで行います'),
+    .setDescription('ChatGPTの応答設定を表示・編集します'),
 
   async execute(interaction) {
     try {
@@ -14,46 +16,31 @@ module.exports = {
         return interaction.reply({ content: '❌ 権限がありません。管理者のみ使用可能です。', flags: MessageFlagsBitField.Flags.Ephemeral });
       }
 
-      const modal = new ModalBuilder()
-        .setCustomId('star_chat_gpt_config_modal')
-        .setTitle('ChatGPT設定');
+      const config = await getChatGPTConfig(interaction.guildId);
 
-      const apiKeyInput = new TextInputBuilder()
-        .setCustomId('star_chat_gpt_config_api_key')
-        .setLabel('APIキー (任意)')
-        .setStyle(TextInputStyle.Short)
-        .setPlaceholder('sk-********************************')
-        .setRequired(false);
+      const embed = new EmbedBuilder()
+        .setTitle('ChatGPT設定')
+        .setColor(0x00FF00)
+        .addFields(
+          { name: 'APIキー', value: config.apiKey ? '✅ 設定済み（非表示）' : '⚠️ 未設定', inline: false },
+          { name: '最大応答文字数', value: (config.maxTokens ?? '未設定').toString(), inline: true },
+          { name: '曖昧さ (temperature)', value: (config.temperature ?? '未設定').toString(), inline: true },
+          { name: '応答の性格・口調', value: config.persona || '未設定', inline: false },
+          { name: '有効チャンネル', value: (config.chat_gpt_channels?.length ?? 0) > 0 ? config.chat_gpt_channels.map(id => `<#${id}>`).join('\n') : '未設定', inline: false }
+        );
 
-      const maxTokensInput = new TextInputBuilder()
-        .setCustomId('max_tokens')
-        .setLabel('最大応答文字数')
-        .setStyle(TextInputStyle.Short)
-        .setPlaceholder('例: 500')
-        .setRequired(true);
-
-      const temperatureInput = new TextInputBuilder()
-        .setCustomId('temperature')
-        .setLabel('ChatGPTの曖昧さ (0〜1)')
-        .setStyle(TextInputStyle.Short)
-        .setPlaceholder('例: 0.7')
-        .setRequired(true);
-
-      modal.addComponents(
-        new ActionRowBuilder().addComponents(apiKeyInput),
-        new ActionRowBuilder().addComponents(maxTokensInput),
-        new ActionRowBuilder().addComponents(temperatureInput),
-        new ActionRowBuilder().addComponents(personaInput)
+      const buttonRow = new ActionRowBuilder().addComponents(
+        new ButtonBuilder()
+          .setCustomId(idManager.createButtonId('star_chat_gpt_config', 'edit_basic_settings'))
+          .setLabel('基本設定を修正')
+          .setStyle(ButtonStyle.Primary),
+        new ButtonBuilder()
+          .setCustomId(idManager.createButtonId('star_chat_gpt_config', 'edit_channels'))
+          .setLabel('対応チャンネルを修正')
+          .setStyle(ButtonStyle.Secondary),
       );
 
-      const personaInput = new TextInputBuilder()
-        .setCustomId('persona')
-        .setLabel('応答の性格・口調（任意）')
-        .setStyle(TextInputStyle.Paragraph)
-        .setPlaceholder('例: 優しい女性教師のように話してください。')
-        .setRequired(false);
-
-      await interaction.showModal(modal);
+      await interaction.reply({ embeds: [embed], components: [buttonRow], ephemeral: true });
 
     } catch (error) {
       console.error('star_chat_gpt_config 実行エラー:', error);
