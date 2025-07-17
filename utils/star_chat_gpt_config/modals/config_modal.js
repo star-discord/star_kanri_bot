@@ -1,5 +1,5 @@
 // utils/star_chat_gpt_config/modals/config_modal.js
-
+const { ActionRowBuilder, StringSelectMenuBuilder, MessageFlagsBitField } = require('discord.js');
 const { getChatGPTConfig, saveChatGPTConfig } = require('../configManager');
 const { safeReply, safeDefer } = require('../../safeReply');
 const { MessageFlagsBitField, ActionRowBuilder, StringSelectMenuBuilder } = require('discord.js');
@@ -40,37 +40,42 @@ module.exports = {
 
       await saveChatGPTConfig(interaction.guildId, config);
 
-      console.log(`[star_chat_gpt_config_modal] 設定更新 (Guild: ${interaction.guildId})`, {
-        apiKey: apiKey ? '設定' : '未設定',  // APIキーは表示しない
-        maxTokens: config.maxTokens,
-        temperature: config.temperature,
-      });
+       // 設定更新のログ出力 (APIキーはマスク)
+       console.log(`[star_chat_gpt_config_modal] 設定更新 (Guild: ${interaction.guildId})`, {
+         apiKey: apiKey ? '設定' : '未設定',
+         maxTokens: config.maxTokens,
+         temperature: config.temperature,
+       });
 
-      const embed = {
-        title: '✅ ChatGPT設定を更新しました',
-        fields: [
-          {
-            name: 'APIキー',
-            value: apiKey ? '設定済み（セキュリティのため表示されません）' : '未設定',
-            inline: false
-          },
-          {
-            name: '1回の最大返答文字数（max_tokens）',
-            value: `${config.maxTokens}文字`,
-            inline: false
-          },
-          {
-            name: '応答のランダム性（temperature）',
-            value: `${config.temperature}`,
-            inline: false
-          }
-        ],
-        color: 0x00FF00,
-      };
-      await interaction.editReply({ embeds: [embed],
-        flags: MessageFlagsBitField.Flags.Ephemeral,
-      });
+       // 設定完了のEmbed
+       const embed = {
+         title: '✅ ChatGPT設定を更新しました',
+         fields: [
+           { name: 'APIキー', value: apiKey ? '設定済み（セキュリティのため表示されません）' : '未設定', inline: false },
+           { name: '1回の最大返答文字数（max_tokens）', value: `${config.maxTokens}文字`, inline: false },
+           { name: '応答のランダム性（temperature）', value: `${config.temperature}`, inline: false },
+         ],
+         color: 0x00FF00,
+       };
 
+       // チャンネル選択メニューを構築、チャンネルリストが空でない場合のみ選択肢を追加
+       const selectMenu = new StringSelectMenuBuilder()
+         .setCustomId('star_chat_gpt_config_select_channels') // 修正済みの customId
+         .setPlaceholder('ChatGPTを有効にするチャンネルを選択 (複数可)')
+         .setMinValues(1);
+       const row = new ActionRowBuilder().addComponents(selectMenu);
+
+       await interaction.editReply({ embeds: [embed], components: [row] });
+      const textChannels = interaction.guild.channels.cache
+        .filter(c => c.isTextBased())
+        .map(c => ({
+          label: c.name,
+          description: `ID: ${c.id}`,
+          value: c.id,
+        }))
+        .slice(0, 25);
+
+      if (textChannels.length > 0) {
     } catch (error) {
       console.error(`⚠️ ChatGPT設定モーダル処理エラー (Guild: ${interaction.guildId}):`, error);
       await safeReply(interaction, {
