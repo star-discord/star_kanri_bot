@@ -21,7 +21,7 @@ class IdManager {
       // モーダルID
       modals: {
         star_config: 'star_config_modal_{action}',
-        star_chat_gpt: 'chatgpt_config_modal',
+        star_chat_gpt_config: 'star_chat_gpt_config_modal',
         totusuna_setti: 'totusuna_modal_{action}:{uuid?}',
         totusuna_config: 'totusuna_config_edit_modal_{uuid}',
         totusuna_report: 'totusuna_modal:{uuid}',
@@ -46,7 +46,7 @@ class IdManager {
 
   /**
    * ボタンIDを生成
-   * @param {string} category - 'star_config', 'star_chat_gpt', 'totusuna_setti', etc.
+   * @param {string} category - 'star_config', 'star_chat_gpt_config', 'totusuna_setti', etc.
    * @param {string} action - アクション名
    * @param {string} [uuid] - UUID（必要な場合）
    * @returns {string}
@@ -55,8 +55,6 @@ class IdManager {
     switch (category) {
       case 'star_config':
         return `star_config:${action}`;
-      case 'star_chat_gpt_setti':
-        return `star_chat_gpt_setti:${action}`;
       case 'star_chat_gpt_config':
         return `star_chat_gpt_config:${action}`;
       case 'totusuna_setti':
@@ -85,6 +83,8 @@ class IdManager {
         return `star_config_modal${action ? `_${action}` : ''}`;
       case 'star_chat_gpt_config':
         return `star_chat_gpt_config_modal${action ? `_${action}` : ''}`;
+      case 'totusuna_setti':
+        return `totusuna_modal_${action}${uuid ? `:${uuid}` : ''}`;
       case 'totusuna_config':
         return `totusuna_config_edit_modal_${uuid}`;
       case 'totusuna_report':
@@ -99,32 +99,30 @@ class IdManager {
   /**
    * customIdを解析してカテゴリ、アクション、UUIDを抽出
    * @param {string} customId 
-   * @returns {object} { category, action, uuid?, type }
+   * @returns {object} { category, action, uuid?, type, originalId }
    */
   parseCustomId(customId) {
-    // 各パターンをチェック
-    // Specific patterns (with fewer wildcards or more segments) should come first.
+    // 解析用のパターン（長いもの優先）
     const patterns = [
-      // --- Most specific patterns first ---
+      // 特殊・具体的なモーダル
       { regex: /^totusuna_config_edit_modal_(.+)$/, category: 'totusuna_config', type: 'modal' },
       { regex: /^totusuna_modal:(.+)$/, category: 'totusuna_report', type: 'modal' },
       { regex: /^totusuna:report:(.+)$/, category: 'totusuna_report', type: 'button' },
-      { regex: /^chatgpt_config_modal$/, category: 'star_chat_gpt', type: 'modal', action: 'config' },
+      { regex: /^chatgpt_config_modal$/, category: 'star_chat_gpt_config', type: 'modal', action: 'config' },
 
-      // --- Patterns with optional UUIDs (Corrected Regex) ---
-      // The regex `([^:]+)(?::(.*))?` correctly captures the action and an optional UUID without capturing the separator colon.
+      // UUIDを含むがアクションもあるパターン（:で区切る）
       { regex: /^totusuna_setti:([^:]+)(?::(.*))?$/, category: 'totusuna_setti', type: 'button' },
       { regex: /^totusuna_modal_([^:]+)(?::(.*))?$/, category: 'totusuna_setti', type: 'modal' },
       { regex: /^totusuna_config:([^:]+)(?::(.*))?$/, category: 'totusuna_config', type: 'button' },
 
-      // --- General category patterns ---
+      // 一般的なモーダル・ボタン・セレクト
       { regex: /^star_config_modal_(.+)$/, category: 'star_config', type: 'modal' },
-      { regex: /^star_config:(.+)$/, category: 'star_config', type: 'select' }, // This is likely a select menu
-      { regex: /^star_chat_gpt_(.+)$/, category: 'star_chat_gpt', type: 'button' },
+      { regex: /^star_config:(.+)$/, category: 'star_config', type: 'select' },
+      { regex: /^star_chat_gpt_config:(.+)$/, category: 'star_chat_gpt_config', type: 'button' },
       { regex: /^kpi_modal_(.+)$/, category: 'kpi', type: 'modal' },
       { regex: /^kpi_(.+)$/, category: 'kpi', type: 'button' },
 
-      // --- Legacy / Hardcoded ID patterns ---
+      // 固定文字列ID（セレクトなど）
       { regex: /^totusuna_config_select$/, category: 'totusuna_config', type: 'select', action: 'select' },
       { regex: /^admin_role_select$/, category: 'star_config', type: 'select', action: 'admin_role' },
       { regex: /^notify_channel_select$/, category: 'star_config', type: 'select', action: 'notify_channel' },
@@ -137,61 +135,54 @@ class IdManager {
         const result = {
           category: pattern.category,
           type: pattern.type,
-          originalId: customId
+          originalId: customId,
         };
-
-        if (pattern.action) {
-          result.action = pattern.action;
-        } else if (match[1]) {
-          result.action = match[1];
-        }
+        // actionは固定指定があればそれを優先、それ以外はmatch[1]
+        result.action = pattern.action ?? match[1] ?? 'unknown';
 
         if (match[2] && match[2].length > 0) {
           result.uuid = match[2];
         }
-
         return result;
       }
     }
 
-    // 解析に失敗した場合
+    // 解析失敗時はunknown
     return {
       category: 'unknown',
       type: 'unknown',
       action: 'unknown',
-      originalId: customId
+      originalId: customId,
     };
   }
 
   /**
-   * customIdが特定のカテゴリに属するかチェック
+   * customIdが特定のカテゴリに属するか判定
    * @param {string} customId 
    * @param {string} category 
    * @returns {boolean}
    */
   belongsToCategory(customId, category) {
-    const parsed = this.parseCustomId(customId);
-    return parsed.category === category;
+    return this.parseCustomId(customId).category === category;
   }
 
   /**
-   * 名前正規化（統一化）
-   * totusuna ↔ totusuna の統一など
+   * 名前の正規化（例: totusunaの別表記統一）
    * @param {string} name 
    * @returns {string}
    */
   normalizeName(name) {
     const normalizations = {
-      'totsuna': 'totusuna', // Corrected duplicate key
+      'totsuna': 'totusuna',
       'toutsuna': 'totusuna',
     };
-    
-    return normalizations[name] || name;
+    return normalizations[name] ?? name;
   }
 
   /**
-   * デバッグ用：現在のID解析結果を表示
+   * デバッグ用にID解析結果をコンソール出力
    * @param {string} customId 
+   * @returns {object} 解析結果
    */
   debugParseId(customId) {
     const parsed = this.parseCustomId(customId);
@@ -200,11 +191,10 @@ class IdManager {
   }
 }
 
-
 // シングルトンインスタンス
 const idManager = new IdManager();
 
 module.exports = {
   IdManager,
-  idManager
+  idManager,
 };

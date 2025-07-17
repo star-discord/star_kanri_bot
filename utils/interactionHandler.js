@@ -12,7 +12,7 @@ const { MessageFlagsBitField } = require('discord.js');
 const handlerFinders = {
   button: {
     star_config: loadHandlers(path.join(__dirname, 'star_config/buttons')),
-    star_chat_gpt_setti: loadHandlers(path.join(__dirname, 'star_chat_gpt_setti/buttons')),
+    star_chat_gpt_config: loadHandlers(path.join(__dirname, 'star_chat_gpt_config/buttons')),
     totusuna_setti: loadHandlers(path.join(__dirname, 'totusuna_setti/buttons')),
     totusuna_config: loadHandlers(path.join(__dirname, 'totusuna_config/buttons')),
     kpi_setti: loadHandlers(path.join(__dirname, 'kpi_setti/buttons')),
@@ -20,7 +20,7 @@ const handlerFinders = {
   },
   select: {
     star_config: loadHandlers(path.join(__dirname, 'star_config/selects')),
-    star_chat_gpt_setti: loadHandlers(path.join(__dirname, 'star_chat_gpt_setti/selects')),
+    star_chat_gpt_config: loadHandlers(path.join(__dirname, 'star_chat_gpt_config/selects')),
     totusuna_setti: loadHandlers(path.join(__dirname, 'totusuna_setti/selects')),
     totusuna_config: loadHandlers(path.join(__dirname, 'totusuna_config/selects')),
     kpi_setti: loadHandlers(path.join(__dirname, 'kpi_setti/selects')),

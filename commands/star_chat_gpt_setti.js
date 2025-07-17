@@ -17,9 +17,12 @@ module.exports = {
     .setDescription('指定チャンネルにChatGPT案内メッセージとボタンを設置します'),
 
   async execute(interaction) {
+    let alreadyAcknowledged = false;
+
     try {
-      // 3秒ルール回避のため、ephemeralで遅延応答
+      // すぐに deferReply で応答確保（遅延を避ける）
       await interaction.deferReply({ flags: MessageFlagsBitField.Flags.Ephemeral });
+      alreadyAcknowledged = true;
 
       const isAdmin = await checkAdmin(interaction);
       if (!isAdmin) {
@@ -45,20 +48,19 @@ module.exports = {
     } catch (error) {
       console.error('star_chat_gpt_setti 実行エラー:', error);
 
-      // 応答の状態をチェックし、安全にエラーメッセージを送信
       try {
-        if (interaction.deferred || interaction.replied) {
-          await interaction.editReply({
-            content: '❌ エラーが発生しました。再度お試しください。',
-          });
-        } else {
+        if (!alreadyAcknowledged) {
           await interaction.reply({
             content: '❌ エラーが発生しました。再度お試しください。',
             flags: MessageFlagsBitField.Flags.Ephemeral,
           });
+        } else {
+          await interaction.editReply({
+            content: '❌ エラーが発生しました。再度お試しください。',
+          });
         }
-      } catch (replyError) {
-        console.error('エラー応答の送信に失敗しました:', replyError);
+      } catch (followupError) {
+        console.error('[safeReply] 応答失敗:', followupError);
       }
     }
   },

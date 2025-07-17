@@ -15,6 +15,7 @@ class MigrationHelper {
   /**
    * ファイルをバックアップ
    * @param {string} filePath 
+   * @returns {Promise<boolean>}
    */
   async backupFile(filePath) {
     if (!fs.existsSync(filePath)) return false;
@@ -38,37 +39,6 @@ class MigrationHelper {
   }
 
   /**
-   * 重複するハンドラーファイルを特定
-   * @returns {object}
-   */
-  findDuplicateHandlers() {
-    const duplicates = {
-      buttons: [],
-      modals: [],
-      selects: [],
-      handlers: []
-    };
-
-    // ボタンハンドラーファイルを検索
-    const buttonFiles = this.findFilesByPattern('**/buttons.js');
-    duplicates.buttons = buttonFiles;
-
-    // モーダルハンドラーファイルを検索
-    const modalFiles = this.findFilesByPattern('**/modals.js');
-    duplicates.modals = modalFiles;
-
-    // セレクトハンドラーファイルを検索
-    const selectFiles = this.findFilesByPattern('**/selects.js');
-    duplicates.selects = selectFiles;
-
-    // その他のハンドラーファイル
-    const handlerFiles = this.findFilesByPattern('**/*Handler.js');
-    duplicates.handlers = handlerFiles;
-
-    return duplicates;
-  }
-
-  /**
    * パターンに一致するファイルを検索
    * @param {string} pattern 
    * @returns {string[]}
@@ -84,11 +54,10 @@ class MigrationHelper {
         const fullPath = path.join(dir, entry.name);
 
         if (entry.isDirectory()) {
-          // ディレクトリの場合は再帰的に検索
+          // 再帰的に検索
           search(fullPath);
         } else if (entry.isFile()) {
-          // ファイルの場合はパターンマッチング
-          const relativePath = path.relative(searchDir, fullPath);
+          const relativePath = path.relative(searchDir, fullPath).replace(/\\/g, '/');
           if (this.matchPattern(relativePath, pattern)) {
             results.push(fullPath);
           }
@@ -101,20 +70,31 @@ class MigrationHelper {
   }
 
   /**
-   * 簡単なパターンマッチング
+   * 簡易的なパターンマッチング (** と * をサポート)
    * @param {string} filePath 
    * @param {string} pattern 
    * @returns {boolean}
    */
   matchPattern(filePath, pattern) {
-    // 簡単な実装：**と*をサポート
     const regexPattern = pattern
+      .replace(/\./g, '\\.')
       .replace(/\*\*/g, '.*')
-      .replace(/\*/g, '[^/]*')
-      .replace(/\./g, '\\.');
-    
+      .replace(/\*/g, '[^/]*');
     const regex = new RegExp(`^${regexPattern}$`);
-    return regex.test(filePath.replace(/\\/g, '/'));
+    return regex.test(filePath);
+  }
+
+  /**
+   * 重複するハンドラーファイルを特定
+   * @returns {object}
+   */
+  findDuplicateHandlers() {
+    return {
+      buttons: this.findFilesByPattern('**/buttons.js'),
+      modals: this.findFilesByPattern('**/modals.js'),
+      selects: this.findFilesByPattern('**/selects.js'),
+      handlers: this.findFilesByPattern('**/*Handler.js'),
+    };
   }
 
   /**
@@ -126,19 +106,17 @@ class MigrationHelper {
     const analysis = {
       totalFiles: 0,
       integrationCandidates: [],
-      potentialSavings: 0
+      potentialSavings: 0,
     };
 
-    // ファイル数を計算
     for (const [type, files] of Object.entries(duplicates)) {
       analysis.totalFiles += files.length;
-
       if (files.length > 1) {
         analysis.integrationCandidates.push({
           type,
           count: files.length,
-          files: files.map(f => path.relative(this.baseDir, f)),
-          savingsPotential: files.length - 1 // 1つに統合できる
+          files: files.map(f => path.relative(this.baseDir, f).replace(/\\/g, '/')),
+          savingsPotential: files.length - 1,
         });
         analysis.potentialSavings += files.length - 1;
       }
@@ -149,7 +127,7 @@ class MigrationHelper {
 
   /**
    * 使用されていないファイルを特定
-   * @returns {string[]}
+   * @returns {Promise<string[]>}
    */
   async findUnusedFiles() {
     const allFiles = this.findFilesByPattern('**/*.js');
@@ -167,28 +145,27 @@ class MigrationHelper {
   /**
    * ファイルが使用されているかチェック
    * @param {string} filePath 
-   * @returns {boolean}
+   * @returns {Promise<boolean>}
    */
   async isFileUnused(filePath) {
     const fileName = path.basename(filePath, '.js');
     const allFiles = this.findFilesByPattern('**/*.js');
-    
-    // 自分自身を除外
     const otherFiles = allFiles.filter(f => f !== filePath);
 
     for (const otherFile of otherFiles) {
       try {
         const content = fs.readFileSync(otherFile, 'utf8');
-        
-        // require文でインポートされているかチェック
-        if (content.includes(`require('./${fileName}')`) ||
-            content.includes(`require('./${fileName}.js')`) ||
-            content.includes(`require('${fileName}')`) ||
-            content.includes(fileName)) {
+        if (
+          content.includes(`require('./${fileName}')`) ||
+          content.includes(`require('./${fileName}.js')`) ||
+          content.includes(`require('${fileName}')`) ||
+          content.includes(`import ${fileName}`) ||
+          content.includes(fileName)
+        ) {
           return false; // 使用されている
         }
-      } catch (error) {
-        // ファイル読み込みエラーは無視
+      } catch {
+        // 無視
       }
     }
 
@@ -201,24 +178,22 @@ class MigrationHelper {
    */
   generateMigrationReport() {
     const analysis = this.analyzeIntegrationPotential();
-    
+
     let report = '# コード統合分析レポート\n\n';
     report += `**分析日時:** ${new Date().toLocaleString('ja-JP')}\n\n`;
     report += `**総ファイル数:** ${analysis.totalFiles}\n`;
-    report += `**統合可能性:** ${analysis.potentialSavings}ファイル削減可能\n\n`;
+    report += `**統合可能性:** ${analysis.potentialSavings} ファイル削減可能\n\n`;
 
-    if (analysis.integrationCandidates.length > 0) {
+    if (analysis.integrationCandidates.length) {
       report += '## 統合候補\n\n';
-      
       for (const candidate of analysis.integrationCandidates) {
         report += `### ${candidate.type} ファイル\n`;
         report += `- **ファイル数:** ${candidate.count}\n`;
-        report += `- **削減可能:** ${candidate.savingsPotential}ファイル\n`;
+        report += `- **削減可能:** ${candidate.savingsPotential} ファイル\n`;
         report += '- **対象ファイル:**\n';
-        
-        for (const file of candidate.files) {
-          report += `  - \`${file}\`\n`;
-        }
+        candidate.files.forEach(f => {
+          report += `  - \`${f}\`\n`;
+        });
         report += '\n';
       }
     }
@@ -239,8 +214,8 @@ class MigrationHelper {
   }
 
   /**
-   * 自動移行を実行（デモ）
-   * @param {boolean} dryRun - 実際の変更は行わず、ログ出力のみ
+   * 自動移行を実行（デモ用）
+   * @param {boolean} dryRun - trueなら変更なしのログのみ実施
    */
   async performAutoMigration(dryRun = true) {
     console.log('🚀 自動移行を開始します...');
@@ -267,7 +242,7 @@ class MigrationHelper {
     console.log('\n📝 index.js の更新提案:');
     console.log('従来のハンドラー import を以下に置き換え:');
     console.log('const { unifiedHandler } = require(\'./utils/unifiedInteractionHandler\');');
-    
+
     if (dryRun) {
       console.log('\n⚠️  ドライランモードのため実際の変更は行いませんでした');
       console.log('実際の移行を行う場合は performAutoMigration(false) を実行してください');
@@ -282,30 +257,31 @@ class MigrationHelper {
 // シングルトンインスタンス
 const migrationHelper = new MigrationHelper();
 
-// CLI用のスクリプト
+// CLI用スクリプト
 if (require.main === module) {
-  console.log('📊 コード統合分析を実行中...\n');
-  
-  const analysis = migrationHelper.analyzeIntegrationPotential();
-  console.log('分析結果:');
-  console.log(`総ファイル数: ${analysis.totalFiles}`);
-  console.log(`削減可能: ${analysis.potentialSavings} ファイル\n`);
-  
-  if (analysis.integrationCandidates.length > 0) {
-    console.log('統合候補:');
-    analysis.integrationCandidates.forEach(candidate => {
-      console.log(`- ${candidate.type}: ${candidate.count}ファイル → ${candidate.savingsPotential}削減可能`);
-    });
-  }
+  (async () => {
+    console.log('📊 コード統合分析を実行中...\n');
+    
+    const analysis = migrationHelper.analyzeIntegrationPotential();
+    console.log('分析結果:');
+    console.log(`総ファイル数: ${analysis.totalFiles}`);
+    console.log(`削減可能: ${analysis.potentialSavings} ファイル\n`);
+    
+    if (analysis.integrationCandidates.length > 0) {
+      console.log('統合候補:');
+      analysis.integrationCandidates.forEach(candidate => {
+        console.log(`- ${candidate.type}: ${candidate.count}ファイル → ${candidate.savingsPotential}削減可能`);
+      });
+    }
 
-  // レポート生成
-  const report = migrationHelper.generateMigrationReport();
-  const reportPath = path.join(__dirname, 'migration-report.md');
-  require('fs').writeFileSync(reportPath, report);
-  console.log(`\n📄 詳細レポート: ${reportPath}`);
+    const report = migrationHelper.generateMigrationReport();
+    const reportPath = path.join(__dirname, 'migration-report.md');
+    fs.writeFileSync(reportPath, report);
+    console.log(`\n📄 詳細レポート: ${reportPath}`);
+  })();
 }
 
 module.exports = {
   MigrationHelper,
-  migrationHelper
+  migrationHelper,
 };

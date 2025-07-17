@@ -1,43 +1,46 @@
-// utils/errorHelper.js
 const { MessageFlagsBitField } = require('discord.js');
 const fs = require('fs/promises');
 const path = require('path');
 
-const errorHelper = module.exports;
+const LOG_FILE = path.join(__dirname, '..', 'logs', 'error.log');
 
 /**
- * エラーログを出力（コンソール + ファイル）
- * @param {string} source - エラー発生源識別子
- * @param {string} message - エラーメッセージ
- * @param {Error} [error] - スタック情報を含む Error オブジェクト（省略可能）
+ * ログファイルにエラーメッセージを出力
+ * @param {string} message - フォーマット済みログ文字列
  */
-async function logError(source, message, error) {
-  const timestamp = new Date().toISOString();
-  const stack = error?.stack || error?.message || '';
-  const fullMessage = `[${timestamp}] [${source}] ${message}${stack ? `\n${stack}` : ''}`;
-  
-
-  
-  console.error(fullMessage); // コンソール出力
-
+async function logErrorToFile(message) {
   try {
-    const logDir = path.join(__dirname, '..', 'logs');
+    const logDir = path.dirname(LOG_FILE);
     await fs.mkdir(logDir, { recursive: true });
-    const logPath = path.join(logDir, 'error.log');
-    await fs.appendFile(logPath, `${fullMessage}\n`, 'utf8');
-  } catch (fileError) {
-    console.error('[logError] ログファイルへの書き込みに失敗:', fileError);
+    await fs.appendFile(LOG_FILE, message + '\n\n', 'utf8');
+  } catch (err) {
+    console.error('[logErrorToFile] ログファイル書き込み失敗:', err);
   }
 }
 
 /**
- * 応答済みかどうかを判断してユーザーに安全にエラーメッセージを返す
+ * エラー出力（コンソール + ファイル）
+ * @param {string} source - 発生元
+ * @param {string} message - 簡易エラー説明
+ * @param {Error} [error] - 詳細情報を持つ Error オブジェクト
+ */
+async function logError(source, message, error) {
+  const timestamp = new Date().toISOString();
+  const stack = error?.stack || error?.message || '';
+  const fullMessage = `[${timestamp}] [${source}]\n${message}${stack ? `\n${stack}` : ''}`;
+
+  console.error(fullMessage);
+  await logErrorToFile(fullMessage);
+}
+
+/**
+ * 応答済み状態に応じて reply/followUp を安全に実行
  * @param {import('discord.js').Interaction} interaction
- * @param {string} content - メッセージ内容
- * @param {object} [options] - flags, embeds, components など
+ * @param {string} content
+ * @param {object} [options]
  */
 async function safeReplyToUser(interaction, content, options = {}) {
-  const replyOptions = {
+  const replyPayload = {
     content,
     embeds: [],
     components: [],
@@ -46,37 +49,41 @@ async function safeReplyToUser(interaction, content, options = {}) {
   };
 
   try {
-    if (interaction.replied || interaction.deferred) {
-      await interaction.followUp(replyOptions);
+    if (interaction.deferred || interaction.replied) {
+      await interaction.followUp(replyPayload);
     } else {
-      await interaction.reply(replyOptions);
+      await interaction.reply(replyPayload);
     }
   } catch (err) {
-    console.error('[safeReplyToUser] 応答失敗:', err.message, {
+    console.error('[safeReplyToUser] 応答失敗:', {
+      error: err.message,
       interactionId: interaction.id,
-      customId: interaction.customId,
+      customId: interaction.customId ?? '(no customId)',
     });
   }
 }
 
 /**
- * ログ記録とユーザーへの通知をまとめて行う
+ * エラーログ + ユーザーへの通知を一括で処理
  * @param {import('discord.js').Interaction} interaction
- * @param {string|Error} logMsg - エラーメッセージか Error オブジェクト
- * @param {string} userMsg - ユーザーへの表示内容
- * @param {object} [options] - embeds や flags などの応答オプション
+ * @param {string|Error} logMsg
+ * @param {string} userMsg
+ * @param {object} [options]
  */
 async function logAndReplyError(interaction, logMsg, userMsg, options = {}) {
   const source = interaction.customId || interaction.commandName || 'unknown_interaction';
   const guildId = interaction.guildId || 'DM';
   const userId = interaction.user?.id || 'unknown_user';
 
-  const logMessage = logMsg instanceof Error ? logMsg.message : logMsg;
-  const errorObject = logMsg instanceof Error ? logMsg : undefined;
+  const message = logMsg instanceof Error ? logMsg.message : logMsg;
+  const error = logMsg instanceof Error ? logMsg : undefined;
 
-  await errorHelper.logError(`${source} [Guild:${guildId}] [User:${userId}]`, logMessage, errorObject);
-  await errorHelper.safeReplyToUser(interaction, userMsg, options);
+  await logError(`${source} [Guild:${guildId}] [User:${userId}]`, message, error);
+  await safeReplyToUser(interaction, userMsg, options);
 }
- // module.exportsを再割り当てすると、ファイルの先頭で定義された`errorHelper`の参照が古くなってしまいます。
- // 代わりに、既存のexportsオブジェクトにプロパティを割り当てることで参照を維持します。
-Object.assign(module.exports, { logError, safeReplyToUser, logAndReplyError });
+
+module.exports = {
+  logError,
+  safeReplyToUser,
+  logAndReplyError,
+};

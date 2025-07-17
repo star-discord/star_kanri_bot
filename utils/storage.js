@@ -3,70 +3,85 @@ const { Storage } = require('@google-cloud/storage');
 const path = require('path');
 const fs = require('fs');
 
-// .env 等で設定する環境変数
+// 環境変数から設定を取得
 const BUCKET_NAME = process.env.GCS_BUCKET_NAME;
 const PROJECT_ID = process.env.GCP_PROJECT_ID;
 const KEY_FILE = process.env.GCP_CREDENTIALS_JSON || 'gcp-service-account.json';
 
-// GCS 利用可否の判定
-const isGCSConfigured = BUCKET_NAME && PROJECT_ID && fs.existsSync(KEY_FILE);
+// 設定確認
+const isKeyFileValid = fs.existsSync(KEY_FILE);
+const isGCSConfigured = Boolean(BUCKET_NAME && PROJECT_ID && isKeyFileValid);
 
+// 警告ログ（初期化時に1度だけ表示）
 if (!isGCSConfigured) {
-  console.warn('警告: GCS設定が不足しているため、storage.js の機能は無効化されます。');
+  console.warn('[storage] ⚠️ GCS設定が不完全なため、ストレージ機能は無効化されます。');
 }
 
-// ストレージ初期化（有効な場合のみ）
+// GCSストレージインスタンスとバケット
 const storage = isGCSConfigured ? new Storage({
   projectId: PROJECT_ID,
-  keyFilename: KEY_FILE
+  keyFilename: KEY_FILE,
 }) : null;
 
 const bucket = isGCSConfigured ? storage.bucket(BUCKET_NAME) : null;
 
 /**
- * GCS にファイルをアップロード
- * @param {string} localFilePath - ローカルファイルのパス
- * @param {string} destinationPath - GCS保存パス（例: 1234567890123/2025-07-凸スナ報告.xlsx）
+ * GCSにファイルをアップロード
+ * @param {string} localFilePath - ローカルファイルの絶対パス
+ * @param {string} destinationPath - GCS保存パス（例: guildId/YYYY-MM-DD/filename.xlsx）
+ * @returns {Promise<boolean>}
  */
 async function uploadFile(localFilePath, destinationPath) {
-  if (!isGCSConfigured) return;
+  if (!isGCSConfigured) {
+    console.warn('[storage] ストレージが未構成のため uploadFile はスキップされました');
+    return false;
+  }
+
   if (!fs.existsSync(localFilePath)) {
-    console.warn(`警告: アップロード用ファイルが存在しません: ${localFilePath}`);
-    return;
+    console.warn(`[storage] ⚠️ アップロード対象のファイルが存在しません: ${localFilePath}`);
+    return false;
   }
 
   try {
     await bucket.upload(localFilePath, {
       destination: destinationPath,
       gzip: true,
-      metadata: { cacheControl: 'no-cache' }
+      metadata: {
+        cacheControl: 'no-cache',
+      },
     });
-    console.log(`クラウド: アップロード完了 ${destinationPath}`);
-  } catch (err) {
-    console.error(`エラー: アップロード失敗 ${destinationPath}`, err);
+    console.log(`[storage] ✅ アップロード成功: ${destinationPath}`);
+    return true;
+  } catch (error) {
+    console.error(`[storage] ❌ アップロード失敗: ${destinationPath}`, error);
+    return false;
   }
 }
 
 /**
- * GCS からファイルをダウンロード
+ * GCSからファイルをダウンロード
  * @param {string} destinationPath - GCS上のファイルパス
- * @param {string} localFilePath - 保存先ローカルパス
- * @returns {Promise<boolean>} - 成功ならtrue
+ * @param {string} localFilePath - ローカル保存先パス
+ * @returns {Promise<boolean>}
  */
 async function downloadFile(destinationPath, localFilePath) {
-  if (!isGCSConfigured) return false;
+  if (!isGCSConfigured) {
+    console.warn('[storage] ストレージが未構成のため downloadFile はスキップされました');
+    return false;
+  }
 
   try {
     await bucket.file(destinationPath).download({ destination: localFilePath });
-    console.log(`ダウンロード: ダウンロード完了 ${destinationPath}`);
+    console.log(`[storage] ✅ ダウンロード成功: ${destinationPath}`);
     return true;
-  } catch (err) {
-    console.warn(`警告: ダウンロード失敗（存在しない可能性あり） ${destinationPath}`);
+  } catch (error) {
+    console.warn(`[storage] ⚠️ ダウンロード失敗（存在しない可能性あり）: ${destinationPath}`);
     return false;
   }
 }
 
 module.exports = {
   uploadFile,
-  downloadFile
+  downloadFile,
+  isGCSConfigured,
 };

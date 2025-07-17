@@ -3,19 +3,24 @@ const { Storage } = require('@google-cloud/storage');
 const path = require('path');
 const fs = require('fs');
 
+// 環境変数から設定取得
 const BUCKET_NAME = process.env.GCS_BUCKET_NAME;
 const PROJECT_ID = process.env.GCP_PROJECT_ID;
 const KEY_FILE = process.env.GCP_CREDENTIALS_JSON || 'gcp-service-account.json';
 
-const isGCSConfigured = BUCKET_NAME && PROJECT_ID && fs.existsSync(KEY_FILE);
+// 設定検証
+const isKeyFileValid = fs.existsSync(KEY_FILE);
+const isGCSConfigured = Boolean(BUCKET_NAME && PROJECT_ID && isKeyFileValid);
 
+// 初期化時警告
 if (!isGCSConfigured) {
-  console.warn('⚠️ 警告: GCS設定が不足しているため、storage.js の機能は無効化されます。');
+  console.warn('[tempStore] ⚠️ GCS設定が不完全なため、一時ストレージ機能は無効化されます。');
   if (!BUCKET_NAME) console.warn('  - GCS_BUCKET_NAME が設定されていません。');
   if (!PROJECT_ID) console.warn('  - GCP_PROJECT_ID が設定されていません。');
-  if (!fs.existsSync(KEY_FILE)) console.warn(`  - GCP_CREDENTIALS_JSON ファイルが見つかりません: ${KEY_FILE}`);
+  if (!isKeyFileValid) console.warn(`  - GCP_CREDENTIALS_JSON ファイルが存在しません: ${KEY_FILE}`);
 }
 
+// ストレージ初期化
 const storage = isGCSConfigured ? new Storage({
   projectId: PROJECT_ID,
   keyFilename: KEY_FILE,
@@ -24,15 +29,19 @@ const storage = isGCSConfigured ? new Storage({
 const bucket = isGCSConfigured ? storage.bucket(BUCKET_NAME) : null;
 
 /**
- * GCS にファイルをアップロード
- * @param {string} localFilePath - ローカルファイルのパス
- * @param {string} destinationPath - GCS保存パス
- * @returns {Promise<boolean>} - 成功ならtrue
+ * 一時ファイルを GCS にアップロード
+ * @param {string} localFilePath - ローカルファイルパス
+ * @param {string} destinationPath - GCS保存先（例: temp/guildId/filename.ext）
+ * @returns {Promise<boolean>}
  */
 async function uploadFile(localFilePath, destinationPath) {
-  if (!isGCSConfigured) return false;
+  if (!isGCSConfigured) {
+    console.warn('[tempStore] アップロードは無効（GCS未構成）');
+    return false;
+  }
+
   if (!fs.existsSync(localFilePath)) {
-    console.warn(`警告: アップロード用ファイルが存在しません: ${localFilePath}`);
+    console.warn(`[tempStore] ⚠️ ファイルが存在しません: ${localFilePath}`);
     return false;
   }
 
@@ -42,29 +51,32 @@ async function uploadFile(localFilePath, destinationPath) {
       gzip: true,
       metadata: { cacheControl: 'no-cache' },
     });
-    console.log(`クラウド: アップロード完了 ${destinationPath}`);
+    console.log(`[tempStore] ✅ アップロード完了: ${destinationPath}`);
     return true;
   } catch (err) {
-    console.error(`エラー: アップロード失敗 ${destinationPath}`, err);
+    console.error(`[tempStore] ❌ アップロード失敗: ${destinationPath}`, err);
     return false;
   }
 }
 
 /**
- * GCS からファイルをダウンロード
- * @param {string} destinationPath - GCS上のファイルパス
+ * 一時ファイルを GCS からダウンロード
+ * @param {string} destinationPath - GCSのファイルパス
  * @param {string} localFilePath - 保存先ローカルパス
- * @returns {Promise<boolean>} - 成功ならtrue
+ * @returns {Promise<boolean>}
  */
 async function downloadFile(destinationPath, localFilePath) {
-  if (!isGCSConfigured) return false;
+  if (!isGCSConfigured) {
+    console.warn('[tempStore] ダウンロードは無効（GCS未構成）');
+    return false;
+  }
 
   try {
     await bucket.file(destinationPath).download({ destination: localFilePath });
-    console.log(`ダウンロード: ダウンロード完了 ${destinationPath}`);
+    console.log(`[tempStore] ✅ ダウンロード完了: ${destinationPath}`);
     return true;
   } catch (err) {
-    console.warn(`警告: ダウンロード失敗（存在しない可能性あり） ${destinationPath}`);
+    console.warn(`[tempStore] ⚠️ ダウンロード失敗（存在しない可能性あり）: ${destinationPath}`);
     return false;
   }
 }
@@ -72,4 +84,5 @@ async function downloadFile(destinationPath, localFilePath) {
 module.exports = {
   uploadFile,
   downloadFile,
+  isGCSConfigured,
 };

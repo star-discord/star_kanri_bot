@@ -1,119 +1,128 @@
-// utils/fileHelper.js
-
-const fs = require('fs');
+const fs = require('fs/promises');
 const path = require('path');
 
 /**
- * 指定されたJSONファイルを読み込んでオブジェクトとして返す
+ * 指定パスの破損ファイルをバックアップフォルダに移動
  * @param {string} filePath
- * @param {object} initialData - パースエラー/読込エラー時のフォールバックデータ
- * @returns {Promise<Object>}
+ * @returns {Promise<string|null>} バックアップ先ファイルパス
  */
-function readJSON(filePath, initialData = {}) {
-  return new Promise((resolve, reject) => {
-    fs.readFile(filePath, 'utf8', (err, data) => {
-      if (err) {
-        console.error(`❌ readJSON: ファイル読み込みエラー - ${filePath}`, err);
+async function backupCorruptedFile(filePath) {
+  try {
+    const backupDir = path.join(path.dirname(filePath), 'backup_errors');
+    await fs.mkdir(backupDir, { recursive: true });
 
-        // ファイルが存在しない場合は初期データでフォールバック
-        if (err.code === 'ENOENT') {
-          console.warn(`[readJSON] ファイル未発見のため初期データでフォールバックします: ${filePath}`);
-          return resolve(initialData);
-        }
-        return reject(err);
-      }
-      try {
-        const json = JSON.parse(data);
-        resolve(json);
-      } catch (parseErr) {
-        console.error(`❌ readJSON: JSONパースエラー - ${filePath}`, parseErr);
-
-        // パースエラー時に破損ファイルをバックアップ
-        try {
-          const backupDir = path.join(path.dirname(filePath), 'backup_errors');
-          if (!fs.existsSync(backupDir)) {
-            fs.mkdirSync(backupDir, { recursive: true });
-          }
-          const backupPath = path.join(backupDir, `${path.basename(filePath)}.${Date.now()}.corrupted`);
-          fs.renameSync(filePath, backupPath); // 同期的にリネーム
-          console.log(`💾 破損ファイルをバックアップしました: ${backupPath}`);
-        } catch (backupErr) {
-          console.error(`❌ 破損ファイルのバックアップに失敗しました: ${filePath}`, backupErr);
-        }
-
-        console.warn(`[readJSON] パースエラーのため初期データでフォールバックします: ${filePath}`);
-        resolve(initialData);
-      }
-    });
-  });
+    const backupPath = path.join(backupDir, `${path.basename(filePath)}.${Date.now()}.corrupted`);
+    await fs.rename(filePath, backupPath);
+    console.log(`💾 破損ファイルをバックアップ: ${backupPath}`);
+    return backupPath;
+  } catch (err) {
+    console.error(`❌ バックアップ失敗: ${filePath}`, err);
+    return null;
+  }
 }
 
 /**
- * オブジェクトをJSONファイルとして保存する
+ * 読み込み失敗・破損時に使う初期データ構造
+ * @returns {Object}
+ */
+function getInitialGuildData() {
+  return {
+    star: {
+      adminRoleIds: [],
+      notifyChannelId: null,
+    },
+    chatgpt: {
+      apiKey: '',
+      maxTokens: 150,
+      temperature: 0.7,
+    },
+    totusuna: {
+      instances: [],
+    },
+    kpi: {
+      settings: {},
+    },
+  };
+}
+
+/**
+ * オブジェクトを整形して文字列化（2スペースJSON）
+ * @param {Object} data
+ * @returns {string}
+ */
+function prettyStringify(data) {
+  return JSON.stringify(data, null, 2);
+}
+
+/**
+ * 指定されたJSONファイルを読み込む（存在しない/破損時は初期データで復元）
+ * @param {string} filePath
+ * @param {object} initialData
+ * @returns {Promise<Object>}
+ */
+async function readJSON(filePath, initialData = {}) {
+  try {
+    const content = await fs.readFile(filePath, 'utf8');
+    return JSON.parse(content);
+  } catch (err) {
+    if (err.code === 'ENOENT') {
+      console.warn(`[readJSON] ファイル未発見 → 初期データ使用: ${filePath}`);
+      return initialData;
+    }
+
+    if (err instanceof SyntaxError) {
+      console.error(`❌ JSONパースエラー: ${filePath}`, err);
+      await backupCorruptedFile(filePath);
+      console.warn(`[readJSON] パース不能 → 初期データで復元: ${filePath}`);
+      return initialData;
+    }
+
+    console.error(`❌ 読み込み失敗: ${filePath}`, err);
+    throw err;
+  }
+}
+
+/**
+ * オブジェクトをJSONファイルとして保存
  * @param {string} filePath
  * @param {Object} data
  * @returns {Promise<void>}
  */
-function writeJSON(filePath, data) {
-  return new Promise((resolve, reject) => {
+async function writeJSON(filePath, data) {
+  try {
     const dir = path.dirname(filePath);
-    fs.mkdir(dir, { recursive: true }, (mkErr) => {
-      if (mkErr) {
-        console.error(`❌ writeJSON: ディレクトリ作成エラー - ${dir}`, mkErr);
-        return reject(mkErr);
-      }
-      fs.writeFile(filePath, JSON.stringify(data, null, 2), 'utf8', (err) => {
-        if (err) {
-          console.error(`❌ writeJSON: ファイル書き込みエラー - ${filePath}`, err);
-          return reject(err);
-        }
-        resolve();
-      });
-    });
-  });
+    await fs.mkdir(dir, { recursive: true });
+    await fs.writeFile(filePath, prettyStringify(data), 'utf8');
+  } catch (err) {
+    console.error(`❌ 書き込み失敗: ${filePath}`, err);
+    throw err;
+  }
 }
 
 /**
- * ギルドごとのデータフォルダと初期JSONファイルを作成し、ファイルパスを返す
+ * ギルドごとの初期データファイルを保証・返却
  * @param {string} guildId
- * @returns {Promise<string>} - JSONファイルの絶対パス
+ * @returns {Promise<string>} - JSONファイルのパス
  */
 async function ensureGuildJSON(guildId) {
   const dir = path.join('data', guildId);
   const filePath = path.join(dir, `${guildId}.json`);
 
   try {
-    await fs.promises.mkdir(dir, { recursive: true });
+    await fs.mkdir(dir, { recursive: true });
 
     try {
-      await fs.promises.access(filePath); // 存在確認
-      console.log(`📄 既存JSONファイルを使用: ${filePath}`);
+      await fs.access(filePath);
+      console.log(`📄 JSONファイル発見: ${filePath}`);
     } catch {
-      // ファイルが存在しない場合のみ新規作成
-      const initialData = {
-        star: {
-          adminRoleIds: [],
-          notifyChannelId: null
-        },
-        chatgpt: {
-          apiKey: '',
-          maxTokens: 150,
-          temperature: 0.7
-        },
-        totusuna: {
-          instances: []
-        },
-        kpi: {
-          settings: {}
-        }
-      };
-      await fs.promises.writeFile(filePath, JSON.stringify(initialData, null, 2), 'utf8');
-      console.log(`✅ 初期JSONファイルを作成しました: ${filePath}`);
+      const initialData = getInitialGuildData();
+      await fs.writeFile(filePath, prettyStringify(initialData), 'utf8');
+      console.log(`✅ 新規JSONファイル作成: ${filePath}`);
     }
 
     return filePath;
   } catch (err) {
-    console.error(`❌ ensureGuildJSON: 初期化エラー - ${filePath}`, err);
+    console.error(`❌ ensureGuildJSON: 初期化失敗: ${filePath}`, err);
     throw err;
   }
 }
@@ -122,4 +131,5 @@ module.exports = {
   readJSON,
   writeJSON,
   ensureGuildJSON,
+  getInitialGuildData, // オプション: 初期値だけ使いたい他モジュール用
 };

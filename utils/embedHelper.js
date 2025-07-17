@@ -1,6 +1,8 @@
 // utils/embedHelper.js
 const { EmbedBuilder } = require('discord.js');
 
+const BOT_NAME = 'STAR管理bot';
+
 const COLORS = {
   PRIMARY: 0x0099ff,
   SUCCESS: 0x00AE86,
@@ -9,88 +11,83 @@ const COLORS = {
 };
 
 /**
- * 標準的なフッターとタイムスタンプを持つ基本的なEmbedを作成します。
- * @param {import('discord.js').EmbedBuilderOptions} options - Embedのオプション
+ * 標準的なフッターとタイムスタンプを含むEmbedを作成
+ * @param {Partial<import('discord.js').EmbedBuilder>} options - Embedオプション
  * @returns {EmbedBuilder}
  */
 function createBaseEmbed(options) {
-  const { footer = { text: 'STAR管理bot' }, ...rest } = options;
-  return new EmbedBuilder(rest)
-    .setFooter(footer)
-    .setTimestamp();
+  const {
+    footer = { text: BOT_NAME },
+    timestamp = true,
+    ...rest
+  } = options;
+
+  const embed = new EmbedBuilder(rest).setFooter(footer);
+  if (timestamp) embed.setTimestamp();
+  return embed;
 }
 
 /**
- * 管理者専用UIのEmbedを作成します。
- * @param {string} title - Embedのタイトル
- * @param {string} description - Embedの説明
+ * タイトルにアイコンを付加して色付きでメッセージEmbedを作成
+ * @param {'✅'|'❌'|'⚠️'|'🔒'} emoji
+ * @param {string} title
+ * @param {string} description
+ * @param {number} color
  * @returns {EmbedBuilder}
+ */
+function createLabeledEmbed(emoji, title, description, color) {
+  return createBaseEmbed({
+    title: `${emoji} ${title}`,
+    description,
+    color,
+  });
+}
+
+/**
+ * 管理者UI用Embed
  */
 function createAdminEmbed(title, description) {
-  return createBaseEmbed({
-    title: `🔒 ${title} (管理者専用)`,
-    description,
-    color: COLORS.PRIMARY,
-  });
+  return createLabeledEmbed('🔒', `${title} (管理者専用)`, description, COLORS.PRIMARY);
 }
 
 /**
- * 権限が不足していることを示すEmbedを作成します。
- * @returns {EmbedBuilder}
+ * 権限不足通知用Embed
  */
 function createAdminRejectEmbed() {
-  return createBaseEmbed({
-    title: '❌ 権限がありません',
-    description: 'この操作を実行するには、管理者権限または指定された管理者ロールが必要です。',
-    color: COLORS.ERROR,
-  });
+  return createLabeledEmbed(
+    '❌',
+    '権限がありません',
+    'この操作を実行するには、管理者権限または指定された管理者ロールが必要です。',
+    COLORS.ERROR
+  );
 }
 
 /**
- * 成功メッセージ用のEmbedを作成します。
- * @param {string} title - 成功メッセージのタイトル
- * @param {string} description - 成功メッセージの詳細
- * @returns {EmbedBuilder}
+ * 成功メッセージ用Embed
  */
 function createSuccessEmbed(title, description) {
-  return createBaseEmbed({
-    title: `✅ ${title}`,
-    description,
-    color: COLORS.SUCCESS,
-  });
+  return createLabeledEmbed('✅', title, description, COLORS.SUCCESS);
 }
 
 /**
- * エラーメッセージ用のEmbedを作成します。
- * @param {string} title - エラーメッセージのタイトル
- * @param {string} description - エラーメッセージの詳細
- * @returns {EmbedBuilder}
+ * エラーメッセージ用Embed
  */
 function createErrorEmbed(title, description) {
-  return createBaseEmbed({
-    title: `❌ ${title}`,
-    description,
-    color: COLORS.ERROR,
-  });
+  return createLabeledEmbed('❌', title, description, COLORS.ERROR);
 }
 
 /**
- * 警告メッセージ用のEmbedを作成します。
- * @param {string} title - 警告メッセージのタイトル
- * @param {string} description - 警告メッセージの詳細
- * @returns {EmbedBuilder}
+ * 警告メッセージ用Embed
  */
 function createWarningEmbed(title, description) {
-  return createBaseEmbed({
-    title: `⚠️ ${title}`,
-    description,
-    color: COLORS.WARNING,
-  });
+  return createLabeledEmbed('⚠️', title, description, COLORS.WARNING);
 }
 
 module.exports = {
+  BOT_NAME,
   COLORS,
   createBaseEmbed,
+  createLabeledEmbed,
   createAdminEmbed,
   createAdminRejectEmbed,
   createSuccessEmbed,

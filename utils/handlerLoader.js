@@ -1,40 +1,38 @@
-// utils/handlerLoader.js
-
 const fs = require('fs');
 const path = require('path');
 
-// 読み込み対象から除外するファイル名のリスト
+// 除外ファイル一覧
 const EXCLUDED_FILES = new Set(['index.js', 'handleSelect.js', 'install_channel.js']);
 
 /**
- * @typedef {Object} Handler
- * @property {string} [customId]
- * @property {string} [customIdStart]
- * @property {(interaction: any) => Promise<void>} handle
+ * 有効なハンドラかを検証
+ * @param {*} mod 
+ * @returns {boolean}
  */
+function isValidHandler(mod) {
+  return mod && typeof mod.handle === 'function' &&
+    (typeof mod.customId === 'string' || typeof mod.customIdStart === 'string');
+}
 
 /**
- * 指定ディレクトリからハンドラを読み込み、customId/customIdStart によるルーティング関数を返す
- * 各ハンドラは { customId, handle } または { customIdStart, handle } をエクスポートする必要がある
- * 
- * @param {string} dirPath - 読み込むディレクトリの絶対パス
- * @returns {(customId: string) => Handler|null} - 対応するハンドラを返す関数
+ * 指定ディレクトリからハンドラを読み込んでルーティング関数を返す
+ * @param {string} dirPath - ディレクトリの絶対パス
+ * @returns {(customId: string) => Handler|null}
  */
 function loadHandlers(dirPath) {
-  const handlers = {};              // 完全一致用ハンドラ格納
-  const startsWithHandlers = [];    // 前方一致用ハンドラ格納
-  
+  const handlers = {};
+  const startsWithHandlers = [];
+
   let fileNames;
   try {
-    // 同期的にディレクトリを読み込む
     fileNames = fs.readdirSync(dirPath);
   } catch (err) {
     if (err.code === 'ENOENT') {
       console.warn(`⚠️ [handlerLoader] ディレクトリが存在しません: ${dirPath}`);
     } else {
-      console.error(`❌ [handlerLoader] ディレクトリの読み込みに失敗: ${dirPath}`, err);
+      console.error(`❌ [handlerLoader] ディレクトリ読み込み失敗: ${dirPath}`, err);
     }
-    return () => null; // エラー時も空のハンドラ関数を返す
+    return () => null;
   }
 
   const files = fileNames.filter(file => file.endsWith('.js') && !EXCLUDED_FILES.has(file));
@@ -48,61 +46,56 @@ function loadHandlers(dirPath) {
 
       const mod = require(modulePath);
 
-      if (mod && typeof mod.handle === 'function') {
-        if (typeof mod.customId === 'string') {
-          if (handlers[mod.customId]) {
-            console.warn(`⚠️ [handlerLoader] ${file} の customId "${mod.customId}" は既に登録されています。上書きされます。`);
-          }
-          handlers[mod.customId] = mod;
-        } else if (typeof mod.customIdStart === 'string') {
-          const existingHandler = startsWithHandlers.find(h => h.key === mod.customIdStart);
-          if (existingHandler) {
-            console.warn(`⚠️ [handlerLoader] 重複する customIdStart "${mod.customIdStart}" が '${path.basename(existingHandler.filePath)}' と '${file}' で見つかりました。'${file}' はスキップされます。`);
-            continue;
-          }
-          startsWithHandlers.push({ key: mod.customIdStart, handler: mod, filePath: modulePath });
-        } else {
-          console.warn(`⚠️ [handlerLoader] ${file} に customId または customIdStart が定義されていません`);
-        }
-      } else {
-        console.warn(`⚠️ [handlerLoader] ${file} は有効なハンドラではありません（handle 関数が未定義）`);
+      if (!isValidHandler(mod)) {
+        console.warn(`⚠️ [handlerLoader] 無効なハンドラ: ${file}`);
+        continue;
       }
+
+      if (mod.customId) {
+        if (handlers[mod.customId]) {
+          console.warn(`⚠️ [handlerLoader] ${file} の customId "${mod.customId}" が重複しています。上書きします。`);
+        }
+        handlers[mod.customId] = mod;
+      } else if (mod.customIdStart) {
+        const duplicate = startsWithHandlers.find(h => h.key === mod.customIdStart);
+        if (duplicate) {
+          console.warn(`⚠️ [handlerLoader] customIdStart "${mod.customIdStart}" が '${path.basename(duplicate.filePath)}' と重複。'${file}' はスキップされます。`);
+          continue;
+        }
+        startsWithHandlers.push({ key: mod.customIdStart, handler: mod, filePath: modulePath });
+      }
+
     } catch (err) {
-      console.error(`❌ [handlerLoader] ハンドラの読み込み失敗 (${file}):`, err);
+      console.error(`❌ [handlerLoader] 読み込み失敗 (${file}):`, err);
     }
   }
 
-  // 前方一致ハンドラはキー長の降順でソートし、より長いプレフィックスを優先
+  // 長い prefix 優先
   startsWithHandlers.sort((a, b) => b.key.length - a.key.length);
 
-  // [追加] 読み込んだハンドラのcustomId一覧をログ出力
+  const dirName = path.basename(dirPath);
   if (Object.keys(handlers).length > 0) {
-    console.log(`[handlerLoader] 読み込まれた customId 一覧 (${path.basename(dirPath)}):`, Object.keys(handlers));
+    console.log(`[handlerLoader] 読み込み完了: ${dirName} 完全一致 -> ${Object.keys(handlers).join(', ')}`);
   }
   if (startsWithHandlers.length > 0) {
-    console.log(`[handlerLoader] 読み込まれた customIdStart 一覧 (${path.basename(dirPath)}):`, startsWithHandlers.map(h => h.key));
+    console.log(`[handlerLoader] 読み込み完了: ${dirName} 前方一致 -> ${startsWithHandlers.map(h => h.key).join(', ')}`);
   }
 
-  // [既存] 読み込んだハンドラの総数をログ出力
-  const totalLoaded = Object.keys(handlers).length + startsWithHandlers.length;
-  if (totalLoaded > 0) {
-    console.log(`[handlerLoader] ✅ ${path.basename(dirPath)}: ${totalLoaded}個のハンドラを読み込みました。`);
+  const total = Object.keys(handlers).length + startsWithHandlers.length;
+  if (total > 0) {
+    console.log(`[handlerLoader] ✅ ${dirName}: 全 ${total} 個のハンドラを登録`);
   }
 
   /**
-   * customId に対応するハンドラを返す（完全一致優先→前方一致）
+   * customId に対応するハンドラを返す
    * @param {string} customId
    * @returns {Handler|null}
    */
   return function findHandler(customId) {
-    if (handlers[customId]) {
-      return handlers[customId];
-    }
+    if (handlers[customId]) return handlers[customId];
 
     for (const { key, handler } of startsWithHandlers) {
-      if (customId.startsWith(key)) {
-        return handler;
-      }
+      if (customId.startsWith(key)) return handler;
     }
 
     return null;

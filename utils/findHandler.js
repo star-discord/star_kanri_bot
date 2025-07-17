@@ -1,25 +1,47 @@
-// utils/fileHandler.js
-
-const fs = require('fs');
+const fs = require('fs/promises');
 const path = require('path');
 
 /**
- * JSONファイルを読み込んでオブジェクトとして返す
+ * 初期データを返す（必要に応じて外部からカスタム可能）
+ * @returns {Object}
+ */
+function getInitialGuildData() {
+  return {
+    star: {
+      adminRoleIds: [],
+      notifyChannelId: null,
+    },
+    chatgpt: {
+      apiKey: '',
+      maxTokens: 150,
+      temperature: 0.7,
+    },
+    totusuna: {
+      instances: [],
+    },
+    kpi: {
+      settings: {},
+    },
+  };
+}
+
+/**
+ * JSONファイルを読み込み、失敗時はエラーを投げる
  * @param {string} filePath
  * @returns {Promise<Object>}
  */
 async function readJSON(filePath) {
   try {
-    const data = await fs.promises.readFile(filePath, 'utf8');
+    const data = await fs.readFile(filePath, 'utf8');
     return JSON.parse(data);
   } catch (err) {
-    console.error(`❌ [readJSON] ファイル読み込みまたはパースエラー: ${filePath}`, err);
+    console.error(`❌ [fileHandler:readJSON] ファイル読み込み失敗: ${filePath}`, err);
     throw err;
   }
 }
 
 /**
- * オブジェクトをJSONファイルとして保存する
+ * オブジェクトをJSONファイルに保存（フォルダ自動作成）
  * @param {string} filePath
  * @param {Object} data
  * @returns {Promise<void>}
@@ -27,38 +49,38 @@ async function readJSON(filePath) {
 async function writeJSON(filePath, data) {
   try {
     const dir = path.dirname(filePath);
-    await fs.promises.mkdir(dir, { recursive: true });
-    await fs.promises.writeFile(filePath, JSON.stringify(data, null, 2), 'utf8');
+    await fs.mkdir(dir, { recursive: true });
+    await fs.writeFile(filePath, JSON.stringify(data, null, 2), 'utf8');
   } catch (err) {
-    console.error(`❌ [writeJSON] ファイル書き込みエラー: ${filePath}`, err);
+    console.error(`❌ [fileHandler:writeJSON] 書き込み失敗: ${filePath}`, err);
     throw err;
   }
 }
 
 /**
- * ギルドIDごとのJSONファイルを初期化・パスを返す
+ * ギルド用のJSONファイルがなければ作成し、そのパスを返す
  * @param {string} guildId
- * @param {Object} [initialData={}] 初期データ（任意）
- * @returns {Promise<string>} ファイルパス
+ * @param {Object} [initialData=getInitialGuildData()] 初期データ
+ * @returns {Promise<string>}
  */
-async function ensureGuildJSON(guildId, initialData = {}) {
+async function ensureGuildJSON(guildId, initialData = getInitialGuildData()) {
   const dir = path.join('data', guildId);
   const filePath = path.join(dir, `${guildId}.json`);
 
   try {
-    await fs.promises.mkdir(dir, { recursive: true });
+    await fs.mkdir(dir, { recursive: true });
 
     try {
-      await fs.promises.access(filePath); // 存在するか確認
+      await fs.access(filePath); // ファイル存在確認
     } catch {
-      // 存在しない場合に初期データで作成
-      await fs.promises.writeFile(filePath, JSON.stringify(initialData, null, 2), 'utf8');
-      console.log(`✅ [fileHandler] 初期JSONファイル作成: ${filePath}`);
+      // ファイルが存在しない → 新規作成
+      await fs.writeFile(filePath, JSON.stringify(initialData, null, 2), 'utf8');
+      console.log(`✅ [fileHandler] 初期ファイル作成: ${filePath}`);
     }
 
     return filePath;
   } catch (err) {
-    console.error(`❌ [ensureGuildJSON] 初期化エラー: ${filePath}`, err);
+    console.error(`❌ [fileHandler:ensureGuildJSON] 初期化失敗: ${filePath}`, err);
     throw err;
   }
 }
@@ -67,4 +89,5 @@ module.exports = {
   readJSON,
   writeJSON,
   ensureGuildJSON,
+  getInitialGuildData, // 外部利用のためにエクスポート
 };
