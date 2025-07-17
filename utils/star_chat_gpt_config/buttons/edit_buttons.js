@@ -83,7 +83,7 @@ module.exports = {
         .setDefaultValues(config.chat_gpt_channels || []);
 
       const row = new ActionRowBuilder().addComponents(selectMenu);
-      await interaction.reply({ content: '有効チャンネルを選択してください。', components: [row], flags: MessageFlagsBitField.Flags.Ephemeral });
+      await interaction.reply({ content: '有効チャンネルを選択してください。', components: [row], ephemeral: true });
     } else {
       await safeReply(interaction, { content: '不明な操作です。', flags: MessageFlagsBitField.Flags.Ephemeral });
     }

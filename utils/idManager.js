@@ -57,6 +57,8 @@ class IdManager {
         return `star_config:${action}`;
       case 'star_chat_gpt_config':
         return `star_chat_gpt_config:${action}`;
+      case 'totusuna_setti':
+        return uuid ? `totusuna_setti:${action}:${uuid}` : `totusuna_setti:${action}`;
       case 'totusuna_config':
         return uuid ? `totusuna_config:${action}:${uuid}` : `totusuna_config:${action}`;
       case 'totusuna_report':
@@ -70,46 +72,25 @@ class IdManager {
 
   /**
    * モーダルIDを生成
-   * @param {string} category 
-   * @param {string} action 
-   * @param {string} [uuid] 
+   * @param {string} category
+   * @param {string} [action]
+   * @param {string} [uuid]
    * @returns {string}
    */
-  createModalId(category, action, uuid = null) {
+  createModalId(category, action = '', uuid = null) {
     switch (category) {
       case 'star_config':
-        return `star_config:${action}`;
+        return `star_config_modal${action ? `_${action}` : ''}`;
       case 'star_chat_gpt_config':
-        return `star_chat_gpt_config:${action}`;
-      case 'totusuna_setti':
-        return uuid ? `totusuna_modal_${action}:${uuid}` : `totusuna_modal_${action}`;
+        return `star_chat_gpt_config_modal${action ? `_${action}` : ''}`;
       case 'totusuna_config':
         return `totusuna_config_edit_modal_${uuid}`;
       case 'totusuna_report':
-        return `totusuna_modal:${uuid}`;
+          return `totusuna_modal:${uuid}`;
       case 'kpi':
         return `kpi_modal_${action}`;
       default:
-        return `${category}_modal_${action}${uuid ? `_${uuid}` : ''}`;
-    }
-  }
-
-  /**
-   * セレクトメニューIDを生成
-   * @param {string} category 
-   * @param {string} action 
-   * @returns {string}
-   */
-  createSelectId(category, action) {
-    switch (category) {
-      case 'star_config':
-        return `star_config:${action}`;
-      case 'totusuna_setti':
-        return `totusuna_setti:${action}`;
-      case 'totusuna_config':
-        return 'totusuna_config_select';
-      default:
-        return `${category}_${action}`;
+        return `${category}_modal${action ? `_${action}` : ''}${uuid ? `_${uuid}` : ''}`;
     }
   }
 

@@ -13,7 +13,7 @@ module.exports = {
     try {
       const isAdmin = await checkAdmin(interaction);
       if (!isAdmin) {
-        return interaction.reply({ content: '❌ 権限がありません。管理者のみ使用可能です。', ephemeral: true });
+        return interaction.reply({ content: '❌ 権限がありません。管理者のみ使用可能です。', flags: MessageFlagsBitField.Flags.Ephemeral });
       }
 
       const config = await getChatGPTConfig(interaction.guildId);
