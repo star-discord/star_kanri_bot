@@ -1,4 +1,4 @@
-// utils/totusuna_setti/selects/installChannelSelect.js
+// utils/star_chat_gpt_config/selects/select_chat_gpt_channels.js
 
 const { safeReply } = require('../../safeReply');
 const { getChatGPTConfig, saveChatGPTConfig } = require('../configManager');

@@ -3,7 +3,7 @@ const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder, Messag
 const { safeReply } = require('../../safeReply');
 
 module.exports = {
-  customId: 'chatgpt_config_button',
+  customId: 'star_chatgpt_setti_config_button',
 
   /**
    * ボタン押下時の処理（モーダル表示）
@@ -12,7 +12,7 @@ module.exports = {
   async handle(interaction) {
     try {
       const modal = new ModalBuilder()
-        .setCustomId('chatgpt_config_modal')
+        .setCustomId('star_chatgpt_setti_modal')
         .setTitle('⚙️ ChatGPT設定');
 
       const apiKeyInput = new TextInputBuilder()

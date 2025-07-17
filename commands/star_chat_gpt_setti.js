@@ -26,7 +26,7 @@ module.exports = {
           .setLabel('🤖 今日のChatGPT')
           .setStyle(ButtonStyle.Primary),
         new ButtonBuilder()
-          .setCustomId('chatgpt_config_button')
+          .setCustomId('star_chatgpt_setti_config_button')
           .setLabel('⚙️ 設定')
           .setStyle(ButtonStyle.Secondary)
       );

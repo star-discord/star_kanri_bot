@@ -4,10 +4,10 @@ const { ensureGuildJSON, readJSON, writeJSON } = require('../../../utils/fileHel
 const { createSuccessEmbed } = require('../../../utils/embedHelper');
 
 module.exports = {
-  customId: 'chatgpt_config_modal',
+  customId: 'star_chatgpt_setti_modal',
 
   async handle(interaction) {
-    console.log('[chatgpt_config_modal] 処理開始:', { user: interaction.user.tag, guild: interaction.guildId });
+    console.log('[star_chatgpt_setti_modal] 処理開始:', { user: interaction.user.tag, guild: interaction.guildId });
 
     const guildId = interaction.guildId;
     if (!guildId) {
@@ -73,7 +73,7 @@ module.exports = {
 
       // deferred済みならeditReply、そうでなければreply
       if (interaction.deferred || interaction.replied) {
-        console.log('[chatgpt_config_modal] 処理完了 - 設定更新 (editReply):',
+        console.log('[star_chatgpt_setti_modal] 処理完了 - 設定更新 (editReply):',
           { apiKey: data.chatgpt.apiKey, maxTokens: data.chatgpt.maxTokens, temperature: data.chatgpt.temperature });
 
         await interaction.editReply({ embeds: [embed] });

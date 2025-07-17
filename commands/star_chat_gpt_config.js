@@ -21,15 +21,15 @@ module.exports = {
       }
 
       const modal = new ModalBuilder()
-        .setCustomId('chatgpt_config_modal')
+        .setCustomId('star_chat_gpt_config_modal') // 修正: ハンドラ側のIDに合わせる
         .setTitle('ChatGPT設定');
 
-      const personalityInput = new TextInputBuilder()
-        .setCustomId('personality')
-        .setLabel('ChatGPTの性格設定')
-        .setStyle(TextInputStyle.Paragraph)
-        .setPlaceholder('例: 優しく丁寧に回答してください')
-        .setRequired(true);
+      const apiKeyInput = new TextInputBuilder()
+        .setCustomId('apiKey')
+        .setLabel('APIキー (任意)')
+        .setStyle(TextInputStyle.Short)
+        .setPlaceholder('sk-********************************')
+        .setRequired(false);
 
       const maxTokensInput = new TextInputBuilder()
         .setCustomId('max_tokens')
@@ -38,9 +38,17 @@ module.exports = {
         .setPlaceholder('例: 500')
         .setRequired(true);
 
+      const temperatureInput = new TextInputBuilder()
+        .setCustomId('temperature')
+        .setLabel('ChatGPTの曖昧さ (0〜1)')
+        .setStyle(TextInputStyle.Short)
+        .setPlaceholder('例: 0.7')
+        .setRequired(true);
+
       modal.addComponents(
-        new ActionRowBuilder().addComponents(personalityInput),
-        new ActionRowBuilder().addComponents(maxTokensInput)
+        new ActionRowBuilder().addComponents(apiKeyInput),
+        new ActionRowBuilder().addComponents(maxTokensInput),
+        new ActionRowBuilder().addComponents(temperatureInput)
       );
 
       // deferReply() を削除したため、showModal() は安全に実行できます。
