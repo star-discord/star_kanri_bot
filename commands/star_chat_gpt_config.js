@@ -13,7 +13,7 @@ module.exports = {
     try {
       const isAdmin = await checkAdmin(interaction);
       if (!isAdmin) {
-        return interaction.reply({ content: '❌ 権限がありません。管理者のみ使用可能です。', flags: MessageFlagsBitField.Flags.Ephemeral });
+        return interaction.reply({ content: '❌ 権限がありません。管理者のみ使用可能です。', ephemeral: true });
       }
 
       const config = await getChatGPTConfig(interaction.guildId);
@@ -40,7 +40,7 @@ module.exports = {
           .setStyle(ButtonStyle.Secondary),
       );
 
-      await interaction.reply({ embeds: [embed], components: [buttonRow], ephemeral: true });
+      await interaction.reply({ embeds: [embed], components: [buttonRow], flags: MessageFlagsBitField.Flags.Ephemeral });
 
     } catch (error) {
       console.error('star_chat_gpt_config 実行エラー:', error);
