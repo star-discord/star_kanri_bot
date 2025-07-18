@@ -1,6 +1,7 @@
 const { MessageFlagsBitField } = require('discord.js');
 const { loadHandlers } = require('./handlerLoader');
 const path = require('path');
+const { logAndReplyError } = require('./errorHelper');
 
 /**
  * 統合インタラクションハンドラー
@@ -96,31 +97,10 @@ class UnifiedInteractionHandler {
     const handler = this.resolveHandler('buttons', customId);
 
     if (!handler) {
-      console.warn(`⚠️ 未対応のボタン: ${customId}`);
-      if (!interaction.replied && !interaction.deferred) {
-        await interaction.reply({
-          content: '⚠️ このボタンは現在利用できません。',
-          flags: MessageFlagsBitField.Flags.Ephemeral,
-        }).catch(() => {});
-      }
-      return;
+      console.warn(`[UnifiedHandler] ボタンハンドラが見つかりません: ${customId}`);
+      return await logAndReplyError(interaction, `未対応のボタン: ${customId}`, '⚠️ このボタンは現在利用できません。');
     }
-
-    try {
-      await handler.handle(interaction);
-    } catch (err) {
-      console.error(`❌ ボタン処理エラー: ${customId}`, err);
-      if (!interaction.replied && !interaction.deferred) {
-        await interaction.reply({
-          content: '❌ ボタン処理中にエラーが発生しました。',
-          flags: MessageFlagsBitField.Flags.Ephemeral,
-        }).catch(() => {});
-      } else {
-        await interaction.editReply({
-          content: '❌ ボタン処理中にエラーが発生しました。',
-        }).catch(() => {});
-      }
-    }
+    await handler.handle(interaction);
   }
 
   async handleModal(interaction) {
@@ -129,30 +109,10 @@ class UnifiedInteractionHandler {
     const handler = this.resolveHandler('modals', customId);
 
     if (!handler) {
-      if (!interaction.replied && !interaction.deferred) {
-        await interaction.reply({
-          content: '❌ モーダルに対応する処理が見つかりませんでした。',
-          flags: MessageFlagsBitField.Flags.Ephemeral,
-        }).catch(() => {});
-      }
-      return;
+      console.warn(`[UnifiedHandler] モーダルハンドラが見つかりません: ${customId}`);
+      return await logAndReplyError(interaction, `未対応のモーダル: ${customId}`, '❌ モーダルに対応する処理が見つかりませんでした。');
     }
-
-    try {
-      await handler.handle(interaction);
-    } catch (err) {
-      console.error(`❌ モーダル処理エラー: ${customId}`, err);
-      if (!interaction.replied && !interaction.deferred) {
-        await interaction.reply({
-          content: '❌ モーダル処理中にエラーが発生しました。',
-          flags: MessageFlagsBitField.Flags.Ephemeral,
-        }).catch(() => {});
-      } else {
-        await interaction.editReply({
-          content: '❌ モーダル処理中にエラーが発生しました。',
-        }).catch(() => {});
-      }
-    }
+    await handler.handle(interaction);
   }
 
   async handleSelect(interaction) {
@@ -161,39 +121,16 @@ class UnifiedInteractionHandler {
     const handler = this.resolveHandler('selects', customId);
 
     if (!handler) {
-      if (!interaction.replied && !interaction.deferred) {
-        await interaction.reply({
-          content: '❌ セレクトメニューに対応する処理が見つかりませんでした。',
-          flags: MessageFlagsBitField.Flags.Ephemeral,
-        }).catch(() => {});
-      }
-      return;
+      console.warn(`[UnifiedHandler] セレクトメニューハンドラが見つかりません: ${customId}`);
+      return await logAndReplyError(interaction, `未対応のセレクトメニュー: ${customId}`, '❌ セレクトメニューに対応する処理が見つかりませんでした。');
     }
-
-    try {
-      await handler.handle(interaction);
-    } catch (err) {
-      console.error(`❌ セレクト処理エラー: ${customId}`, err);
-      if (!interaction.replied && !interaction.deferred) {
-        await interaction.reply({
-          content: '❌ セレクトメニュー処理中にエラーが発生しました。',
-          flags: MessageFlagsBitField.Flags.Ephemeral,
-        }).catch(() => {});
-      } else {
-        await interaction.editReply({
-          content: '❌ セレクトメニュー処理中にエラーが発生しました。',
-        }).catch(() => {});
-      }
-    }
+    await handler.handle(interaction);
   }
 
   async handleInteraction(interaction) {
     if (!this.isReady) {
       console.warn('⚠️ [UnifiedHandler] ハンドラが未準備のため、インタラクションを拒否しました。');
-      return interaction.reply({
-        content: 'ボットがまだ準備中です。少し待ってからもう一度お試しください。',
-        flags: MessageFlagsBitField.Flags.Ephemeral,
-      }).catch(() => {});
+      return await logAndReplyError(interaction, 'ハンドラ未準備', 'ボットがまだ準備中です。少し待ってからもう一度お試しください。');
     }
 
     try {
@@ -204,10 +141,14 @@ class UnifiedInteractionHandler {
       } else if (interaction.isAnySelectMenu()) {
         await this.handleSelect(interaction);
       } else {
-        console.warn(`未対応のinteractionタイプ: ${interaction.type}`);
+        // サポート外のインタラクションタイプは無視する
+        console.warn(`[UnifiedHandler] 未対応のinteractionタイプ: ${interaction.type}`);
       }
     } catch (err) {
-      console.error('統合ハンドラーエラー:', err);
+      // 各ハンドラ内で発生したエラーはここで一括キャッチし、ユーザーに応答する
+      const customId = interaction.customId || 'unknown';
+      console.error(`[UnifiedHandler] Interaction処理中にエラーが発生 (ID: ${customId}):`, err);
+      await logAndReplyError(interaction, err, `❌ 処理中にエラーが発生しました (ID: ${customId})`);
     }
   }
 }
