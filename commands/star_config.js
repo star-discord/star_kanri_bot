@@ -11,6 +11,8 @@ const {
 const { idManager } = require('../utils/idManager');
 const { PermissionFlagsBits } = require('discord.js');
 const { configManager } = require('../utils/configManager');
+const { checkAdmin } = require('../utils/permissions/checkAdmin'); // 共通の管理者チェックをインポート
+const { createAdminRejectEmbed, createErrorEmbed } = require('../utils/embedHelper');
 const { logAndReplyError } = require('../utils/errorHelper');
 
 module.exports = {
@@ -24,34 +26,34 @@ module.exports = {
       // Defer the reply to prevent "Unknown Interaction" errors for long-running operations.
       await interaction.deferReply({ flags: MessageFlagsBitField.Flags.Ephemeral });
 
-      const { guild, member } = interaction;
+      const { guild } = interaction;
       const guildId = guild.id;
 
-      // This check is technically redundant due to setDefaultMemberPermissions,
-      // but it provides a more user-friendly message.
-      if (!member.permissions.has(PermissionFlagsBits.Administrator)) {
-        return await interaction.editReply({
-          content: '❌ この設定コマンドには Discord の管理者権限が必要です。\n' +
-                   'サーバー設定で管理者権限を付与してください。',
-        });
+      // 共通の管理者チェック関数を使用（Discord管理者権限 + 設定されたロールを考慮）
+      if (!(await checkAdmin(interaction))) {
+        // 共通の権限拒否Embedを使用
+        return await interaction.editReply({ embeds: [createAdminRejectEmbed()] });
       }
 
       let config;
       try {
         config = await configManager.getGuildConfig(guildId);
       } catch (err) {
+        // 共通のエラーEmbedを使用
         console.error(`❌ [star_config] ファイル読み込みエラー (Guild: ${guildId}):`, err);
-        return interaction.editReply({ content: '❌ 設定ファイルの読み込みに失敗しました。' });
+        return interaction.editReply({
+          embeds: [createErrorEmbed('設定エラー', '設定ファイルの読み込みに失敗しました。')],
+        });
       }
 
       const currentAdminRoleIds = config.star?.adminRoleIds || [];
       const currentNotifyChannelId = config.star?.notifyChannelId || null;
 
       const getSettingsEmbed = (roleIds, notifyId) => {
-      const roleMentions =
+        const roleMentions =
           roleIds.length > 0
             ? roleIds.map(id => {
-            const role = guild.roles.cache.get(id);
+                const role = guild.roles.cache.get(id);
                 return role ? `<@&${id}>` : `~~(削除済ロール: ${id})~~`;
               }).join('\n')
             : '*未設定*';
@@ -61,20 +63,20 @@ module.exports = {
           ? `<#${notifyId}>`
           : notifyId ? `~~(削除済チャンネル: ${notifyId})~~` : '*未設定*';
 
-        return new EmbedBuilder()
+       return new EmbedBuilder()
           .setTitle('🌟 STAR管理Bot設定')
-          .setDescription(`**管理者ロール / 通知チャンネル 設定**\n\n📌 現在の管理者ロール:\n${roleMentions}\n\n📣 現在の通知チャンネル:\n${notifyDisplay}`)
+          .setDescription(`**管理者ロールと通知チャンネルを設定します。**\n\n📌 **現在の管理者ロール**\n${roleMentions}\n\n📣 **現在の通知チャンネル**\n${notifyDisplay}`)
           .setColor(0x0099ff);
       };
 
-      const roleSelect = new RoleSelectMenuBuilder()
-        .setCustomId(idManager.createButtonId('star_config', 'admin_role_select'))
+      const roleSelect = new RoleSelectMenuBuilder() // セマンティックな正確性のために createSelectId を使用
+        .setCustomId(idManager.createSelectId('star_config', 'admin_role_select'))
         .setPlaceholder('管理者として許可するロールを選択')
         .setMinValues(0)
         .setMaxValues(25);
 
       const channelSelect = new ChannelSelectMenuBuilder()
-        .setCustomId(idManager.createButtonId('star_config', 'notify_channel_select'))
+        .setCustomId(idManager.createSelectId('star_config', 'notify_channel_select'))
         .setPlaceholder('通知チャンネルを選択')
         .addChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement)
         .setMinValues(1)

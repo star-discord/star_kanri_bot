@@ -50,8 +50,9 @@ async function logAndReplyError(interaction, logMsg, userMsg, options = {}) {
   const userId = interaction.user?.id || 'unknown_user';
 
   const message = logMsg instanceof Error ? logMsg.message : logMsg;
-  // logMsgがErrorインスタンスの場合、スタックトレースを含む全情報をログに残す
-  const error = logMsg instanceof Error ? logMsg : undefined;
+  // logMsgがErrorインスタンスでない場合でも、new Error()でラップすることで、
+  // 呼び出し元のスタックトレースをログに残すことができ、デバッグが容易になります。
+  const error = logMsg instanceof Error ? logMsg : new Error(logMsg);
 
   await logError(`${source} [Guild:${guildId}] [User:${userId}]`, message, error);
 
