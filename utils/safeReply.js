@@ -60,6 +60,9 @@ async function safeDefer(interaction, options = {}) {
       interactionId: interaction?.id,
       customId: interaction?.customId,
     });
+    // Re-throw the error so the calling function knows the deferral failed
+    // and can handle it appropriately (e.g., by stopping execution).
+    throw error;
   }
 }
 
