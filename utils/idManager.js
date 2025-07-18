@@ -7,36 +7,6 @@ const { v4: uuidv4 } = require('uuid');
  * customId の生成と解析を一元管理
  */
 class IdManager {
-  constructor() {
-    // ID命名規則の定義
-    this.patterns = {
-      // ボタンID
-      buttons: {
-        star_config: 'star_config:{action}',
-        star_chat_gpt_config: 'star_chat_gpt_config:{action}',
-        totusuna_setti: 'totusuna_setti:{action}:{uuid?}',
-        totusuna_config: 'totusuna_config:{action}:{uuid?}',
-        totusuna_report: 'totusuna:report:{uuid}',
-        kpi: 'kpi_{action}',
-      },
-      // モーダルID
-      modals: {
-        star_config: 'star_config_modal_{action}',
-        star_chat_gpt_config: 'star_chat_gpt_config_modal',
-        totusuna_setti: 'totusuna_modal_{action}:{uuid?}',
-        totusuna_config: 'totusuna_config_edit_modal_{uuid}',
-        totusuna_report: 'totusuna_modal:{uuid}',
-        kpi: 'kpi_modal_{action}',
-      },
-      // セレクトメニューID
-      selects: {
-        star_config: 'star_config:{action}',
-        totusuna_setti: 'totusuna_setti:{action}',
-        totusuna_config: 'totusuna_config_select',
-      }
-    };
-  }
-
   /**
    * UUIDを生成
    * @returns {string}
@@ -67,7 +37,8 @@ class IdManager {
       case 'kpi':
         return `kpi_${action}`;
       default:
-        return `${category}_${action}${uuid ? `_${uuid}` : ''}`;
+        // 未定義のカテゴリに対してはエラーをスローし、明示的な定義を強制する
+        throw new Error(`[IdManager] Unknown button category: "${category}"`);
     }
   }
 
@@ -93,7 +64,8 @@ class IdManager {
       case 'kpi':
         return `kpi_modal_${action}`;
       default:
-        return `${category}_modal${action ? `_${action}` : ''}${uuid ? `_${uuid}` : ''}`;
+        // 未定義のカテゴリに対してはエラーをスローし、明示的な定義を強制する
+        throw new Error(`[IdManager] Unknown modal category: "${category}"`);
     }
   }
 
@@ -114,105 +86,9 @@ class IdManager {
       case 'totusuna_config':
         return 'totusuna_config_select';
       default:
-        return `${category}_select_${action}`;
+        // 未定義のカテゴリに対してはエラーをスローし、明示的な定義を強制する
+        throw new Error(`[IdManager] Unknown select category: "${category}"`);
     }
-  }
-
-  /**
-   * customIdを解析してカテゴリ、アクション、UUIDを抽出
-   * @param {string} customId 
-   * @returns {{ category: string, action: string, uuid?: string, type: string, originalId: string }}
-   */
-  parseCustomId(customId) {
-    // A more declarative and robust set of parsing rules.
-    // Order is important: more specific patterns should come first.
-    const parsingRules = [
-      // --- Modals ---
-      { regex: /^totusuna_config_edit_modal_(.+)$/, type: 'modal', category: 'totusuna_config', parts: { action: 'edit', uuid: 1 } },
-      { regex: /^totusuna_modal:(.+)$/, type: 'modal', category: 'totusuna_report', parts: { uuid: 1 } },
-      { regex: /^totusuna_modal_([^:]+):(.+)$/, type: 'modal', category: 'totusuna_setti', parts: { action: 1, uuid: 2 } },
-      { regex: /^totusuna_modal_([^:]+)$/, type: 'modal', category: 'totusuna_setti', parts: { action: 1 } },
-      { regex: /^star_config_modal_(.+)$/, type: 'modal', category: 'star_config', parts: { action: 1 } },
-      { regex: /^star_chat_gpt_config_modal$/, type: 'modal', category: 'star_chat_gpt_config', parts: { action: 'edit' } },
-      { regex: /^kpi_modal_(.+)$/, type: 'modal', category: 'kpi', parts: { action: 1 } },
-      // --- Buttons ---
-      { regex: /^totusuna:report:(.+)$/, type: 'button', category: 'totusuna_report', parts: { uuid: 1 } },
-      { regex: /^totusuna_setti:([^:]+):(.+)$/, type: 'button', category: 'totusuna_setti', parts: { action: 1, uuid: 2 } },
-      { regex: /^totusuna_setti:([^:]+)$/, type: 'button', category: 'totusuna_setti', parts: { action: 1 } },
-      { regex: /^totusuna_config:([^:]+):(.+)$/, type: 'button', category: 'totusuna_config', parts: { action: 1, uuid: 2 } },
-      { regex: /^totusuna_config:([^:]+)$/, type: 'button', category: 'totusuna_config', parts: { action: 1 } },
-      { regex: /^star_chat_gpt_config:(.+)$/, type: 'button', category: 'star_chat_gpt_config', parts: { action: 1 } },
-      { regex: /^kpi_(.+)$/, type: 'button', category: 'kpi', parts: { action: 1 } },
-      // --- Selects ---
-      { regex: /^star_config:(.+)$/, type: 'select', category: 'star_config', parts: { action: 1 } },
-      { regex: /^totusuna_setti:(.+)$/, type: 'select', category: 'totusuna_setti', parts: { action: 1 } },
-      { regex: /^totusuna_config_select$/, type: 'select', category: 'totusuna_config', parts: { action: 'select' } },
-    ];
-
-    for (const rule of parsingRules) {
-      const match = customId.match(rule.regex);
-      if (match) {
-        const result = {
-          category: rule.category,
-          type: rule.type,
-          action: 'unknown',
-          originalId: customId,
-        };
-
-        if (rule.parts) {
-          for (const [key, value] of Object.entries(rule.parts)) {
-            if (typeof value === 'number') {
-              result[key] = match[value];
-            } else {
-              result[key] = value;
-            }
-          }
-        }
-        return result;
-      }
-    }
-
-    // Fallback for simple IDs that don't match complex patterns
-    return {
-      category: 'unknown',
-      type: 'unknown',
-      action: 'unknown',
-      originalId: customId,
-    };
-  }
-
-  /**
-   * customIdが特定のカテゴリに属するか判定
-   * @param {string} customId 
-   * @param {string} category 
-   * @returns {boolean}
-   */
-  belongsToCategory(customId, category) {
-    return this.parseCustomId(customId).category === category;
-  }
-
-  /**
-   * 名前の正規化（例: totusunaの別表記統一）
-   * @param {string} name 
-   * @returns {string}
-   */
-  normalizeName(name) {
-    const normalizations = {
-      'totsuna': 'totusuna',
-      'toutsuna': 'totusuna',
-    };
-    return normalizations[name] ?? name;
-  }
-
-  /**
-   * デバッグ用にID解析結果をコンソール出力
-   * @param {string} customId 
-   * @returns {object} 解析結果
-   */
-  debugParseId(customId) {
-    const parsed = this.parseCustomId(customId);
-    console.log(`[IdManager] Parse result for "${customId}":`, parsed);
-    return parsed;
   }
 }
 

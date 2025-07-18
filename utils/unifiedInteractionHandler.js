@@ -13,12 +13,19 @@ class UnifiedInteractionHandler {
     this.isReady = false;
 
     this.prefixMapping = {
+      // Button/Select prefixes
       'star_config:': 'star_config',
       'star_chat_gpt_setti:': 'star_chat_gpt_setti',
       'star_chat_gpt_config:': 'star_chat_gpt_config',
       'totusuna_setti:': 'totusuna_setti',
       'totusuna_config:': 'totusuna_config',
       'kpi_': 'kpi_setti',
+      // Modal prefixes
+      'star_config_modal_': 'star_config',
+      'star_chat_gpt_config_modal': 'star_chat_gpt_config', // Handles with and without action
+      'totusuna_modal_': 'totusuna_setti',
+      'totusuna_config_edit_modal_': 'totusuna_config',
+      'kpi_modal_': 'kpi_setti',
     };
 
     this.customIdMapping = {
@@ -27,7 +34,6 @@ class UnifiedInteractionHandler {
       'star_chat_gpt_setti:main': 'star_chat_gpt_setti',
       'star_chat_gpt_setti_modal': 'star_chat_gpt_setti',
       'star_chat_gpt_setti:open_config': 'star_chat_gpt_setti',
-      'star_chat_gpt_config_modal': 'star_chat_gpt_config',
       'star_chat_gpt_config_select_channels': 'star_chat_gpt_config',
       'totusuna_select_main': 'totusuna_setti',
       'totusuna_select_replicate': 'totusuna_setti',

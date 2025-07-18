@@ -1,65 +1,66 @@
-// utils/totusuna_setti/mod
-
+// utils/totusuna_setti/modals/install.js
 const {
   ActionRowBuilder,
   ChannelSelectMenuBuilder,
   MessageFlagsBitField,
+  ChannelType,
 } = require('discord.js');
-const { tempStore } = require('../../tempStore');
+const { tempDataStore } = require('../../tempDataStore');
 const requireAdmin = require('../../permissions/requireAdmin');
+const { idManager } = require('../../idManager');
+const { logAndReplyError } = require('../../errorHelper');
 
 /**
- * 凸スナ設置用モーダルの処理
+ * "凸スナ設置" モーダルの送信を処理します。
  * @param {import('discord.js').ModalSubmitInteraction} interaction
  */
 async function actualHandler(interaction) {
   try {
-    // 1. タイムアウトを回避するため、即座に応答を遅延させます
+    // タイムアウトを回避するため、即座に応答を遅延させます。
     await interaction.deferReply({ flags: MessageFlagsBitField.Flags.Ephemeral });
 
     const guildId = interaction.guildId;
     const userId = interaction.user.id;
-    const key = `${guildId}:${userId}`;
+    // このユーザーの操作のための一時的なデータを保存するための一意なキーを作成します。
+    const tempKey = `totusuna_install:${guildId}:${userId}`;
 
-    // 2. モーダルから入力データを取得します
+    // モーダルフィールドからデータを抽出します。
     const inputData = {
       body: interaction.fields.getTextInputValue('body'),
-      title: interaction.fields.getTextInputValue('title') || '📣 凸スナ報告受付中', // デフォルトタイトル
+      // タイトルはモーダルから削除されたため、デフォルト値を使用します。
+      title: '📣 凸スナ報告受付中',
     };
 
-    if (!inputData.body) {
-      return await interaction.editReply({ content: '❌ 本文は必須入力です。' });
-    }
-
-    // 3. 次のステップ（チャンネル選択）のために、データを一時保存します
-    tempStore.set(key, {
+    // 次のステップのために、抽出したデータをインメモリストアに保存します。
+    tempDataStore.set(tempKey, {
       data: inputData,
       timestamp: Date.now(),
     });
 
-    // 4. チャンネル選択メニューを作成します
+    // ユーザーが設置チャンネルを選択するためのチャンネル選択メニューを作成します。
     const channelSelect = new ChannelSelectMenuBuilder()
-      .setCustomId('totusuna_channel_select:install') // このIDは installChannelSelect.js で処理されます
+      .setCustomId(idManager.createSelectId('totusuna_setti', 'select_install_channel'))
       .setPlaceholder('メッセージを設置するチャンネルを選択してください')
+      .addChannelTypes(ChannelType.GuildText) // テキストチャンネルのみを許可
       .setMinValues(1)
       .setMaxValues(1);
 
     const row = new ActionRowBuilder().addComponents(channelSelect);
 
-    // 5. ユーザーにチャンネル選択メニューを提示します
+    // 遅延応答を更新して、チャンネル選択メニューを表示します。
     await interaction.editReply({
       content: '✅ 本文を受け付けました。\n次に、この凸スナ案内を設置するチャンネルを選択してください。',
       components: [row],
     });
-  } catch (err) {
-    console.error('[installModal.js] 凸スナ設置処理エラー:', err);
-    if (interaction.deferred || interaction.replied) {
-      await interaction.editReply({ content: '❌ 処理中にエラーが発生しました。', components: [], embeds: [] });
-    }
+
+  } catch (error) {
+    // エラーをログに記録し、ユーザーに通知します。
+    await logAndReplyError(interaction, error, '❌ モーダルの処理中にエラーが発生しました。');
   }
 }
 
 module.exports = {
-  customId: 'totusuna_install_modal',
-  handle: requireAdmin(actualHandler), // 管理者権限を要求
+  // このIDは、ボタンハンドラのidManagerによって生成されたものと一致する必要があります。
+  customId: 'totusuna_modal_install',
+  handle: requireAdmin(actualHandler),
 };
