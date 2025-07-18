@@ -118,10 +118,10 @@ echo "================================"
 
 if [ ! -d ~/star_kanri_bot ]; then
   echo "  1. 初回セットアップ:"
-  echo "     git clone https://github.com/star-discord/star_kanri_bot.git ~/star_kanri_bot"
+  echo "     git clone git@github.com:star-discord/star_kanri_bot.git ~/star_kanri_bot"
 elif [ ! -d ~/star_kanri_bot/.git ]; then
   echo "  1. Gitリポジトリ修復:"
-  echo "     cd ~/star_kanri_bot && git init && git remote add origin https://github.com/star-discord/star_kanri_bot.git"
+  echo "     cd ~/star_kanri_bot && git init && git remote add origin git@github.com:star-discord/star_kanri_bot.git"
 fi
 
 if [ -d ~/star_kanri_bot ]; then

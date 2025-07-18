@@ -45,7 +45,7 @@ if [ -d "$PROJECT_DIR" ]; then
 fi
 
 echo "📂 GitHubからリポジトリをクローンします: ${PROJECT_DIR}"
-git clone https://github.com/star-discord/star_kanri_bot.git "$PROJECT_DIR"
+git clone git@github.com:star-discord/star_kanri_bot.git "$PROJECT_DIR"
 cd "$PROJECT_DIR"
 
 echo "📝 .env ファイルをセットアップします"
