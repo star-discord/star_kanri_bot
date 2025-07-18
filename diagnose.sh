@@ -29,43 +29,44 @@ echo ""
 echo "📂 ファイル・ディレクトリ状況:"
 if [ -d ~/star_kanri_bot ]; then
   echo "  ✅ ~/star_kanri_bot: 存在"
-  cd ~/star_kanri_bot
-  
-  echo "    📁 重要ファイル:"
-  for file in package.json .env index.js deploy-commands.js; do
-    if [ -f "$file" ]; then
-      size=$(ls -lh "$file" | awk '{print $5}')
-      echo "      ✅ $file ($size)"
-    else
-      echo "      ❌ $file: 見つかりません"
-    fi
-  done
-  
-  echo "    📁 data/:"
-  if [ -d data ]; then
-    file_count=$(find data -type f 2>/dev/null | wc -l)
-    echo "      ✅ data/: 存在 ($file_count ファイル)"
-  else
-    echo "      ❌ data/: 見つかりません"
-  fi
-  
-  echo "    🔗 Git状況:"
-  if [ -d .git ]; then
-    echo "      ブランチ: $(git branch --show-current 2>/dev/null || echo '不明')"
-    echo "      最新コミット: $(git log --oneline -1 2>/dev/null || echo '不明')"
-    echo "      リモート: $(git remote get-url origin 2>/dev/null || echo '不明')"
+  # サブシェル内で実行することで、スクリプト全体のカレントディレクトリを変更しないようにする
+  (
+    cd ~/star_kanri_bot
+    echo "    📁 重要ファイル:"
+    for file in package.json .env index.js deploy-commands.js; do
+      if [ -f "$file" ]; then
+        size=$(ls -lh "$file" | awk '{print $5}')
+        echo "      ✅ $file ($size)"
+      else
+        echo "      ❌ $file: 見つかりません"
+      fi
+    done
     
-    # ローカル変更確認
-    changes=$(git status --porcelain 2>/dev/null | wc -l)
-    if [ "$changes" -gt 0 ]; then
-      echo "      ⚠️ ローカル変更: $changes ファイル"
+    echo "    📁 data/:"
+    if [ -d data ]; then
+      file_count=$(find data -type f 2>/dev/null | wc -l)
+      echo "      ✅ data/: 存在 ($file_count ファイル)"
     else
-      echo "      ✅ ローカル変更: なし"
+      echo "      ❌ data/: 見つかりません"
     fi
-  else
-    echo "      ❌ Gitリポジトリではありません"
-  fi
-  
+    
+    echo "    🔗 Git状況:"
+    if [ -d .git ]; then
+      echo "      ブランチ: $(git branch --show-current 2>/dev/null || echo '不明')"
+      echo "      最新コミット: $(git log --oneline -1 2>/dev/null || echo '不明')"
+      echo "      リモート: $(git remote get-url origin 2>/dev/null || echo '不明')"
+      
+      # ローカル変更確認
+      changes=$(git status --porcelain 2>/dev/null | wc -l)
+      if [ "$changes" -gt 0 ]; then
+        echo "      ⚠️ ローカル変更: $changes ファイル"
+      else
+        echo "      ✅ ローカル変更: なし"
+      fi
+    else
+      echo "      ❌ Gitリポジトリではありません"
+    fi
+  )
 else
   echo "  ❌ ~/star_kanri_bot: 見つかりません"
 fi

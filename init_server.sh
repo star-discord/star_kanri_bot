@@ -27,7 +27,11 @@ sudo timedatectl set-timezone Asia/Tokyo
 
 echo "📦 必須パッケージをインストール"
 sudo apt-get update && sudo apt-get upgrade -y
-sudo apt-get install -y git curl nodejs npm
+sudo apt-get install -y git curl
+
+echo "📦 Node.js (v18.x) をインストール"
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+sudo apt-get install -y nodejs
 
 echo "🔧 Node.js と npm のバージョン確認:"
 node -v
