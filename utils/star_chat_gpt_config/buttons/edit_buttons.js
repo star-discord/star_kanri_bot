@@ -13,7 +13,7 @@ module.exports = {
 
     if (customId === 'star_chat_gpt_config:edit_basic_settings') {
       const modal = new ModalBuilder()
-        .setCustomId('star_chat_gpt_config:edit_basic_settings_modal')
+        .setCustomId('star_chat_gpt_config:config_modal') // ここを修正（以前は edit_basic_settings_modal）
         .setTitle('ChatGPT 基本設定修正');
 
       const apiKeyInput = new TextInputBuilder()
@@ -89,4 +89,5 @@ module.exports = {
     }
   }
 };
+
 

@@ -6,7 +6,7 @@ const path = require('path');
  * @param {string} filePath
  * @returns {Promise<string|null>} バックアップ先ファイルパス
  */
-async function backupCorruptedFile(filePath) {
+async function backupCorruptedFile(filePath, error) {
   try {
     const backupDir = path.join(path.dirname(filePath), 'backup_errors');
     await fs.mkdir(backupDir, { recursive: true });
@@ -14,8 +14,9 @@ async function backupCorruptedFile(filePath) {
     const backupPath = path.join(backupDir, `${path.basename(filePath)}.${Date.now()}.corrupted`);
     await fs.rename(filePath, backupPath);
     console.log(`💾 破損ファイルをバックアップ: ${backupPath}`);
+    console.error(`[backupCorruptedFile] ❌ 破損ファイル "${filePath}" をバックアップしました:`, error.message);
     return backupPath;
-  } catch (err) {
+  } catch (err) {    
     console.error(`❌ バックアップ失敗: ${filePath}`, err);
     return null;
   }
@@ -62,7 +63,7 @@ function prettyStringify(data) {
  */
 async function readJSON(filePath, initialData = {}) {
   try {
-    const content = await fs.readFile(filePath, 'utf8');
+    const content = await fs.readFile(filePath, 'utf-8');
     return JSON.parse(content);
   } catch (err) {
     if (err.code === 'ENOENT') {
@@ -72,7 +73,7 @@ async function readJSON(filePath, initialData = {}) {
 
     if (err instanceof SyntaxError) {
       console.error(`❌ JSONパースエラー: ${filePath}`, err);
-      await backupCorruptedFile(filePath);
+      await backupCorruptedFile(filePath, err);
       console.warn(`[readJSON] パース不能 → 初期データで復元: ${filePath}`);
       return initialData;
     }
@@ -92,7 +93,7 @@ async function writeJSON(filePath, data) {
   try {
     const dir = path.dirname(filePath);
     await fs.mkdir(dir, { recursive: true });
-    await fs.writeFile(filePath, prettyStringify(data), 'utf8');
+    await fs.writeFile(filePath, prettyStringify(data), 'utf-8');
   } catch (err) {
     console.error(`❌ 書き込み失敗: ${filePath}`, err);
     throw err;
@@ -116,7 +117,7 @@ async function ensureGuildJSON(guildId) {
       console.log(`📄 JSONファイル発見: ${filePath}`);
     } catch {
       const initialData = getInitialGuildData();
-      await fs.writeFile(filePath, prettyStringify(initialData), 'utf8');
+      await fs.writeFile(filePath, prettyStringify(initialData), 'utf-8');
       console.log(`✅ 新規JSONファイル作成: ${filePath}`);
     }
 

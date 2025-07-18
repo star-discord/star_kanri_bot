@@ -174,8 +174,10 @@ client.on('interactionCreate', async interaction => {
 });
 
 // ======== 起動ログ ========
-client.once('ready', () => {
+client.once('ready', async () => {
   console.log(`🎉 Bot 起動完了！ログイン: ${client.user.tag}`);
+  // ハンドラの初期化を待つ
+  await unifiedHandler.initialize();
 });
 
 // ======== Discordにログイン ========

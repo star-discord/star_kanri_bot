@@ -8,34 +8,8 @@ const path = require('path');
  */
 class UnifiedInteractionHandler {
   constructor() {
-    this.initializeHandlers();
-  }
-
-  initializeHandlers() {
-    this.handlerCategories = {
-      buttons: {
-        star_config: loadHandlers(path.join(__dirname, 'star_config/buttons')),
-        star_chat_gpt_setti: loadHandlers(path.join(__dirname, 'star_chat_gpt_setti/buttons')),
-        star_chat_gpt_config: loadHandlers(path.join(__dirname, 'star_chat_gpt_config/buttons')),
-        totusuna_setti: loadHandlers(path.join(__dirname, 'totusuna_setti/buttons')),
-        totusuna_config: loadHandlers(path.join(__dirname, 'totusuna_config/buttons')),
-        kpi_setti: loadHandlers(path.join(__dirname, 'kpi_setti/buttons')),
-      },
-      modals: {
-        star_config: loadHandlers(path.join(__dirname, 'star_config/modals')),
-        star_chat_gpt_setti: loadHandlers(path.join(__dirname, 'star_chat_gpt_setti/modals')),
-        star_chat_gpt_config: loadHandlers(path.join(__dirname, 'star_chat_gpt_config/modals')),
-        totusuna_setti: loadHandlers(path.join(__dirname, 'totusuna_setti/modals')),
-        totusuna_config: loadHandlers(path.join(__dirname, 'totusuna_config/modals')),
-        kpi_setti: loadHandlers(path.join(__dirname, 'kpi_setti/modals')),
-      },
-      selects: {
-        star_config: loadHandlers(path.join(__dirname, 'star_config/selects')),
-        star_chat_gpt_config: loadHandlers(path.join(__dirname, 'star_chat_gpt_config/selects')),
-        totusuna_setti: loadHandlers(path.join(__dirname, 'totusuna_setti/selects')),
-        totusuna_config: loadHandlers(path.join(__dirname, 'totusuna_config/selects')),
-      }
-    };
+    this.handlerCategories = {};
+    this.isReady = false;
 
     this.prefixMapping = {
       'star_config:': 'star_config',
@@ -58,6 +32,46 @@ class UnifiedInteractionHandler {
       'totusuna_select_replicate': 'totusuna_setti',
       'totusuna_config_select': 'totusuna_config',
     };
+  }
+
+  /**
+   * ハンドラを非同期で読み込み、初期化する
+   */
+  async initialize() {
+    console.log('🔄 [UnifiedHandler] ハンドラの初期化を開始...');
+    const buttonHandlers = {
+      star_config: await loadHandlers(path.join(__dirname, 'star_config/buttons')),
+      star_chat_gpt_setti: await loadHandlers(path.join(__dirname, 'star_chat_gpt_setti/buttons')),
+      star_chat_gpt_config: await loadHandlers(path.join(__dirname, 'star_chat_gpt_config/buttons')),
+      totusuna_setti: await loadHandlers(path.join(__dirname, 'totusuna_setti/buttons')),
+      totusuna_config: await loadHandlers(path.join(__dirname, 'totusuna_config/buttons')),
+      kpi_setti: await loadHandlers(path.join(__dirname, 'kpi_setti/buttons')),
+    };
+
+    const modalHandlers = {
+      star_config: await loadHandlers(path.join(__dirname, 'star_config/modals')),
+      star_chat_gpt_setti: await loadHandlers(path.join(__dirname, 'star_chat_gpt_setti/modals')),
+      star_chat_gpt_config: await loadHandlers(path.join(__dirname, 'star_chat_gpt_config/modals')),
+      totusuna_setti: await loadHandlers(path.join(__dirname, 'totusuna_setti/modals')),
+      totusuna_config: await loadHandlers(path.join(__dirname, 'totusuna_config/modals')),
+      kpi_setti: await loadHandlers(path.join(__dirname, 'kpi_setti/modals')),
+    };
+
+    const selectHandlers = {
+      star_config: await loadHandlers(path.join(__dirname, 'star_config/selects')),
+      star_chat_gpt_config: await loadHandlers(path.join(__dirname, 'star_chat_gpt_config/selects')),
+      totusuna_setti: await loadHandlers(path.join(__dirname, 'totusuna_setti/selects')),
+      totusuna_config: await loadHandlers(path.join(__dirname, 'totusuna_config/selects')),
+    };
+
+    this.handlerCategories = {
+      buttons: buttonHandlers,
+      modals: modalHandlers,
+      selects: selectHandlers,
+    };
+
+    this.isReady = true;
+    console.log('✅ [UnifiedHandler] ハンドラの初期化が完了しました。');
   }
 
   getCategoryFromCustomId(customId) {
@@ -175,6 +189,14 @@ class UnifiedInteractionHandler {
   }
 
   async handleInteraction(interaction) {
+    if (!this.isReady) {
+      console.warn('⚠️ [UnifiedHandler] ハンドラが未準備のため、インタラクションを拒否しました。');
+      return interaction.reply({
+        content: 'ボットがまだ準備中です。少し待ってからもう一度お試しください。',
+        flags: MessageFlagsBitField.Flags.Ephemeral,
+      }).catch(() => {});
+    }
+
     try {
       if (interaction.isButton()) {
         await this.handleButton(interaction);

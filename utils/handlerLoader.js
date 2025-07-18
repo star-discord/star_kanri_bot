@@ -1,10 +1,17 @@
 // utils/handlerLoader.js
 
-const fs = require('fs');
+const fsp = require('fs/promises');
 const path = require('path');
 
 // 除外ファイル一覧
 const EXCLUDED_FILES = new Set(['index.js', 'handleSelect.js', 'install_channel.js']);
+
+/**
+ * @typedef {object} Handler
+ * @property {string} [customId] - 完全一致する customId
+ * @property {string} [customIdStart] - 前方一致する customId
+ * @property {(interaction: import('discord.js').Interaction) => Promise<void>} handle - インタラクションを処理する関数
+ */
 
 /**
  * 有効なハンドラかを検証
@@ -18,21 +25,22 @@ function isValidHandler(mod) {
 
 /**
  * 指定ディレクトリからハンドラを読み込んでルーティング関数を返す
+ * @description この関数は非同期になり、呼び出し元での `await` が必要です。
  * @param {string} dirPath - ディレクトリの絶対パス
- * @returns {(customId: string) => Handler|null}
+ * @returns {Promise<(customId: string) => Handler|null>}
  */
-function loadHandlers(dirPath) {
+async function loadHandlers(dirPath) {
   const handlers = {};
   const startsWithHandlers = [];
 
   let fileNames;
   try {
-    fileNames = fs.readdirSync(dirPath);
+    fileNames = await fsp.readdir(dirPath);
   } catch (err) {
     if (err.code === 'ENOENT') {
       console.warn(`⚠️ [handlerLoader] ディレクトリが存在しません: ${dirPath}`);
     } else {
-      console.error(`❌ [handlerLoader] ディレクトリ読み込み失敗: ${dirPath}`, err);
+      console.error(`❌ [handlerLoader] ディレクトリ読み込み失敗: ${dirPath}`, err.stack);
     }
     return () => null;
   }
@@ -68,7 +76,7 @@ function loadHandlers(dirPath) {
       }
 
     } catch (err) {
-      console.error(`❌ [handlerLoader] 読み込み失敗 (${file}):`, err);
+      console.error(`❌ [handlerLoader] 読み込み失敗 (${file}):`, err.stack);
     }
   }
 
