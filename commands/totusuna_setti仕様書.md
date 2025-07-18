@@ -13,27 +13,6 @@
 
 ### 主な機能
 1. 凸スナ設置ボタンの提供
-2. 設定管理ボタンの提供
-3. クイック設置ボタンの提供
-4. 管理者向け案内表示
-
-### ボタン構成
-```javascript
-const installButton = new ButtonBuilder()
-  .setCustomId('totusuna_install_button')
-  .setLabel('📝 凸スナ設置')
-  .setStyle(ButtonStyle.Primary);
-
-const configButton = new ButtonBuilder()
-  .setCustomId('totusuna_config_button')
-  .setLabel('⚙️ 設定管理')
-  .setStyle(ButtonStyle.Secondary);
-
-const quickButton = new ButtonBuilder()
-  .setCustomId('totusuna_quick_button')
-  .setLabel('⚡ クイック設置')
-  .setStyle(ButtonStyle.Success);
-```
 
 ### Embed構成
 ```javascript
@@ -46,16 +25,6 @@ const embed = createAdminEmbed(
     value: '新しい凸スナを作成してチャンネルに設置します',
     inline: false
   },
-  {
-    name: '⚙️ 設定管理',
-    value: '既存の凸スナの確認・編集・削除を行います',
-    inline: false
-  },
-  {
-    name: '⚡ クイック設置',
-    value: 'テンプレートを使用して素早く凸スナを設置します',
-    inline: false
-  }
 );
 ```
 
@@ -76,22 +45,26 @@ const embed = createAdminEmbed(
 | ボタン | ハンドラファイル | 機能 |
 |--------|------------------|------|
 | 📝 凸スナ設置 | `utils/totusuna_setti/buttons/install.js` | 詳細設定での凸スナ作成 |
-| ⚙️ 設定管理 | `utils/totusuna_setti/buttons/totusuna_config_button.js` | 既存凸スナの管理 |
-| ⚡ クイック設置 | `utils/totusuna_setti/buttons/totusuna_quick_button.js` | 簡易凸スナ作成 |
 
 ### 設置フロー（📝 凸スナ設置）
 1. ボタンクリック
 2. 本文入力モーダル表示
 3. 設置チャンネル選択
-4. 複製チャンネル選択（オプション）
+4. 複製チャンネル選択
 5. UUID生成と設置実行
 6. JSON設定保存
 
-### クイックフロー（⚡ クイック設置）
-1. ボタンクリック
-2. 本文入力モーダル表示
-3. 現在のチャンネルに即座設置
-4. 設定保存
+### チャンネル選択UI（モーダル送信後）
+モーダルで本文が入力されると、次のステップとしてチャンネル選択メニューが表示されます。
+
+**メッセージ内容:**
+```
+✅ 本文を受け付けました。
+次に、この凸スナ案内を設置するチャンネルを選択してください。
+```
+
+**UIコンポーネント:**
+- `ChannelSelectMenu`: 設置先のチャンネルを1つ選択します。
 
 ## エラーハンドリング
 ```javascript
@@ -113,10 +86,6 @@ catch (error) {
 → 「📝 凸スナ設置」選択
 → 本文入力 → チャンネル選択 → 設置完了
 
-または
-
-→ 「⚡ クイック設置」選択
-→ 本文入力 → 即座設置完了
 ```
 
 ## 設置される凸スナの構造
@@ -143,6 +112,7 @@ const button = new ButtonBuilder()
       {
         "id": "uuid-v4",
         "userId": "設置者ID",
+        "title": "凸スナ報告受付中",
         "body": "凸スナ本文",
         "installChannelId": "設置チャンネルID",
         "replicateChannelIds": ["複製先ID1", "複製先ID2"],
@@ -155,23 +125,8 @@ const button = new ButtonBuilder()
 
 ## 機能別詳細
 
-### 📝 凸スナ設置（標準設置）
-- **特徴**: 詳細設定可能
-- **流れ**: 本文 → 設置先 → 複製先 → 設置
-- **利点**: 柔軟な設定
+### 🆕 新規設置（標準設置）
 - **用途**: 重要な告知・複数チャンネル配信
-
-### ⚡ クイック設置
-- **特徴**: 即座設置
-- **流れ**: 本文 → 即座設置
-- **利点**: 操作簡単
-- **用途**: 緊急告知・単発案内
-
-### ⚙️ 設定管理
-- **特徴**: 一覧表示・編集
-- **流れ**: 一覧 → 選択 → 編集/削除
-- **利点**: 統合管理
-- **用途**: メンテナンス・修正
 
 ## 想定利用シーン
 1. **イベント告知**: 参加者募集の凸スナ設置
@@ -180,8 +135,7 @@ const button = new ButtonBuilder()
 4. **アンケート**: 意見・感想の収集
 
 ## 注意事項
-- UUID重複の可能性は極めて低い（uuid v4使用）
-- 設置後の本文変更は設定管理から実行
+- UUID重複の可能性は極めて低い（uuid v4使用)
 - チャンネル削除時の凸スナ動作に注意
 - JSON保存失敗時のロールバック機能なし
 
@@ -190,3 +144,7 @@ const button = new ButtonBuilder()
 - UUID による一意識別
 - チャンネル権限の継承
 - 設定ファイルアクセス制御
+
+
+
+モーダル入力後の本文embedを追記
