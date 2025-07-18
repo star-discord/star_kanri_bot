@@ -47,7 +47,7 @@ module.exports = {
       // ボタン構成（1列）
       const row1 = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
-          .setCustomId(idManager.createButtonId('totusuna', 'install'))
+          .setCustomId(idManager.createButtonId('totusuna_setti', 'install'))
           .setLabel('新規設置')
           .setEmoji('🆕')
           .setStyle(ButtonStyle.Primary),
