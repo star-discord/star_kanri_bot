@@ -12,3 +12,4 @@ data/
 
 # chat gpt
 copilot_chatgpt/
+copilot_chatgpt/*.md
