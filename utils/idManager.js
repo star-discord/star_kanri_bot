@@ -98,57 +98,81 @@ class IdManager {
   }
 
   /**
+   * セレクトメニューIDを生成
+   * @param {string} category
+   * @param {string} action
+   * @returns {string}
+   */
+  createSelectId(category, action) {
+    switch (category) {
+      case 'star_config':
+        // e.g., star_config:admin_role_select
+        return `star_config:${action}`;
+      case 'totusuna_setti':
+        // e.g., totusuna_setti:select_main
+        return `totusuna_setti:${action}`;
+      case 'totusuna_config':
+        return 'totusuna_config_select';
+      default:
+        return `${category}_select_${action}`;
+    }
+  }
+
+  /**
    * customIdを解析してカテゴリ、アクション、UUIDを抽出
    * @param {string} customId 
-   * @returns {object} { category, action, uuid?, type, originalId }
+   * @returns {{ category: string, action: string, uuid?: string, type: string, originalId: string }}
    */
   parseCustomId(customId) {
-    // 解析用のパターン（長いもの優先）
-    const patterns = [
-      // 特殊・具体的なモーダル
-      { regex: /^totusuna_config_edit_modal_(.+)$/, category: 'totusuna_config', type: 'modal' },
-      { regex: /^totusuna_modal:(.+)$/, category: 'totusuna_report', type: 'modal' },
-      { regex: /^totusuna:report:(.+)$/, category: 'totusuna_report', type: 'button' },
-      { regex: /^chatgpt_config_modal$/, category: 'star_chat_gpt_config', type: 'modal', action: 'config' },
-
-      // UUIDを含むがアクションもあるパターン（:で区切る）
-      { regex: /^totusuna_setti:([^:]+)(?::(.*))?$/, category: 'totusuna_setti', type: 'button' },
-      { regex: /^totusuna_modal_([^:]+)(?::(.*))?$/, category: 'totusuna_setti', type: 'modal' },
-      { regex: /^totusuna_config:([^:]+)(?::(.*))?$/, category: 'totusuna_config', type: 'button' },
-
-      // 一般的なモーダル・ボタン・セレクト
-      { regex: /^star_config_modal_(.+)$/, category: 'star_config', type: 'modal' },
-      { regex: /^star_config:(.+)$/, category: 'star_config', type: 'select' },
-      { regex: /^star_chat_gpt_config:(.+)$/, category: 'star_chat_gpt_config', type: 'button' },
-      { regex: /^kpi_modal_(.+)$/, category: 'kpi', type: 'modal' },
-      { regex: /^kpi_(.+)$/, category: 'kpi', type: 'button' },
-
-      // 固定文字列ID（セレクトなど）
-      { regex: /^totusuna_config_select$/, category: 'totusuna_config', type: 'select', action: 'select' },
-      { regex: /^admin_role_select$/, category: 'star_config', type: 'select', action: 'admin_role' },
-      { regex: /^notify_channel_select$/, category: 'star_config', type: 'select', action: 'notify_channel' },
-      { regex: /^totusuna_select_(main|replicate)$/, category: 'totusuna_setti', type: 'select' },
+    // A more declarative and robust set of parsing rules.
+    // Order is important: more specific patterns should come first.
+    const parsingRules = [
+      // --- Modals ---
+      { regex: /^totusuna_config_edit_modal_(.+)$/, type: 'modal', category: 'totusuna_config', parts: { action: 'edit', uuid: 1 } },
+      { regex: /^totusuna_modal:(.+)$/, type: 'modal', category: 'totusuna_report', parts: { uuid: 1 } },
+      { regex: /^totusuna_modal_([^:]+):(.+)$/, type: 'modal', category: 'totusuna_setti', parts: { action: 1, uuid: 2 } },
+      { regex: /^totusuna_modal_([^:]+)$/, type: 'modal', category: 'totusuna_setti', parts: { action: 1 } },
+      { regex: /^star_config_modal_(.+)$/, type: 'modal', category: 'star_config', parts: { action: 1 } },
+      { regex: /^star_chat_gpt_config_modal$/, type: 'modal', category: 'star_chat_gpt_config', parts: { action: 'edit' } },
+      { regex: /^kpi_modal_(.+)$/, type: 'modal', category: 'kpi', parts: { action: 1 } },
+      // --- Buttons ---
+      { regex: /^totusuna:report:(.+)$/, type: 'button', category: 'totusuna_report', parts: { uuid: 1 } },
+      { regex: /^totusuna_setti:([^:]+):(.+)$/, type: 'button', category: 'totusuna_setti', parts: { action: 1, uuid: 2 } },
+      { regex: /^totusuna_setti:([^:]+)$/, type: 'button', category: 'totusuna_setti', parts: { action: 1 } },
+      { regex: /^totusuna_config:([^:]+):(.+)$/, type: 'button', category: 'totusuna_config', parts: { action: 1, uuid: 2 } },
+      { regex: /^totusuna_config:([^:]+)$/, type: 'button', category: 'totusuna_config', parts: { action: 1 } },
+      { regex: /^star_chat_gpt_config:(.+)$/, type: 'button', category: 'star_chat_gpt_config', parts: { action: 1 } },
+      { regex: /^kpi_(.+)$/, type: 'button', category: 'kpi', parts: { action: 1 } },
+      // --- Selects ---
+      { regex: /^star_config:(.+)$/, type: 'select', category: 'star_config', parts: { action: 1 } },
+      { regex: /^totusuna_setti:(.+)$/, type: 'select', category: 'totusuna_setti', parts: { action: 1 } },
+      { regex: /^totusuna_config_select$/, type: 'select', category: 'totusuna_config', parts: { action: 'select' } },
     ];
 
-    for (const pattern of patterns) {
-      const match = customId.match(pattern.regex);
+    for (const rule of parsingRules) {
+      const match = customId.match(rule.regex);
       if (match) {
         const result = {
-          category: pattern.category,
-          type: pattern.type,
+          category: rule.category,
+          type: rule.type,
+          action: 'unknown',
           originalId: customId,
         };
-        // actionは固定指定があればそれを優先、それ以外はmatch[1]
-        result.action = pattern.action ?? match[1] ?? 'unknown';
 
-        if (match[2] && match[2].length > 0) {
-          result.uuid = match[2];
+        if (rule.parts) {
+          for (const [key, value] of Object.entries(rule.parts)) {
+            if (typeof value === 'number') {
+              result[key] = match[value];
+            } else {
+              result[key] = value;
+            }
+          }
         }
         return result;
       }
     }
 
-    // 解析失敗時はunknown
+    // Fallback for simple IDs that don't match complex patterns
     return {
       category: 'unknown',
       type: 'unknown',

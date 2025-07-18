@@ -11,6 +11,7 @@ const {
 const { idManager } = require('../utils/idManager');
 const { PermissionFlagsBits } = require('discord.js');
 const { configManager } = require('../utils/configManager');
+const { logAndReplyError } = require('../utils/errorHelper');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -88,18 +89,7 @@ module.exports = {
       });
 
     } catch (error) {
-      console.error('❌ [star_config] 予期せぬエラー:', error);
-      // エラー発生時、インタラクションが未応答でないか確認し、適切に応答を返す
-      try {
-        if (interaction.deferred || interaction.replied) {
-          await interaction.editReply({ content: '❌ コマンドの実行中に予期せぬエラーが発生しました。' });
-        } else {
-          await interaction.reply({ content: '❌ コマンドの実行中に予期せぬエラーが発生しました。', flags: MessageFlagsBitField.Flags.Ephemeral });
-        }
-      } catch (replyError) {
-        // フォールバックの応答すら失敗した場合
-        console.error('❌ [star_config] エラーメッセージの送信にも失敗:', replyError);
-      }
+      await logAndReplyError(interaction, error, '❌ コマンドの実行中に予期せぬエラーが発生しました。');
     }
   }
 };

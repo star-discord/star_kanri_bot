@@ -40,7 +40,6 @@ class UnifiedInteractionHandler {
   async initialize() {
     console.log('🔄 [UnifiedHandler] ハンドラの初期化を開始...');
     const buttonHandlers = {
-      star_config: await loadHandlers(path.join(__dirname, 'star_config/buttons')),
       star_chat_gpt_setti: await loadHandlers(path.join(__dirname, 'star_chat_gpt_setti/buttons')),
       star_chat_gpt_config: await loadHandlers(path.join(__dirname, 'star_chat_gpt_config/buttons')),
       totusuna_setti: await loadHandlers(path.join(__dirname, 'totusuna_setti/buttons')),
