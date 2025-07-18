@@ -1,4 +1,7 @@
+// utils/errorHelper.js
+
 const { MessageFlagsBitField } = require('discord.js');
+const { safeReply } = require('./safeReply'); // 共通のsafeReplyをインポート
 const fs = require('fs/promises');
 const path = require('path');
 
@@ -26,41 +29,12 @@ async function logErrorToFile(message) {
  */
 async function logError(source, message, error) {
   const timestamp = new Date().toISOString();
-  const stack = error?.stack || error?.message || '';
-  const fullMessage = `[${timestamp}] [${source}]\n${message}${stack ? `\n${stack}` : ''}`;
+  // error.stack には通常 message も含まれるため、stackを優先する
+  const details = error?.stack || message;
+  const fullMessage = `[${timestamp}] [${source}]\n${details}`;
 
   console.error(fullMessage);
   await logErrorToFile(fullMessage);
-}
-
-/**
- * 応答済み状態に応じて reply/followUp を安全に実行
- * @param {import('discord.js').Interaction} interaction
- * @param {string} content
- * @param {object} [options]
- */
-async function safeReplyToUser(interaction, content, options = {}) {
-  const replyPayload = {
-    content,
-    embeds: [],
-    components: [],
-    flags: MessageFlagsBitField.Flags.Ephemeral,
-    ...options,
-  };
-
-  try {
-    if (interaction.deferred || interaction.replied) {
-      await interaction.followUp(replyPayload);
-    } else {
-      await interaction.reply(replyPayload);
-    }
-  } catch (err) {
-    console.error('[safeReplyToUser] 応答失敗:', {
-      error: err.message,
-      interactionId: interaction.id,
-      customId: interaction.customId ?? '(no customId)',
-    });
-  }
 }
 
 /**
@@ -76,14 +50,23 @@ async function logAndReplyError(interaction, logMsg, userMsg, options = {}) {
   const userId = interaction.user?.id || 'unknown_user';
 
   const message = logMsg instanceof Error ? logMsg.message : logMsg;
+  // logMsgがErrorインスタンスの場合、スタックトレースを含む全情報をログに残す
   const error = logMsg instanceof Error ? logMsg : undefined;
 
   await logError(`${source} [Guild:${guildId}] [User:${userId}]`, message, error);
-  await safeReplyToUser(interaction, userMsg, options);
+
+  // ユーザーへの応答ペイロードを作成
+  const replyPayload = {
+    content: userMsg,
+    flags: MessageFlagsBitField.Flags.Ephemeral,
+    ...options,
+  };
+
+  // 共通化されたsafeReplyで応答
+  await safeReply(interaction, replyPayload);
 }
 
 module.exports = {
   logError,
-  safeReplyToUser,
   logAndReplyError,
 };

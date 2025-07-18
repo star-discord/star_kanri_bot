@@ -11,11 +11,12 @@ const {
 const { safeReply, safeDefer } = require('../utils/safeReply');
 const { checkAdmin } = require('../utils/permissions/checkAdmin');
 const { logAndReplyError } = require('../utils/errorHelper');
+const { idManager } = require('../utils/idManager');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('凸スナ設置')
-    .setDescription('凸スナ報告メッセージを新規設置・管理する（管理者専用）'),
+    .setDescription('凸スナの新規設置を行います（管理者専用）'),
 
   async execute(interaction) {
     try {
@@ -33,45 +34,29 @@ module.exports = {
 
       // Embed作成
       const embed = new EmbedBuilder()
-        .setTitle('📌 凸スナ設置・管理メニュー')
+        .setTitle('📌 凸スナ 新規設置')
         .setDescription([
           '🆕 新しい凸スナ報告メッセージを設置するには、「新規設置」ボタンを押してください。',
-          '🛠️ 既存の投稿を管理する場合は、「管理」ボタンをご利用ください。',
-          '❓ 操作方法の確認や、📄 CSV出力もこちらから可能です。'
+          '',
+          '**💡 ヒント**',
+          '• 設置済みの凸スナを管理するには `/凸スナ設定` を使用してください。',
+          '• 報告データをCSVで出力するには `/凸スナcsv` を使用してください。'
         ].join('\n'))
         .setColor(0x2ecc71);
 
-      // ボタン構成（2列）
+      // ボタン構成（1列）
       const row1 = new ActionRowBuilder().addComponents(
         new ButtonBuilder()
-          .setCustomId('totusuna_install_button')
+          .setCustomId(idManager.createButtonId('totusuna', 'install'))
           .setLabel('新規設置')
           .setEmoji('🆕')
           .setStyle(ButtonStyle.Primary),
-        new ButtonBuilder()
-          .setCustomId('totusuna_manage_button')
-          .setLabel('管理')
-          .setEmoji('🛠️')
-          .setStyle(ButtonStyle.Secondary)
-      );
-
-      const row2 = new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-          .setCustomId('totusuna_help_button')
-          .setLabel('ヘルプ')
-          .setEmoji('❓')
-          .setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder()
-          .setCustomId('totusuna_csv_button')
-          .setLabel('CSV出力')
-          .setEmoji('📄')
-          .setStyle(ButtonStyle.Success)
       );
 
       // 応答送信
       await safeReply(interaction, {
         embeds: [embed],
-        components: [row1, row2],
+        components: [row1],
       });
 
     } catch (error) {

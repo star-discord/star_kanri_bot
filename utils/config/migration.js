@@ -44,6 +44,7 @@ function migrate(data) {
   console.log(`[ConfigMigration] データ移行が必要: v${currentVersion} -> v${CURRENT_SCHEMA_VERSION}`);
   for (let i = currentVersion - 1; i < migrations.length; i++) {
     // 移行関数を呼び出し、データを更新する
+    console.log(`  [MIGRATE] v${i + 1} -> v${i + 2} を実行します...`);
     data = migrationsi;
   }
   data._version = CURRENT_SCHEMA_VERSION;

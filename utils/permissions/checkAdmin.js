@@ -9,9 +9,17 @@ const { configManager } = require('../configManager');
  */
 async function checkAdmin(interaction) {
   if (!interaction.inGuild()) {
-    return false; // Admin commands are guild-only
+    // DMからのコマンドは管理者権限を持ち得ない
+    return false;
   }
-  return configManager.isStarAdmin(interaction.guildId, interaction.member);
+
+  try {
+    return await configManager.isStarAdmin(interaction.guildId, interaction.member);
+  } catch (error) {
+    console.error(`[checkAdmin] 権限チェック中にエラーが発生しました (Guild: ${interaction.guildId}, User: ${interaction.user.tag}):`, error);
+    // エラー発生時は安全のため権限なしとみなす
+    return false;
+  }
 }
 
 module.exports = { checkAdmin };
