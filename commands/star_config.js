@@ -12,7 +12,7 @@ const { idManager } = require('../utils/idManager');
 const { PermissionFlagsBits } = require('discord.js');
 const { configManager } = require('../utils/configManager');
 const { checkAdmin } = require('../utils/permissions/checkAdmin'); // 共通の管理者チェックをインポート
-const { createAdminRejectEmbed, createErrorEmbed } = require('../utils/embedHelper');
+const { createAdminRejectEmbed, createErrorEmbed, createStarConfigEmbed } = require('../utils/embedHelper');
 const { logAndReplyError } = require('../utils/errorHelper');
 
 module.exports = {
@@ -49,25 +49,7 @@ module.exports = {
       const currentAdminRoleIds = config.star?.adminRoleIds || [];
       const currentNotifyChannelId = config.star?.notifyChannelId || null;
 
-      const getSettingsEmbed = (roleIds, notifyId) => {
-        const roleMentions =
-          roleIds.length > 0
-            ? roleIds.map(id => {
-                const role = guild.roles.cache.get(id);
-                return role ? `<@&${id}>` : `~~(削除済ロール: ${id})~~`;
-              }).join('\n')
-            : '*未設定*';
-
-        const notifyChannel = notifyId ? guild.channels.cache.get(notifyId) : null;
-        const notifyDisplay = notifyChannel
-          ? `<#${notifyId}>`
-          : notifyId ? `~~(削除済チャンネル: ${notifyId})~~` : '*未設定*';
-
-       return new EmbedBuilder()
-          .setTitle('🌟 STAR管理Bot設定')
-          .setDescription(`**管理者ロールと通知チャンネルを設定します。**\n\n📌 **現在の管理者ロール**\n${roleMentions}\n\n📣 **現在の通知チャンネル**\n${notifyDisplay}`)
-          .setColor(0x0099ff);
-      };
+      const settingsEmbed = createStarConfigEmbed(guild, currentAdminRoleIds, currentNotifyChannelId);
 
       const roleSelect = new RoleSelectMenuBuilder() // セマンティックな正確性のために createSelectId を使用
         .setCustomId(idManager.createSelectId('star_config', 'admin_role_select'))
@@ -86,7 +68,7 @@ module.exports = {
       const row2 = new ActionRowBuilder().addComponents(channelSelect);
 
       await interaction.editReply({
-        embeds: [getSettingsEmbed(currentAdminRoleIds, currentNotifyChannelId)],
+        embeds: [settingsEmbed],
         components: [row1, row2],
       });
 

@@ -83,6 +83,33 @@ function createWarningEmbed(title, description) {
   return createLabeledEmbed('⚠️', title, description, COLORS.WARNING);
 }
 
+/**
+ * STAR管理bot設定用のEmbedを生成
+ * @param {import('discord.js').Guild} guild - ギルドオブジェクト
+ * @param {string[]} adminRoleIds - 管理者ロールIDの配列
+ * @param {string|null} notifyChannelId - 通知チャンネルID
+ * @returns {EmbedBuilder}
+ */
+function createStarConfigEmbed(guild, adminRoleIds, notifyChannelId) {
+  const roleMentions =
+    adminRoleIds.length > 0
+      ? adminRoleIds.map(id => {
+          const role = guild.roles.cache.get(id);
+          return role ? `<@&${id}>` : `~~(削除済ロール: ${id})~~`;
+        }).join('\n')
+      : '*未設定*';
+
+  const notifyChannel = notifyChannelId ? guild.channels.cache.get(notifyChannelId) : null;
+  const notifyDisplay = notifyChannel
+    ? `<#${notifyChannelId}>`
+    : notifyChannelId ? `~~(削除済チャンネル: ${notifyChannelId})~~` : '*未設定*';
+
+  return new EmbedBuilder()
+    .setTitle('🌟 STAR管理Bot設定')
+    .setDescription(`**管理者ロールと通知チャンネルを設定します。**\n\n📌 **現在の管理者ロール**\n${roleMentions}\n\n📣 **現在の通知チャンネル**\n${notifyDisplay}`)
+    .setColor(COLORS.PRIMARY);
+}
+
 module.exports = {
   BOT_NAME,
   COLORS,
@@ -93,4 +120,5 @@ module.exports = {
   createSuccessEmbed,
   createErrorEmbed,
   createWarningEmbed,
+  createStarConfigEmbed,
 };
