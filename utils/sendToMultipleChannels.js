@@ -21,23 +21,14 @@ module.exports.sendToMultipleChannels = async (client, channelIds, message) => {
     try {
       const channel = await client.channels.fetch(channelId);
 
-      if (!channel) {
-        console.warn(`[sendToMultipleChannels] チャンネル取得失敗: ${channelId}`);
-        continue;
-      }
-
-      if (!channel.isTextBased?.()) {
-        console.warn(`[sendToMultipleChannels] テキストベースのチャンネルではありません: ${channelId}`);
+      if (!channel || !channel.isTextBased?.()) {
+        console.warn(`[sendToMultipleChannels] チャンネルが見つからないか、テキストベースではありません: ${channelId}`);
         continue;
       }
 
       await channel.send(message);
-      console.log(`[sendToMultipleChannels] メッセージ送信成功: ${channelId}`);
     } catch (err) {
-      console.error(`[sendToMultipleChannels] メッセージ送信失敗（チャンネルID: ${channelId}）`, {
-        message: err.message,
-        stack: err.stack,
-      });
+      console.error(`[sendToMultipleChannels] メッセージ送信失敗（チャンネルID: ${channelId}）`, err);
     }
   }
 };

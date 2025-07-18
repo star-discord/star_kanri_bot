@@ -11,6 +11,7 @@ const requireAdmin = require('../../permissions/requireAdmin');
 const { idManager } = require('../../idManager');
 const { configManager } = require('../../configManager');
 const { logAndReplyError } = require('../../errorHelper');
+const { sendToMultipleChannels } = require('../../sendToMultipleChannels');
 
 /**
  * 連携チャンネルの選択を処理し、凸スナの設置を完了させます。
@@ -58,25 +59,30 @@ async function actualHandler(interaction) {
       .setLabel('凸スナ報告')
       .setStyle(ButtonStyle.Primary);
 
-    const row = new ActionRowBuilder().addComponents(reportButton);
+    const messagePayload = {
+      embeds: [embed],
+      components: [new ActionRowBuilder().addComponents(reportButton)],
+    };
 
-    // メッセージを設置先チャンネルに送信します。
-    const sentMessage = await installChannel.send({ embeds: [embed], components: [row] });
+    // メインチャンネルと連携チャンネルのIDを結合します。
+    const allChannelIds = [installChannel.id, ...replicateChannelIds];
 
+    // sendToMultipleChannels ユーティリティを使用して、すべてのチャンネルに一括送信します。
+    await sendToMultipleChannels(interaction.client, allChannelIds, messagePayload);
+    
     // configManagerを使用して、すべての設定を永続化します。
     await configManager.addTotusunaInstance(guildId, {
       id: instanceId,
       ...tempData.data,
-      installChannelId: sentMessage.channel.id,
+      installChannelId: installChannel.id,
       replicateChannelIds: replicateChannelIds,
-      messageId: sentMessage.id,
       createdBy: userId,
       createdAt: new Date().toISOString(),
     });
 
     // 完了メッセージをユーザーに送信します。
     await interaction.editReply({
-      content: `✅ 凸スナを <#${sentMessage.channel.id}> に設置しました！\n${replicateChannelIds.length > 0 ? `連携チャンネル: ${replicateChannelIds.map(id => `<#${id}>`).join(', ')}` : ''}`,
+      content: `✅ 凸スナを <#${installChannel.id}> に設置しました！\n${replicateChannelIds.length > 0 ? `連携チャンネル: ${replicateChannelIds.map(id => `<#${id}>`).join(', ')}` : ''}`,
       components: [],
     });
 
