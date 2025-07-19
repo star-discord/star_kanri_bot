@@ -1,13 +1,14 @@
 // utils/totusuna_setti/selects/select_replicate_channels.js
 const { ChannelType } = require('discord.js');
 const { tempDataStore } = require('../../tempDataStore');
-const requireAdmin = require('../../permissions/requireAdmin');
 const { idManager } = require('../../idManager');
 const { totusunaConfigManager } = require('../totusunaConfigManager');
 const { logAndReplyError } = require('../../errorHelper');
 const { sendToMultipleChannels } = require('../../sendToMultipleChannels');
 const { safeDefer } = require('../../safeReply');
 const { buildTotusunaMessage } = require('../totusunaMessageHelper');
+const { checkAdmin } = require('../../permissions/checkAdmin');
+const { createAdminRejectEmbed } = require('../../embedHelper');
 
 /**
  * 連携チャンネルの選択を処理し、凸スナの設置を完了させます。
@@ -16,6 +17,12 @@ const { buildTotusunaMessage } = require('../totusunaMessageHelper');
 async function actualHandler(interaction) {
   // 最終ステップでファイルI/Oや複数APIコールがあるため、安全に遅延応答します。
   await safeDefer(interaction, { ephemeral: true });
+
+  // 権限チェックは必ず遅延応答の後に行います
+  const isAdmin = await checkAdmin(interaction);
+  if (!isAdmin) {
+    return await interaction.editReply({ embeds: [createAdminRejectEmbed()] });
+  }
 
   const guildId = interaction.guildId;
   const userId = interaction.user.id;
@@ -97,5 +104,5 @@ async function actualHandler(interaction) {
 
 module.exports = {
   customId: 'totusuna_setti:select_replicate_channels',
-  handle: requireAdmin(actualHandler),
+  handle: actualHandler,
 };

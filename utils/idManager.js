@@ -84,7 +84,8 @@ class IdManager {
         // e.g., totusuna_setti:select_main
         return `totusuna_setti:${action}`;
       case 'totusuna_config':
-        return 'totusuna_config_select';
+        // e.g., totusuna_config:select
+        return `totusuna_config:${action}`;
       default:
         // 未定義のカテゴリに対してはエラーをスローし、明示的な定義を強制する
         throw new Error(`[IdManager] Unknown select category: "${category}"`);
