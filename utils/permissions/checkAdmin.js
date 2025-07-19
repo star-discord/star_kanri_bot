@@ -14,7 +14,12 @@ async function checkAdmin(interaction) {
   }
 
   try {
-    return await configManager.isStarAdmin(interaction.guildId, interaction.member);
+    // Logic moved from configManager.isStarAdmin
+    const config = await configManager.getSectionConfig(interaction.guildId, 'star');
+    const adminRoleIds = config.adminRoleIds ?? [];
+
+    return interaction.member.permissions.has('Administrator') ||
+           adminRoleIds.some(roleId => interaction.member.roles.cache.has(roleId));
   } catch (error) {
     console.error(`[checkAdmin] 権限チェック中にエラーが発生しました (Guild: ${interaction.guildId}, User: ${interaction.user.tag}):`, error);
     // エラー発生時は安全のため権限なしとみなす

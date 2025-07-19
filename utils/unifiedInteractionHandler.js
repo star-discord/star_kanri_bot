@@ -19,6 +19,7 @@ class UnifiedInteractionHandler {
       'star_chat_gpt_config:': 'star_chat_gpt_config',
       'totusuna_setti:': 'totusuna_setti',
       'totusuna_config:': 'totusuna_config',
+      'totusuna:report:': 'totusuna_report',
       'kpi_': 'kpi_setti',
       // Modal prefixes
       'star_config_modal_': 'star_config',
@@ -27,18 +28,6 @@ class UnifiedInteractionHandler {
       'totusuna_config_edit_modal_': 'totusuna_config',
       'kpi_modal_': 'kpi_setti',
     };
-
-    this.customIdMapping = {
-      'admin_role_select': 'star_config',
-      'notify_channel_select': 'star_config',
-      'star_chat_gpt_setti:main': 'star_chat_gpt_setti',
-      'star_chat_gpt_setti_modal': 'star_chat_gpt_setti',
-      'star_chat_gpt_setti:open_config': 'star_chat_gpt_setti',
-      'star_chat_gpt_config_select_channels': 'star_chat_gpt_config',
-      'totusuna_select_main': 'totusuna_setti',
-      'totusuna_select_replicate': 'totusuna_setti',
-      'totusuna_config_select': 'totusuna_config',
-    };
   }
 
   /**
@@ -46,43 +35,33 @@ class UnifiedInteractionHandler {
    */
   async initialize() {
     console.log('🔄 [UnifiedHandler] ハンドラの初期化を開始...');
-    const buttonHandlers = {
-      star_chat_gpt_setti: await loadHandlers(path.join(__dirname, 'star_chat_gpt_setti/buttons')),
-      star_chat_gpt_config: await loadHandlers(path.join(__dirname, 'star_chat_gpt_config/buttons')),
-      totusuna_setti: await loadHandlers(path.join(__dirname, 'totusuna_setti/buttons')),
-      totusuna_config: await loadHandlers(path.join(__dirname, 'totusuna_config/buttons')),
-      kpi_setti: await loadHandlers(path.join(__dirname, 'kpi_setti/buttons')),
-    };
 
-    const modalHandlers = {
-      star_config: await loadHandlers(path.join(__dirname, 'star_config/modals')),
-      star_chat_gpt_setti: await loadHandlers(path.join(__dirname, 'star_chat_gpt_setti/modals')),
-      star_chat_gpt_config: await loadHandlers(path.join(__dirname, 'star_chat_gpt_config/modals')),
-      totusuna_setti: await loadHandlers(path.join(__dirname, 'totusuna_setti/modals')),
-      totusuna_config: await loadHandlers(path.join(__dirname, 'totusuna_config/modals')),
-      kpi_setti: await loadHandlers(path.join(__dirname, 'kpi_setti/modals')),
-    };
+    const interactionTypes = ['buttons', 'modals', 'selects'];
+    // prefixMappingからカテゴリ名を動的に取得
+    const categories = [...new Set(Object.values(this.prefixMapping))];
 
-    const selectHandlers = {
-      star_config: await loadHandlers(path.join(__dirname, 'star_config/selects')),
-      star_chat_gpt_config: await loadHandlers(path.join(__dirname, 'star_chat_gpt_config/selects')),
-      totusuna_setti: await loadHandlers(path.join(__dirname, 'totusuna_setti/selects')),
-      totusuna_config: await loadHandlers(path.join(__dirname, 'totusuna_config/selects')),
-    };
+    const allLoadPromises = [];
 
-    this.handlerCategories = {
-      buttons: buttonHandlers,
-      modals: modalHandlers,
-      selects: selectHandlers,
-    };
+    // 各インタラクションタイプとカテゴリの組み合わせでハンドラを動的に読み込む
+    for (const type of interactionTypes) {
+      this.handlerCategories[type] = {};
+      for (const category of categories) {
+        const handlerPath = path.join(__dirname, category, type);
+        const promise = loadHandlers(handlerPath).then(findFunc => {
+          this.handlerCategories[type][category] = findFunc;
+        });
+        allLoadPromises.push(promise);
+      }
+    }
+
+    // すべてのハンドラの読み込みを並列で実行
+    await Promise.all(allLoadPromises);
 
     this.isReady = true;
     console.log('✅ [UnifiedHandler] ハンドラの初期化が完了しました。');
   }
 
   getCategoryFromCustomId(customId) {
-    if (this.customIdMapping[customId]) return this.customIdMapping[customId];
-
     for (const [prefix, category] of Object.entries(this.prefixMapping)) {
       if (customId.startsWith(prefix)) return category;
     }
@@ -97,39 +76,23 @@ class UnifiedInteractionHandler {
     return typeof find === 'function' ? find(customId) : null;
   }
 
-  async handleButton(interaction) {
-    if (!interaction.isButton()) return;
-    const customId = interaction.customId;
-    const handler = this.resolveHandler('buttons', customId);
+  /**
+   * 内部ヘルパー：特定のインタラクションタイプのハンドラを解決して実行する
+   * @param {import('discord.js').Interaction} interaction
+   * @param {'buttons' | 'modals' | 'selects'} interactionType
+   * @private
+   */
+  async _executeHandler(interaction, interactionType) {
+    const { customId } = interaction;
+    const handler = this.resolveHandler(interactionType, customId);
 
     if (!handler) {
-      console.warn(`[UnifiedHandler] ボタンハンドラが見つかりません: ${customId}`);
-      return await logAndReplyError(interaction, `未対応のボタン: ${customId}`, '⚠️ このボタンは現在利用できません。');
+      const typeName = { buttons: 'ボタン', modals: 'モーダル', selects: 'セレクトメニュー' }[interactionType];
+      console.warn(`[UnifiedHandler] ${typeName}ハンドラが見つかりません: ${customId}`);
+      await logAndReplyError(interaction, `未対応の${typeName}: ${customId}`, `⚠️ この${typeName}は現在利用できません。`);
+      return;
     }
-    await handler.handle(interaction);
-  }
 
-  async handleModal(interaction) {
-    if (!interaction.isModalSubmit()) return;
-    const customId = interaction.customId;
-    const handler = this.resolveHandler('modals', customId);
-
-    if (!handler) {
-      console.warn(`[UnifiedHandler] モーダルハンドラが見つかりません: ${customId}`);
-      return await logAndReplyError(interaction, `未対応のモーダル: ${customId}`, '❌ モーダルに対応する処理が見つかりませんでした。');
-    }
-    await handler.handle(interaction);
-  }
-
-  async handleSelect(interaction) {
-    if (!interaction.isAnySelectMenu()) return;
-    const customId = interaction.customId;
-    const handler = this.resolveHandler('selects', customId);
-
-    if (!handler) {
-      console.warn(`[UnifiedHandler] セレクトメニューハンドラが見つかりません: ${customId}`);
-      return await logAndReplyError(interaction, `未対応のセレクトメニュー: ${customId}`, '❌ セレクトメニューに対応する処理が見つかりませんでした。');
-    }
     await handler.handle(interaction);
   }
 
@@ -141,11 +104,11 @@ class UnifiedInteractionHandler {
 
     try {
       if (interaction.isButton()) {
-        await this.handleButton(interaction);
+        await this._executeHandler(interaction, 'buttons');
       } else if (interaction.isModalSubmit()) {
-        await this.handleModal(interaction);
+        await this._executeHandler(interaction, 'modals');
       } else if (interaction.isAnySelectMenu()) {
-        await this.handleSelect(interaction);
+        await this._executeHandler(interaction, 'selects');
       } else {
         // サポート外のインタラクションタイプは無視する
         console.warn(`[UnifiedHandler] 未対応のinteractionタイプ: ${interaction.type}`);
@@ -164,7 +127,4 @@ const unifiedHandler = new UnifiedInteractionHandler();
 module.exports = {
   UnifiedInteractionHandler,
   unifiedHandler,
-  handleButton: (i) => unifiedHandler.handleButton(i),
-  handleModal: (i) => unifiedHandler.handleModal(i),
-  handleSelect: (i) => unifiedHandler.handleSelect(i),
 };

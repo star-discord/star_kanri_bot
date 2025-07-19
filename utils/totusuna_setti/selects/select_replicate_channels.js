@@ -9,17 +9,18 @@ const {
 const { tempDataStore } = require('../../tempDataStore');
 const requireAdmin = require('../../permissions/requireAdmin');
 const { idManager } = require('../../idManager');
-const { configManager } = require('../../configManager');
+const { totusunaConfigManager } = require('../totusunaConfigManager');
 const { logAndReplyError } = require('../../errorHelper');
 const { sendToMultipleChannels } = require('../../sendToMultipleChannels');
+const { safeDefer } = require('../../safeReply');
 
 /**
  * 連携チャンネルの選択を処理し、凸スナの設置を完了させます。
  * @param {import('discord.js').ChannelSelectMenuInteraction} interaction
  */
 async function actualHandler(interaction) {
-  // 最終ステップなので、完了まで時間がかかる可能性があるため、応答を遅延させます。
-  await interaction.deferReply({ ephemeral: true });
+  // 最終ステップでファイルI/Oや複数APIコールがあるため、安全に遅延応答します。
+  await safeDefer(interaction, { ephemeral: true });
 
   const guildId = interaction.guildId;
   const userId = interaction.user.id;

@@ -92,10 +92,14 @@ class ConfigManager {
     try {
       await withLock(mutex, async () => {
         await writeJSON(jsonPath, config);
-        this.invalidateCache(guildId); // 保存後にキャッシュを無効化
+        // キャッシュを無効化する代わりに、保存した新しい設定で更新する
+        this.configCache.set(guildId, config);
+        console.log(`[ConfigManager] Guild ${guildId} の設定キャッシュを更新しました。`);
       });
     } catch (e) {
       if (e === E_TIMEOUT) {
+        // タイムアウトした場合、書き込みが成功したか不明なため、キャッシュを無効化して次の読み込みで再同期させるのが安全
+        this.invalidateCache(guildId);
         throw new Error(`ファイルロックの取得がタイムアウトしました (Context: ${context})`);
       }
       throw e;
@@ -121,9 +125,56 @@ class ConfigManager {
    * @returns {Promise<void>}
    */
   async updateSectionConfig(guildId, section, sectionConfig) {
-    const config = await this.getGuildConfig(guildId);
-    config[section] = { ...(config[section] ?? {}), ...sectionConfig };
-    await this.saveGuildConfig(guildId, config, `updateSectionConfig: ${section}`);
+    const currentConfig = await this.getGuildConfig(guildId);
+    // 不変性を保つため、キャッシュされたオブジェクトのディープコピーを作成して変更する
+    const newConfig = JSON.parse(JSON.stringify(currentConfig));
+    newConfig[section] = { ...(newConfig[section] ?? {}), ...sectionConfig };
+    await this.saveGuildConfig(guildId, newConfig, `updateSectionConfig: ${section}`);
+  }
+
+  /**
+   * Adds an item to an array within a specific configuration section.
+   * @param {string} guildId
+   * @param {string} section The top-level section key (e.g., 'totusuna').
+   * @param {string} arrayKey The key of the array within the section (e.g., 'instances').
+   * @param {object} itemData The item to add to the array.
+   * @returns {Promise<object>} The added item.
+   */
+  async addItemToArray(guildId, section, arrayKey, itemData) {
+    const currentConfig = await this.getGuildConfig(guildId);
+    const newConfig = JSON.parse(JSON.stringify(currentConfig));
+
+    newConfig[section] = newConfig[section] ?? {};
+    newConfig[section][arrayKey] = newConfig[section][arrayKey] ?? [];
+    newConfig[section][arrayKey].push(itemData);
+
+    await this.saveGuildConfig(guildId, newConfig, `addItemToArray: ${section}.${arrayKey}`);
+    return itemData;
+  }
+
+  /**
+   * Updates an item in an array within a specific configuration section.
+   * @param {string} guildId
+   * @param {string} section
+   * @param {string} arrayKey
+   * @param {string} itemId The ID of the item to update.
+   * @param {object} updates The properties to update.
+   * @param {string} [idField='id'] The name of the ID field in the array items.
+   * @returns {Promise<boolean>} True if the item was found and updated.
+   */
+  async updateItemInArray(guildId, section, arrayKey, itemId, updates, idField = 'id') {
+    const currentConfig = await this.getGuildConfig(guildId);
+    const newConfig = JSON.parse(JSON.stringify(currentConfig));
+
+    if (!newConfig[section]?.[arrayKey]) return false;
+
+    const itemIndex = newConfig[section][arrayKey].findIndex(item => item[idField] === itemId);
+    if (itemIndex === -1) return false;
+
+    newConfig[section][arrayKey][itemIndex] = { ...newConfig[section][arrayKey][itemIndex], ...updates };
+
+    await this.saveGuildConfig(guildId, newConfig, `updateItemInArray: ${section}.${arrayKey}[${itemId}]`);
+    return true;
   }
 
   /**
@@ -138,6 +189,36 @@ class ConfigManager {
   }
 
   /**
+   * Helper to check if a value is a plain object.
+   * @private
+   */
+  _isObject(item) {
+    return (item && typeof item === 'object' && !Array.isArray(item));
+  }
+
+  /**
+   * Deeply merges the `source` object into the `target` object.
+   * @private
+   */
+  _deepMerge(target, source) {
+    const output = { ...target };
+    if (this._isObject(target) && this._isObject(source)) {
+      Object.keys(source).forEach(key => {
+        if (this._isObject(source[key])) {
+          if (!(key in target)) {
+            Object.assign(output, { [key]: source[key] });
+          } else {
+            output[key] = this._deepMerge(target[key], source[key]);
+          }
+        } else {
+          Object.assign(output, { [key]: source[key] });
+        }
+      });
+    }
+    return output;
+  }
+
+  /**
   * @param {string} guildId
    * デフォルト値とマージ
    * @private
@@ -145,120 +226,11 @@ class ConfigManager {
    * @returns {object}
    */
   _mergeWithDefaults(config) {
-    const merged = { ...this.defaultConfig };
-
-
-    for (const [key, value] of Object.entries(config)) {
-       if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-        merged[key] = { ...merged[key], ...value };
-      } else {
-        merged[key] = value;
-      }
-    }
-
-    return merged;
+    // Perform a deep merge of the default config and the loaded config.
+    // This ensures that new default properties are added to existing configs.
+    return this._deepMerge(this.defaultConfig, config);
   }
 
-  /**
-   * STAR管理者権限をチェック
-   * @param {string} guildId 
-
-   * @param {import('discord.js').GuildMember} member 
-   * @returns {Promise<boolean>}
-   */
-  async isStarAdmin(guildId, member) {
-    const config = await this.getSectionConfig(guildId, 'star');
-    const adminRoleIds = config.adminRoleIds ?? [];
-
-    // 管理者権限またはSTAR管理ロールを持っているかチェック
-    return member.permissions.has('Administrator') || 
-           adminRoleIds.some(roleId => member.roles.cache.has(roleId));
-  }
-
-  /**
-   * totusuna インスタンスを追加
-   * @param {string} guildId 
-   * @param {object} instanceData 
-   */
-  async addTotusunaInstance(guildId, instanceData) {
-    const config = await this.getGuildConfig(guildId);
-    config.totusuna = config.totusuna ?? { instances: [] };
-    config.totusuna.instances = config.totusuna.instances ?? [];
-    config.totusuna.instances.push(instanceData);
-    await this.saveGuildConfig(guildId, config, 'addTotusunaInstance');
-    return instanceData;
-  }
-
-  /**
-   * totusuna インスタンスを取得
-   * @param {string} guildId 
-   * @param {string} uuid 
-   * @returns {Promise<object|null>}
-   */
-  async getTotusunaInstance(guildId, uuid) {
-    const config = await this.getSectionConfig(guildId, 'totusuna');
-    const instances = config.instances ?? [];
-    return instances.find(instance => instance.id === uuid) || null;
-  }
-
-  /**
-   * totusuna インスタンスを更新
-   * @param {string} guildId 
-   * @param {string} uuid 
-   * @param {object} updates 
-   * @returns {Promise<boolean>}
-   */
-  async updateTotusunaInstance(guildId, uuid, updates) {
-    const config = await this.getGuildConfig(guildId);
-    if (!config.totusuna?.instances) return false;
-
-    const instanceIndex = config.totusuna.instances.findIndex(instance => instance.id === uuid);
-    if (instanceIndex === -1) return false;
-
-    config.totusuna.instances[instanceIndex] = { ...config.totusuna.instances[instanceIndex], ...updates };
-    console.log(`[ConfigManager] updateTotusunaInstance: インスタンスを更新 (guild: ${guildId}, uuid: ${uuid})`);
-    await this.saveGuildConfig(guildId, config, `updateTotusunaInstance: ${uuid}`);
-    return true;
-  }
-
-  /**
-   * totusuna インスタンスを削除
-   * @param {string} guildId 
-   * @param {string} uuid 
-   * @returns {Promise<boolean>}
-   */
-  async removeTotusunaInstance(guildId, uuid) {
-    const config = await this.getGuildConfig(guildId);
-    if (!config.totusuna?.instances) return false;
-
-    const originalLength = config.totusuna.instances.length;
-    config.totusuna.instances = config.totusuna.instances.filter(instance => instance.id !== uuid);
-
-    if (config.totusuna.instances.length < originalLength) {
-      console.log(`[ConfigManager] removeTotusunaInstance: インスタンスを削除 (guild: ${guildId}, uuid: ${uuid})`);
-      await this.saveGuildConfig(guildId, config, `removeTotusunaInstance: ${uuid}`);
-      return true;
-    }
-    return false;
-  }
-
-  /**
-   * ChatGPT設定を更新
-   * @param {string} guildId 
-   * @param {object} chatgptConfig 
-   */
-  async updateChatGPTConfig(guildId, chatgptConfig) {
-    return this.updateSectionConfig(guildId, 'chatgpt', chatgptConfig);
-  }
-
-  /**
-   * ChatGPT設定を取得
-   * @param {string} guildId 
-   * @returns {Promise<object>}
-   */
-  async getChatGPTConfig(guildId) {
-    return await this.getSectionConfig(guildId, 'chatgpt');
-  }
 }
 
 // シングルトンインスタンス

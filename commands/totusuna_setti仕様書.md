@@ -1,7 +1,7 @@
 # totusuna_setti.js コマンド仕様書
 
 ## 概要
-指定チャンネルに凸スナ案内メッセージとボタンを設置するメインコマンドです。凸スナシステムの設置・管理の中核機能を提供します。
+凸スナの新規設置を行うための管理メニューを表示するコマンドです。凸スナシステムの設置・管理の中核機能を提供します。
 
 ## コマンド情報
 - **コマンド名**: `/凸スナ設置`
@@ -16,16 +16,16 @@
 
 ### Embed構成
 ```javascript
-const embed = createAdminEmbed(
-  '📝 凸スナ設置メニュー',
-  '以下のボタンから凸スナの設置・管理を行うことができます。'
-).addFields(
-  {
-    name: '📝 凸スナ設置',
-    value: '新しい凸スナを作成してチャンネルに設置します',
-    inline: false
-  },
-);
+const embed = new EmbedBuilder()
+  .setTitle('📌 凸スナ 新規設置')
+  .setDescription([
+    '🆕 新しい凸スナ報告メッセージを設置するには、「新規設置」ボタンを押してください。',
+    '',
+    '**💡 ヒント**',
+    '• 設置済みの凸スナを管理するには `/凸スナ設定` を使用してください。',
+    '• 報告データをCSVで出力するには `/凸スナcsv` を使用してください。'
+  ].join('\n'))
+  .setColor(0x2ecc71);
 ```
 
 ## 依存関係
@@ -43,16 +43,25 @@ const embed = createAdminEmbed(
 
 ### ボタンハンドラ
 | ボタン | ハンドラファイル | 機能 |
-|--------|------------------|------|
-| 📝 凸スナ設置 | `utils/totusuna_setti/buttons/install.js` | 詳細設定での凸スナ作成 |
+|--------|------------------|:---|
+| 🆕 新規設置 | `utils/totusuna_setti/buttons/install.js` | 本文入力モーダルを表示 |
+
+### モーダルハンドラ
+| モーダルID | ハンドラファイル | 機能 |
+|---|---|:---|
+| `totusuna_modal_install` | `utils/totusuna_setti/modals/install.js` | 本文を受け取り、メインチャンネル選択UIを表示 |
+
+### セレクトメニューハンドラ
+| メニューID | ハンドラファイル | 機能 |
+|---|---|:---|
+| `totusuna_setti:select_install_channel` | `utils/totusuna_setti/selects/select_install_channel.js` | メインチャンネルを保存し、連携チャンネル選択UIを表示 |
+| `totusuna_setti:select_replicate_channels` | `utils/totusuna_setti/selects/select_replicate_channels.js` | 連携チャンネルを受け取り、凸スナを設置・保存 |
 
 ### 設置フロー（📝 凸スナ設置）
-1. ボタンクリック
-2. 本文入力モーダル表示
-3. 設置チャンネル選択
-4. 複製チャンネル選択
-5. UUID生成と設置実行
-6. JSON設定保存
+1. **ボタンクリック**: `install.js` がモーダルを表示します。
+2. **モーダル送信**: `modals/install.js` が本文を受け取り、一時データストアに保存後、メインチャンネル選択メニューを表示します。
+3. **メインチャンネル選択**: `select_install_channel.js` が選択されたチャンネルIDを一時データストアに追記し、連携チャンネル選択メニューを表示します。
+4. **連携チャンネル選択**: `select_replicate_channels.js` が最終的な設定を元に、メインチャンネルと連携チャンネルにメッセージを投稿し、設定を `configManager` を通じてJSONファイルに永続化します。
 
 ### チャンネル選択UI（モーダル送信後）
 モーダルで本文が入力されると、次のステップとしてチャンネル選択メニューが表示されます。
@@ -65,6 +74,18 @@ const embed = createAdminEmbed(
 
 **UIコンポーネント:**
 - `ChannelSelectMenu`: 設置先のチャンネルを1つ選択します。
+
+### 連携チャンネル選択UI（メインチャンネル選択後）
+メインチャンネルが選択されると、次のステップとして連携チャンネル選択メニューが表示されます。
+
+**メッセージ内容:**
+```
+✅ メインチャンネルとして <#...> を選択しました。
+次に、報告を連携するチャンネルを選択してください（任意）。
+```
+
+**UIコンポーネント:**
+- `ChannelSelectMenu`: 連携先のチャンネルを複数選択できます（任意）。
 
 ## エラーハンドリング
 ```javascript
