@@ -16,7 +16,7 @@ echo "  ディスク使用量: $(df -h $HOME | tail -1 | awk '{print $3 "/" $2 "
 
 echo ""
 echo "🔧 インストール済みツール:"
-for tool in git node npm pm2; do
+for tool in git node npm pm2 rsync; do
   if command -v $tool > /dev/null 2>&1; then
     version=$($tool --version 2>/dev/null | head -1)
     echo "  ✅ $tool: $version"
