@@ -80,5 +80,11 @@ perform_restore() {
     shopt -u nullglob
 }
 
-[[ "$ACTION" == "backup" ]] && perform_backup
-[[ "$ACTION" == "restore" ]] && perform_restore
+if [[ "$ACTION" == "backup" ]]; then
+    perform_backup
+elif [[ "$ACTION" == "restore" ]]; then
+    perform_restore
+else
+    echo "エラー: 無効なアクションが指定されました: $ACTION" >&2
+    exit 1
+fi
