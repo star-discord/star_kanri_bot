@@ -40,148 +40,121 @@ const client = new Client({
 
 client.commands = new Collection();
 
-// ======== コマンド読み込み関数 ========
-function loadCommandFiles(dir) {
-  const entries = fs.readdirSync(dir, { withFileTypes: true });
+/**
+ * Botのメイン処理を開始します。
+ */
+async function start() {
+  /**
+   * 指定されたディレクトリからモジュール（コマンドやイベント）を再帰的に読み込む
+   * @param {string} dirPath モジュールが格納されているディレクトリのパス
+   * @param {function(object, string): void} registerFn 読み込んだモジュールを登録する関数
+   */
+  function loadModules(dirPath, registerFn) {
+    if (!fs.existsSync(dirPath)) {
+      console.warn(`⚠️  モジュールディレクトリが見つかりません: ${dirPath}`);
+      return 0;
+    }
 
-  for (const entry of entries) {
-    const fullPath = path.join(dir, entry.name);
-    if (entry.isDirectory()) {
-      loadCommandFiles(fullPath); // 再帰
-    } else if (entry.name.endsWith('.js')) {
-      try {
-        const command = require(fullPath);
-        if (command?.data?.name && typeof command.execute === 'function') {
-          client.commands.set(command.data.name, command);
-          console.log(`✅ コマンド読み込み: ${command.data.name}`);
-        } else {
-          console.warn(`⚠️ 無効なコマンド形式: ${fullPath}`);
+    const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+    let count = 0;
+
+    for (const entry of entries) {
+      const fullPath = path.join(dirPath, entry.name);
+      if (entry.isDirectory()) {
+        count += loadModules(fullPath, registerFn); // 再帰
+      } else if (entry.name.endsWith('.js')) {
+        try {
+          // 開発中にファイルを変更した場合でも最新版を読み込むためにキャッシュをクリア
+          delete require.cache[require.resolve(fullPath)];
+          const module = require(fullPath);
+          registerFn(module, fullPath);
+          count++;
+        } catch (err) {
+          console.error(`❌ モジュール読込失敗: ${path.relative(__dirname, fullPath)}`, err);
         }
-      } catch (err) {
-        console.error(`❌ コマンド読込失敗: ${fullPath}`, err);
       }
     }
+    return count;
   }
-}
 
-// ======== コマンド読み込み実行 ========
-loadCommandFiles(path.join(__dirname, 'commands'));
-console.log(`🧩 合計 ${client.commands.size} 個のコマンドを読み込みました。`);
+  // ======== コマンド読み込み実行 ========
+  const commandCount = loadModules(path.join(__dirname, 'commands'), (command, filePath) => {
+    if (command?.data?.name && typeof command.execute === 'function') {
+      client.commands.set(command.data.name, command);
+    } else {
+      console.warn(`⚠️  無効なコマンド形式: ${path.relative(__dirname, filePath)}`);
+    }
+  });
+  console.log(`🧩 合計 ${commandCount} 個のコマンドを読み込みました。`);
 
-// ======== イベント読み込み ========
-const eventsPath = path.join(__dirname, 'events');
-if (fs.existsSync(eventsPath)) {
-  const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.js'));
+  // ======== イベント読み込み ========
+  const eventCount = loadModules(path.join(__dirname, 'events'), (event, filePath) => {
+    if (event?.name && typeof event.execute === 'function') {
+      const bindFn = (...args) => event.execute(...args, client);
+      event.once ? client.once(event.name, bindFn) : client.on(event.name, bindFn);
+    } else {
+      console.warn(`⚠️  無効なイベント形式: ${path.relative(__dirname, filePath)}`);
+    }
+  });
+  console.log(`🔔 合計 ${eventCount} 個のイベントを登録しました。`);
 
-  for (const file of eventFiles) {
-    const filePath = path.join(eventsPath, file);
+  // ======== ハンドラ読み込み ========
+  const { unifiedHandler } = require('./utils/unifiedInteractionHandler');
+  client.on('interactionCreate', async interaction => {
+    const startTime = Date.now();
+
     try {
-      const event = require(filePath);
-      if (event?.name && typeof event.execute === 'function') {
-        const bindFn = (...args) => event.execute(...args, client);
-        event.once ? client.once(event.name, bindFn) : client.on(event.name, bindFn);
-        console.log(`📡 イベント登録: ${event.name}`);
+      if (interaction.isChatInputCommand()) {
+        const command = client.commands.get(interaction.commandName);
+        if (!command) {
+          console.warn(`⚠️  未知のコマンド: ${interaction.commandName}`);
+          return;
+        }
+
+        // コマンドファイル側で `deferReply: true` が設定されていれば、応答を保留する
+        if (command.deferReply && !interaction.deferred) {
+          await interaction.deferReply({ ephemeral: command.ephemeral ?? true });
+        }
+
+        await command.execute(interaction);
+
       } else {
-        console.warn(`⚠️ 無効なイベントファイル: ${file}`);
+        await unifiedHandler.handleInteraction(interaction);
       }
+
+      const duration = Date.now() - startTime;
+      console.log(`✅ 処理完了: ${interaction.commandName || interaction.customId} (${duration}ms)`);
+
     } catch (err) {
-      console.error(`❌ イベント読込失敗: ${file}`, err);
+      const duration = Date.now() - startTime;
+      console.error('❌ ハンドリングエラー:', {
+        error: err.message,
+        command: interaction.commandName || interaction.customId,
+        user: interaction.user?.tag,
+        duration,
+        stack: err.stack?.split('\n').slice(0, 3).join('\n'),
+      });
+
+      try {
+        const errorMessage = {
+          content: '⚠️ 処理中にエラーが発生しました。しばらく時間をおいて再試行してください。',
+          ephemeral: true
+        };
+
+        if (interaction.replied || interaction.deferred) {
+          await interaction.followUp(errorMessage);
+        } else {
+          await interaction.reply(errorMessage);
+        }
+      } catch (replyError) {
+        console.error('❌ エラーレスポンス送信失敗:', replyError.message);
+      }
     }
-  }
-
-  console.log(`🔔 合計 ${eventFiles.length} 個のイベントを登録しました。`);
-}
-
-// ======== ハンドラ読み込み ========
-const { unifiedHandler } = require('./utils/unifiedInteractionHandler');
-client.on('interactionCreate', async interaction => {
-  const startTime = Date.now();
-  const interactionId = interaction.id;
-
-  console.log('🔔 [interactionCreate] 受信:', {
-    type: interaction.type,
-    commandName: interaction.commandName || interaction.customId || 'unknown',
-    user: interaction.user.tag,
-    guild: interaction.guild?.name || 'DM',
-    timestamp: new Date().toISOString()
   });
 
-  try {
-    if (interaction.isChatInputCommand()) {
-      const command = client.commands.get(interaction.commandName);
-      if (!command) {
-        console.warn(`⚠️ [interactionCreate] 未知のコマンド: ${interaction.commandName}`);
-        return;
-      }
-
-      const shouldDefer = ['kpi_設定'].includes(interaction.commandName);
-      if (shouldDefer && !interaction.deferred && !interaction.replied) {
-        try {
-          await interaction.deferReply({ flags: MessageFlagsBitField.Flags.Ephemeral });
-          console.log(`✅ [interactionCreate] 予防的デファー: ${interaction.commandName}`);
-        } catch (deferError) {
-          console.error('❌ [interactionCreate] デファー失敗:', deferError.message);
-        }
-      }
-
-      await command.execute(interaction);
-
-    } else {
-      await unifiedHandler.handleInteraction(interaction);
-    }
-
-    const duration = Date.now() - startTime;
-    console.log(`✅ [interactionCreate] 処理完了: ${interaction.commandName || interaction.customId} (${duration}ms)`);
-
-  } catch (err) {
-    const duration = Date.now() - startTime;
-    console.error('❌ [interactionCreate] ハンドリングエラー:', {
-      error: err.message,
-      full: err,
-      stack: err.stack?.split('\n').slice(0, 3).join('\n'),
-      commandName: interaction.commandName || interaction.customId,
-      interactionId,
-      duration,
-      deferred: interaction.deferred,
-      replied: interaction.replied,
-      user: interaction.user?.tag
-    });
-
-    try {
-      const errorMessage = '⚠️ 処理中にエラーが発生しました。しばらく時間をおいて再試行してください。';
-
-      if (interaction.deferred) {
-        await interaction.editReply({
-          content: errorMessage,
-          flags: MessageFlagsBitField.Flags.Ephemeral
-        });
-      } else if (!interaction.replied) {
-        await interaction.reply({
-          content: errorMessage,
-          flags: MessageFlagsBitField.Flags.Ephemeral
-        });
-      }
-
-    } catch (replyError) {
-      console.error('❌ [interactionCreate] エラーレスポンス送信失敗:', {
-        error: replyError.message,
-        interactionId,
-        deferred: interaction.deferred,
-        replied: interaction.replied
-      });
-    }
-  }
-});
-
-// ======== 起動ログ ========
-client.once('ready', async () => {
-  console.log(`🎉 Bot 起動完了！ログイン: ${client.user.tag}`);
-  // ハンドラの初期化を待つ
-  await unifiedHandler.initialize();
-});
-
-// ======== Discordにログイン ========
-client.login(process.env.DISCORD_TOKEN);
+  // ======== Discordにログイン ========
+  await client.login(process.env.DISCORD_TOKEN);
+}
 
 // ======== エラーフック（プロダクション対応強化） ========
 process.on('unhandledRejection', (reason, promise) => {
@@ -219,6 +192,9 @@ process.on('SIGTERM', () => {
   client.destroy();
   process.exit(0);
 });
+
+// ======== Bot起動 ========
+start();
 
 process.on('SIGINT', () => {
   console.log('📡 [SIGINT] 受信 - グレースフルシャットダウン開始');

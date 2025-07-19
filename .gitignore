@@ -3,13 +3,20 @@
 
 # Node.jsの依存パッケージフォルダ
 node_modules/
-package-lock.json
 
 # Google Cloud 認証ファイルを無視
 star-discord-bot-*.json
 data/star-discord-bot-*.json
+
+# ユーザーデータはGitで管理しない（backup_handler.shで保護）
 data/
 
 # chat gpt
 copilot_chatgpt/
 copilot_chatgpt/*.md
+
+# ログファイル
+logs/
+
+# 一時的なバックアップファイル
+*.bak

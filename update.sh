@@ -34,16 +34,38 @@ handle_error() {
 # エラートラップを設定
 trap 'handle_error $LINENO' ERR
 
+print_usage() {
+  echo -e "\n💡 使用可能なオプション:"
+  echo "  ./update.sh          : 通常更新"
+  echo "  ./update.sh -f       : 強制同期（ローカル変更破棄）"
+  echo "  ./update.sh -s       : PM2操作スキップ"
+  echo -e "\n🔧 トラブルシューティング:"
+  echo "  Bot起動確認: pm2 status"
+  echo "  ログ確認: pm2 logs star-kanri-bot"
+}
+
 echo -e "${GREEN}--- STAR管理Bot 更新スクリプト ---${NC}"
 
-# コマンドライン引数チェック
+# --- Argument Parsing ---
 FORCE_SYNC=false
 SKIP_PM2=false
-if [ "$1" = "--force-sync" ] || [ "$1" = "-f" ]; then
-  FORCE_SYNC=true
+for arg in "$@"; do
+  case $arg in
+    -f|--force-sync)
+      FORCE_SYNC=true
+      shift
+      ;;
+    -s|--skip-pm2)
+      SKIP_PM2=true
+      shift
+      ;;
+  esac
+done
+
+if [ "$FORCE_SYNC" = true ]; then
   echo "⚡ 強制同期モードが有効です。ローカルの変更は破棄されます。"
-elif [ "$1" = "--skip-pm2" ] || [ "$1" = "-s" ]; then
-  SKIP_PM2=true
+fi
+if [ "$SKIP_PM2" = true ]; then
   echo "⏭️ PM2スキップモード: PM2操作をスキップします"
 fi
 
@@ -108,12 +130,12 @@ fi
 echo "📦 npm パッケージをインストール中..."
 npm install --no-audit --no-fund
 
-if [ ! -f deploy-commands.js ]; then
-  echo -e "${RED}❌ deploy-commands.js が見つかりません。リポジトリが破損している可能性があります。${NC}"
+if [ ! -f devcmdup.js ]; then
+  echo -e "${RED}❌ devcmdup.js が見つかりません。リポジトリが破損している可能性があります。${NC}"
   exit 1
 fi
 echo "📡 スラッシュコマンドをDiscordに登録中..."
-node deploy-commands.js
+node devcmdup.js
 
 # PM2操作（スキップオプション対応）
 if [ "$SKIP_PM2" = false ]; then
@@ -138,11 +160,6 @@ else
   echo -e "\n${YELLOW}6. PM2操作をスキップしました。${NC}"
 fi
 
-echo -e "\n${GREEN}✅ star_kanri_bot 更新処理完了${NC}"
-echo -e "\n💡 使用可能なオプション:"
-echo "  ./update.sh          : 通常更新"
-echo "  ./update.sh -f       : 強制同期（ローカル変更破棄）"
-echo "  ./update.sh -s       : PM2操作スキップ"
-echo -e "\n🔧 トラブルシューティング:"
-echo "  Bot起動確認: pm2 status"
-echo "  ログ確認: pm2 logs star-kanri-bot"
+echo -e "\n${GREEN}✅ star_kanri_bot 更新処理が正常に完了しました。${NC}"
+
+print_usage

@@ -48,8 +48,10 @@ if [ -d "$PROJECT_DIR" ]; then
     exit 1
 fi
 
-echo "📂 GitHubからリポジトリをクローンします: ${PROJECT_DIR}"
-git clone git@github.com:star-discord/star_kanri_bot.git "$PROJECT_DIR"
+echo "📂 GitHubからリポジトリをクローンします (HTTPS経由): ${PROJECT_DIR}"
+# HTTPSを使用することで、SSHキーが未設定の環境でもクローンが可能です。
+git clone https://github.com/star-discord/star_kanri_bot.git "$PROJECT_DIR"
+
 cd "$PROJECT_DIR"
 
 echo "📝 .env ファイルをセットアップします"
@@ -70,7 +72,8 @@ echo "✅ すべてのシェルスクリプトに実行権限を付与しまし�
 
 echo -e "\n${YELLOW}*** 重要: .env ファイルを編集してください ***${NC}"
 echo "Botのトークンや各種IDを設定する必要があります。"
-echo "例: nano .env  または  vim .env"
+echo "エディタでファイルを開いて編集してください: ${GREEN}nano .env${NC}"
+echo "(別のターミナルウィンドウを開いて作業することもできます)"
 read -p "編集が完了したら、Enterキーを押して続行してください..."
 
 # --- 3. Dependencies & Deployment ---
@@ -79,7 +82,7 @@ echo "📦 npm パッケージをインストールしています (数分かか
 npm install --no-audit --no-fund
 
 echo "📡 スラッシュコマンドをDiscordに登録しています..."
-node deploy-commands.js
+node devcmdup.js
 
 # --- 4. PM2 Setup ---
 echo -e "\n${YELLOW}4. PM2でBotを起動し、自動起動を設定します...${NC}"
@@ -90,7 +93,7 @@ pm2 start ecosystem.config.js
 echo "💾 現在のPM2プロセスリストを保存します..."
 pm2 save
 
-echo -e "\n${YELLOW}*** 重要: サーバー起動時にBotを自動起動させる設定 ***${NC}"
+echo -e "\n${YELLOW}*** 重要: サーバー再起動時にBotを自動起動させる設定 ***${NC}"
 echo "以下のコマンドをコピーして実行してください:"
 
 # Generate the startup command but let the user run it

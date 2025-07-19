@@ -147,8 +147,8 @@ module.exports = {
   ]
 };
 
-コマンド登録（deploy-commands.js）
-node deploy-commands.js
+コマンド登録（devcmdup.js）
+node devcmdup.js
 
 🚀 今後の拡張案（ToDo）
 | 拡張内容        | 補足説明                                  |

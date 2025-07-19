@@ -30,13 +30,16 @@ handle_error() {
 }
 trap 'handle_error $LINENO' ERR
 
-echo -e "${YELLOW}--- GitHubリポジトリとの安全な強制同期スクリプト ---${NC}"
-echo -e "${RED}警告: このスクリプトはローカルの追跡済みファイルを強制的に上書きします。${NC}"
-read -p "続行してもよろしいですか？ (y/N): " -n 1 -r
-echo
-if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-    echo "処理を中止しました。"
-    exit 1
+# --- Confirmation Prompt (if run interactively) ---
+if [[ "$1" != "--force" ]]; then
+    echo -e "${YELLOW}--- GitHubリポジトリとの安全な強制同期スクリプト ---${NC}"
+    echo -e "${RED}警告: このスクリプトはローカルの追跡済みファイルを強制的に上書きします。${NC}"
+    read -p "続行してもよろしいですか？ (y/N): " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo "処理を中止しました。"
+        exit 1
+    fi
 fi
 
 # --- 1. Pre-flight Checks ---

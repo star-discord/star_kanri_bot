@@ -13,23 +13,13 @@ PROJECT_DIR="$HOME/star_kanri_bot"
 # --- Error Handling ---
 handle_error() {
     local exit_code=$?
-    echo -e "${RED}❌ エラーが発生しました (終了コード: $exit_code, 行番号: $1)。処理を中止します。${NC}"
-    # エラー発生時にバックアップから自動復元
-    if [ -d "$TEMP_BACKUP" ] && [ -f "scripts/backup_handler.sh" ]; then
-        echo -e "${YELLOW}🔧 一時バックアップから復元を試みます...${NC}"
-        if ./scripts/backup_handler.sh restore "$TEMP_BACKUP"; then
-            echo -e "${GREEN}✅ バックアップからの復元が完了しました。${NC}"
-        else
-            echo -e "${RED}❌ バックアップからの復元に失敗しました。手動で確認してください: $TEMP_BACKUP${NC}"
-        fi
-        rm -rf "$TEMP_BACKUP"
-    fi
+    echo -e "\n${RED}❌ エラーが発生しました (終了コード: $exit_code, 行番号: $1)。処理を中止します。${NC}"
+    echo "💡 エラーの原因によっては、'./sync_from_github.sh' を直接実行することで解決する場合があります。"
     exit $exit_code
 }
 trap 'handle_error $LINENO' ERR
 
 echo -e "${YELLOW}--- STAR管理Bot 緊急更新スクリプト ---${NC}"
-echo "🎯 ローカルの変更を破棄し、GitHubの最新版に強制同期します。"
 
 # --- 1. Pre-flight Checks ---
 if [ ! -d "$PROJECT_DIR" ]; then
@@ -38,48 +28,33 @@ if [ ! -d "$PROJECT_DIR" ]; then
   exit 1
 fi
 cd "$PROJECT_DIR"
-
-# --- Pre-flight Checks ---
-./scripts/pre-flight-check.sh
-
-# --- 2. Safe Backup of Critical Files ---
-TEMP_BACKUP="/tmp/star_kanri_quick_update_backup_$$"
-echo -e "\n${YELLOW}1. 重要ファイルを一時バックアップしています...${NC}"
-if [ ! -f "scripts/backup_handler.sh" ]; then
-    echo -e "${RED}❌ バックアップヘルパースクリプト 'scripts/backup_handler.sh' が見つかりません。${NC}"
-    echo "💡 リポジトリが最新の状態であることを確認してください。"
+echo "🎯 ローカルの変更を破棄し、GitHubの最新版に強制同期します。"
+read -p "続行してもよろしいですか？ (y/N): " -n 1 -r
+echo
+if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    echo "処理を中止しました。"
     exit 1
 fi
-./scripts/backup_handler.sh backup "$TEMP_BACKUP"
-echo -e "${GREEN}✅ バックアップ完了。${NC}"
 
-# --- 3. Force Sync with GitHub ---
-echo -e "\n${YELLOW}2. GitHubリポジトリと強制同期しています...${NC}"
-git fetch origin
-git reset --hard origin/master
-git clean -fdx
-echo -e "${GREEN}✅ 同期完了。ローカルは 'origin/master' の最新版と一致しました。${NC}"
+# --- 1. Force Sync with GitHub (using the dedicated script) ---
+echo -e "\n${YELLOW}1. GitHubリポジトリと安全に強制同期しています...${NC}"
+if [ ! -f "./sync_from_github.sh" ]; then
+    echo -e "${RED}❌ 同期スクリプト './sync_from_github.sh' が見つかりません。${NC}"
+    exit 1
+fi
+./sync_from_github.sh --force # --force flag to skip interactive prompt
 
-# --- 4. Restore Critical Files ---
-echo -e "\n${YELLOW}3. 重要ファイルを復元しています...${NC}"
-./scripts/backup_handler.sh restore "$TEMP_BACKUP"
-rm -rf "$TEMP_BACKUP"
-echo -e "${GREEN}✅ 復元完了。${NC}"
-
-# --- 5. Install Dependencies & Deploy Commands ---
-echo -e "\n${YELLOW}4. 依存関係のインストールとコマンドのデプロイ...${NC}"
+# --- 2. Install Dependencies & Deploy Commands ---
+echo -e "\n${YELLOW}2. 依存関係のインストールとコマンドのデプロイ...${NC}"
 echo "📦 npm パッケージをインストール中..."
 npm install --no-audit --no-fund
 
 echo "📡 スラッシュコマンドをDiscordに登録中..."
-node deploy-commands.js
+node devcmdup.js
 
 # --- スクリプト権限の確認 ---
-echo -e "\n${YELLOW}* スクリプトの実行権限を確認・設定しています...${NC}"
-find . -type f -name "*.sh" -exec chmod +x {} \;
-
-# --- 6. Restart PM2 Process ---
-echo -e "\n${YELLOW}5. Botプロセスを再起動しています...${NC}"
+# --- 3. Restart PM2 Process ---
+echo -e "\n${YELLOW}3. Botプロセスを再起動しています...${NC}"
 if command -v pm2 &> /dev/null && pm2 list | grep -q "star-kanri-bot"; then
   pm2 restart star-kanri-bot
   pm2 save
@@ -89,7 +64,7 @@ else
   echo "   cd $PROJECT_DIR && pm2 start ecosystem.config.js"
 fi
 
-# --- 7. Final Message ---
+# --- 4. Final Message ---
 echo -e "\n${GREEN}🎉 緊急更新がすべて完了しました！${NC}"
 echo "💡 Botの状態は 'pm2 status' または 'pm2 logs star-kanri-bot' で確認できます。"
 echo "💡 より詳細なオプションを持つ更新は './update.sh' を使用してください。"

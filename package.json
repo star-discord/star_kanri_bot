@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
-    "deploy": "node deploy-commands.js",
+    "deploy": "node devcmdup.js",
     "test": "npx jest",
     "pm2:start": "pm2 start ecosystem.config.js",
     "pm2:logs": "pm2 logs star-kanri-bot",

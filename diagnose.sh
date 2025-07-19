@@ -14,26 +14,12 @@ echo "  現在地: $(pwd)"
 echo "  日時: $(date)"
 echo "  ディスク使用量: $(df -h $HOME | tail -1 | awk '{print $3 "/" $2 " (" $5 ")"}')"
 
-echo ""
-echo "🔧 インストール済みツール:"
-for tool in git node npm pm2 rsync; do
-  if command -v $tool > /dev/null 2>&1; then
-    version=$($tool --version 2>/dev/null | head -1)
-    echo "  ✅ $tool: $version"
-  else
-    echo "  ❌ $tool: 未インストール"
-  fi
-done
-
-echo ""
-echo "📂 ファイル・ディレクトリ状況:"
-if [ -d ~/star_kanri_bot ]; then
   echo "  ✅ ~/star_kanri_bot: 存在"
   # サブシェル内で実行することで、スクリプト全体のカレントディレクトリを変更しないようにする
   (
     cd ~/star_kanri_bot
     echo "    📁 重要ファイル:"
-    for file in package.json .env index.js deploy-commands.js; do
+    for file in package.json .env index.js devcmdup.js; do
       if [ -f "$file" ]; then
         size=$(ls -lh "$file" | awk '{print $5}')
         echo "      ✅ $file ($size)"
@@ -48,15 +34,16 @@ if [ -d ~/star_kanri_bot ]; then
     done
     
     echo "    📁 data/:"
-    if [ -d data ]; then
+    if [ -d "data" ]; then
       file_count=$(find data -type f 2>/dev/null | wc -l)
-      echo "      ✅ data/: 存在 ($file_count ファイル)"
+      echo -e "      ${GREEN}✅ data/:${NC} 存在 ($file_count ファイル)"
     else
-      echo "      ❌ data/: 見つかりません"
+      echo -e "      ${RED}❌ data/:${NC} 見つかりません"
+      RECOMMEND_UPDATE=true
     fi
     
     echo "    🔗 Git状況:"
-    if [ -d .git ]; then
+    if [ -d ".git" ]; then
       echo "      ブランチ: $(git branch --show-current 2>/dev/null || echo '不明')"
       echo "      最新コミット: $(git log --oneline -1 2>/dev/null || echo '不明')"
       echo "      リモート: $(git remote get-url origin 2>/dev/null || echo '不明')"
@@ -64,101 +51,143 @@ if [ -d ~/star_kanri_bot ]; then
       # ローカル変更確認
       changes=$(git status --porcelain 2>/dev/null | wc -l)
       if [ "$changes" -gt 0 ]; then
-        echo "      ⚠️ ローカル変更: $changes ファイル"
+        echo -e "      ${YELLOW}⚠️ ローカル変更:${NC} $changes ファイル"
+        RECOMMEND_UPDATE=true
       else
-        echo "      ✅ ローカル変更: なし"
+        echo -e "      ${GREEN}✅ ローカル変更:${NC} なし"
       fi
     else
-      echo "      ❌ Gitリポジトリではありません"
+      echo -e "      ${RED}❌ Gitリポジトリではありません${NC}"
+      RECOMMEND_GIT_REPAIR=true
     fi
   )
 else
-  echo "  ❌ ~/star_kanri_bot: 見つかりません"
+  echo -e "  ${RED}❌ $PROJECT_DIR:${NC} 見つかりません"
+  RECOMMEND_INIT=true
 fi
 
-echo ""
-echo "🗂️ データファイル構文チェック:"
-if ! command -v jq > /dev/null 2>&1; then
-  echo "  ⚠️ jq が未インストールのためスキップします。 (sudo apt-get install jq)"
-else
-  if [ -d ~/star_kanri_bot/data ]; then
-    json_files=$(find ~/star_kanri_bot/data -type f -name "*.json")
+print_header "🗂️ データファイル構文チェック"
+if [ -d "$PROJECT_DIR/data" ] && command -v jq > /dev/null 2>&1; then
+    json_files=$(find "$PROJECT_DIR/data" -type f -name "*.json")
     if [ -z "$json_files" ]; then
-      echo "    ✅ JSONファイルが見つかりません。"
+      echo "  ✅ JSONファイルが見つかりません。"
     else
       error_found=false
-      echo "    🔍 JSONファイルの構文をチェック中..."
+      echo "  🔍 JSONファイルの構文をチェック中..."
       for file in $json_files; do
-        relative_path=${file#$HOME/star_kanri_bot/}
+        relative_path=${file#"$PROJECT_DIR/"}
         if jq -e . >/dev/null 2>&1 < "$file"; then
           : # 正常な場合は何も表示しない
         else
-          echo "    ❌ ${relative_path}: 構文エラー"
+          echo -e "    ${RED}❌ ${relative_path}:${NC} 構文エラー"
           error_found=true
+          RECOMMEND_CHECK_JSON=true
         fi
       done
-      [ "$error_found" = false ] && echo "    ✅ すべてのJSONファイルの構文は正常です。"
+      [ "$error_found" = false ] && echo -e "  ${GREEN}✅ すべてのJSONファイルの構文は正常です。${NC}"
     fi
-  fi
+elif ! command -v jq > /dev/null 2>&1; then
+    echo -e "  ${YELLOW}⚠️ jq が未インストールのためスキップします。 (sudo apt-get install jq)${NC}"
+else
+    echo "  ✅ dataディレクトリが存在しないためスキップします。"
 fi
 
-echo ""
-echo "📦 PM2プロセス状況:"
-if command -v pm2 > /dev/null 2>&1; then
+print_header "📦 PM2プロセス状況"
+if command -v pm2 >/dev/null 2>&1; then
   echo "  PM2バージョン: $(pm2 --version)"
   
-  if pm2 list | grep "star-kanri-bot" | grep -q "online"; then
-    echo "  ✅ star-kanri-bot プロセス: オンライン"
-    pm2 show star-kanri-bot 2>/dev/null | grep -E "(status|uptime|restarts)" || true
+  # PM2のプロセスリストを取得
+  PM2_STATUS=$(pm2 jlist 2>/dev/null)
+  BOT_PROCESS=$(echo "$PM2_STATUS" | jq '.[] | select(.name == "star-kanri-bot")')
+
+  if [ -n "$BOT_PROCESS" ]; then
+    STATUS=$(echo "$BOT_PROCESS" | jq -r '.pm2_env.status')
+    if [ "$STATUS" = "online" ]; then
+      UPTIME=$(pm2 describe star-kanri-bot | grep Uptime | awk '{print $4}')
+      RESTARTS=$(echo "$BOT_PROCESS" | jq -r '.pm2_env.restart_time')
+      echo -e "  ${GREEN}✅ star-kanri-bot プロセス:${NC} オンライン (稼働時間: $UPTIME, 再起動: ${RESTARTS}回)"
+    else
+      echo -e "  ${RED}❌ star-kanri-bot プロセス:${NC} オフライン (状態: $STATUS)"
+      RECOMMEND_PM2_START=true
+      
+      # エラーログを自動表示
+      ERROR_LOG_PATH=$(echo "$BOT_PROCESS" | jq -r '.pm2_env.pm_err_log_path')
+      if [ -f "$ERROR_LOG_PATH" ]; then
+          echo -e "    ${YELLOW}直近のエラーログ (15行):${NC}"
+          echo "    ----------------------------------------"
+          tail -n 15 "$ERROR_LOG_PATH" | sed 's/^/    /'
+          echo "    ----------------------------------------"
+      fi
+    fi
   else
-    echo "  ⚠️ star-kanri-bot プロセス: オフラインまたは未登録"
+    echo -e "  ${YELLOW}⚠️ star-kanri-bot プロセス:${NC} PM2に未登録"
+    RECOMMEND_PM2_START=true
   fi
-  
-  echo "  登録済みプロセス:"
-  pm2 list --no-color 2>/dev/null | head -5
 else
-  echo "  ❌ PM2: 未インストール"
+  echo -e "  ${RED}❌ PM2:${NC} 未インストール"
 fi
 
-echo ""
-echo "🌐 ネットワーク接続:"
-if ping -c 1 github.com > /dev/null 2>&1; then
-  echo "  ✅ GitHub接続: 正常"
-else
-  echo "  ❌ GitHub接続: 失敗"
+print_header "🌐 ネットワーク接続"
+check_ping() {
+    local host=$1
+    local name=$2
+    if ping -c 1 "$host" >/dev/null 2>&1; then
+        echo -e "  ${GREEN}✅ $name 接続:${NC} 正常"
+    else
+        echo -e "  ${RED}❌ $name 接続:${NC} 失敗"
+    fi
+}
+check_ping "github.com" "GitHub"
+check_ping "registry.npmjs.org" "npm registry"
+
+print_header "💡 推奨アクション"
+ACTION_COUNT=0
+
+if [ "$RECOMMEND_INIT" = true ]; then
+    echo "  1. プロジェクトが存在しません。初回セットアップを実行してください:"
+    echo -e "     ${GREEN}./init_server.sh${NC}"
+    ((ACTION_COUNT++))
 fi
 
-if ping -c 1 registry.npmjs.org > /dev/null 2>&1; then
-  echo "  ✅ npm registry接続: 正常"
-else
-  echo "  ❌ npm registry接続: 失敗"
+if [ "$RECOMMEND_GIT_REPAIR" = true ]; then
+    echo "  1. Gitリポジトリが破損しています。修復を試みてください:"
+    echo -e "     ${GREEN}cd $PROJECT_DIR && ./sync_from_github.sh${NC}"
+    ((ACTION_COUNT++))
 fi
 
-echo ""
-echo "💡 推奨アクション:"
-echo "================================"
-
-if [ ! -d ~/star_kanri_bot ]; then
-  echo "  1. 初回セットアップ:"
-  echo "     git clone git@github.com:star-discord/star_kanri_bot.git ~/star_kanri_bot"
-elif [ ! -d ~/star_kanri_bot/.git ]; then
-  echo "  1. Gitリポジトリ修復:"
-  echo "     cd ~/star_kanri_bot && git init && git remote add origin git@github.com:star-discord/star_kanri_bot.git"
+if [ "$RECOMMEND_CHECK_TOKEN" = true ]; then
+    echo "  - Discord Botのトークンが設定されていません。'.env'ファイルを確認してください:"
+    echo -e "     ${GREEN}nano ~/star_kanri_bot/.env${NC}"
+    ((ACTION_COUNT++))
 fi
 
-if [ -d ~/star_kanri_bot ]; then
-  echo "  2. 通常更新:"
-  echo "     cd ~/star_kanri_bot && ./update.sh"
-  echo "  3. 強制更新（問題がある場合）:"
-  echo "     cd ~/star_kanri_bot && ./update.sh --force-sync"
-  echo "  4. 緊急更新（最小限）:"
-  echo "     cd ~/star_kanri_bot && ./quick_update.sh"
+if [ "$RECOMMEND_UPDATE" = true ]; then
+    echo "  - ファイルが不足しているか、ローカルでの変更があります。更新スクリプトの実行を推奨します:"
+    echo -e "     ${GREEN}cd ~/star_kanri_bot && ./update.sh${NC}"
+    echo "     (問題が解決しない場合) ${GREEN}./update.sh --force-sync${NC}"
+    ((ACTION_COUNT++))
 fi
 
-if ! command -v pm2 > /dev/null 2>&1; then
-  echo "  5. PM2インストール:"
-  echo "     npm install -g pm2"
+if [ "$RECOMMEND_CHECK_JSON" = true ]; then
+    echo "  - 構文エラーのあるJSONファイルが見つかりました。手動で修正してください。"
+    ((ACTION_COUNT++))
 fi
 
-echo ""
-echo "🔍 診断完了 - $(date)"
+if [ "$RECOMMEND_PM2_INSTALL" = true ]; then
+    echo "  - プロセス管理ツールPM2がインストールされていません:"
+    echo -e "     ${GREEN}sudo npm install -g pm2${NC}"
+    ((ACTION_COUNT++))
+fi
+
+if [ "$RECOMMEND_PM2_START" = true ] && [ "$RECOMMEND_PM2_INSTALL" = false ]; then
+    echo "  - Botプロセスが停止しています。起動または再起動してください:"
+    echo -e "     ${GREEN}cd ~/star_kanri_bot && pm2 restart star-kanri-bot${NC}"
+    echo "     (プロセスがない場合) ${GREEN}pm2 start ecosystem.config.js${NC}"
+    ((ACTION_COUNT++))
+fi
+
+if [ $ACTION_COUNT -eq 0 ]; then
+    echo -e "  ${GREEN}✅ 問題は見つかりませんでした。システムは正常です。${NC}"
+fi
+
+echo -e "\n${GREEN}🔍 診断完了 - $(date)${NC}"

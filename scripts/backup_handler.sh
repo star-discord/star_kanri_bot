@@ -69,12 +69,16 @@ perform_restore() {
     done
 
     shopt -s nullglob
-    for file in "$TEMP_BACKUP"/{,data/}star-discord-bot-*.json; do
-        if [ -f "$file" ]; then
-            target_file="${file#$TEMP_BACKUP/}"
-            mkdir -p "$(dirname "$target_file")"
-            mv "$file" "$target_file"
-            echo "     - Restored by pattern: $target_file"
+    # バックアップ時と同じパターン配列をループすることで、将来の変更に強くなる
+    for pattern in "${PATTERNS_TO_PROTECT[@]}"; do
+        for file_in_backup in "$TEMP_BACKUP"/$pattern; do
+            if [ -f "$file_in_backup" ]; then
+                # バックアップ元からの相対パスを復元
+                target_file="${file_in_backup#$TEMP_BACKUP/}"
+                mkdir -p "$(dirname "$target_file")"
+                mv "$file_in_backup" "$target_file"
+                echo "     - Restored by pattern: $target_file"
+            fi
         fi
     done
     shopt -u nullglob
