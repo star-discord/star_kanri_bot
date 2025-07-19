@@ -8,7 +8,7 @@ const {
   MessageFlagsBitField,
 } = require('discord.js');
 const { checkAdmin } = require('../../permissions/checkAdmin');
-const { configManager } = require('../../configManager');
+const { totusunaConfigManager } = require('../totusunaConfigManager');
 const { createAdminRejectEmbed } = require('../../embedHelper');
 
 module.exports = {
@@ -31,7 +31,7 @@ module.exports = {
 
       uuid = interaction.customId.substring(module.exports.customIdStart.length);
 
-      const instance = await configManager.getTotusunaInstance(interaction.guildId, uuid);
+      const instance = await totusunaConfigManager.getInstance(interaction.guildId, uuid);
 
       if (!instance) {
         return await interaction.reply({

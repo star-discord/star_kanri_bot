@@ -6,7 +6,7 @@ const {
   MessageFlagsBitField,
 } = require('discord.js');
 const { idManager } = require('../utils/idManager.js');
-const { configManager } = require('../utils/configManager.js');
+const { totusunaConfigManager } = require('../utils/totusuna_setti/totusunaConfigManager.js');
 const { checkAdmin } = require('../utils/permissions/checkAdmin.js');
 const { createAdminEmbed } = require('../utils/embedHelper.js');
 
@@ -27,8 +27,7 @@ module.exports = {
       }
 
       const guildId = interaction.guildId;
-      const config = await configManager.getSectionConfig(guildId, 'totusuna');
-      const instances = config.instances ?? [];
+      const instances = await totusunaConfigManager.getAllInstances(guildId);
 
       if (instances.length === 0) {
         return interaction.editReply({

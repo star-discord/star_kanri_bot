@@ -22,6 +22,11 @@ class TotusunaConfigManager {
   async removeInstance(guildId, uuid) {
     return configManager.removeItemFromArray(guildId, SECTION, ARRAY_KEY, uuid, 'id');
   }
+
+  async getAllInstances(guildId) {
+    const config = await configManager.getSectionConfig(guildId, SECTION);
+    return config.instances ?? [];
+  }
 }
 
 const totusunaConfigManager = new TotusunaConfigManager();

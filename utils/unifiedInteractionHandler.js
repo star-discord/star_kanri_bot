@@ -26,6 +26,7 @@ class UnifiedInteractionHandler {
       'star_chat_gpt_config_modal': 'star_chat_gpt_config', // Handles with and without action
       'totusuna_modal_': 'totusuna_setti',
       'totusuna_config_edit_modal_': 'totusuna_config',
+      'totusuna_report_modal:': 'totusuna_report',
       'kpi_modal_': 'kpi_setti',
     };
   }

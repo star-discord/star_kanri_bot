@@ -60,7 +60,7 @@ class IdManager {
       case 'totusuna_config':
         return `totusuna_config_edit_modal_${uuid}`;
       case 'totusuna_report':
-        return `totusuna_report_modal:${action}:${uuid}`;
+        return `totusuna_report_modal:${action || 'submit'}:${uuid}`;
       case 'kpi':
         return `kpi_modal_${action}`;
       default:

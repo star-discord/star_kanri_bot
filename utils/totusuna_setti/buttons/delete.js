@@ -1,6 +1,6 @@
 // utils/totusuna_setti/buttons/delete.js
 
-const { configManager } = require('../../configManager');
+const { totusunaConfigManager } = require('../totusunaConfigManager');
 const {
   createSuccessEmbed,
   createErrorEmbed,
@@ -34,7 +34,7 @@ module.exports = {
 
     try {
       // インスタンス取得（messageId・channelId含む）
-      const instance = await configManager.getTotusunaInstance(guild.id, uuid);
+      const instance = await totusunaConfigManager.getInstance(guild.id, uuid);
 
       if (instance?.messageId && instance.installChannelId) {
         try {
@@ -57,7 +57,7 @@ module.exports = {
         }
       }
 
-      const success = await configManager.removeTotusunaInstance(guild.id, uuid);
+      const success = await totusunaConfigManager.removeInstance(guild.id, uuid);
 
       if (success) {
         console.log(`[delete.js] DBからインスタンス削除成功 (guild: ${guild.id}, uuid: ${uuid})`);

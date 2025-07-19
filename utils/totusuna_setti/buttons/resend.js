@@ -6,7 +6,7 @@ const {
   ButtonStyle,
   MessageFlagsBitField,
 } = require('discord.js');
-const { configManager } = require('../../configManager');
+const { totusunaConfigManager } = require('../totusunaConfigManager');
 const { idManager } = require('../../idManager');
 const { safeReply, safeDefer } = require('../../safeReply');
 const { logAndReplyError } = require('../../errorHelper');
@@ -28,7 +28,7 @@ module.exports = {
 
     try {
       // configManagerを使用して安全にデータを取得
-      const instance = await configManager.getTotusunaInstance(guild.id, uuid);
+      const instance = await totusunaConfigManager.getInstance(guild.id, uuid);
       if (!instance || !instance.installChannelId) {
         return safeReply(interaction, { embeds: [createErrorEmbed('データエラー', '対象の凸スナデータが見つからないか、設置チャンネルが記録されていません。')] });
       }
@@ -67,7 +67,7 @@ module.exports = {
       console.log(`[resend.js] 新規メッセージ投稿完了: ${sentMessage.id}`);
 
       // configManagerを使用して新しいメッセージIDを安全に保存
-      await configManager.updateTotusunaInstance(guild.id, uuid, { messageId: sentMessage.id });
+      await totusunaConfigManager.updateInstance(guild.id, uuid, { messageId: sentMessage.id });
       console.log(`[resend.js] 新規メッセージIDを保存完了: ${uuid}`);
 
       await safeReply(interaction, { content: '📤 再送信しました。' });

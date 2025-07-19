@@ -178,6 +178,31 @@ class ConfigManager {
   }
 
   /**
+   * Removes an item from an array within a specific configuration section.
+   * @param {string} guildId
+   * @param {string} section
+   * @param {string} arrayKey
+   * @param {string} itemId The ID of the item to remove.
+   * @param {string} [idField='id'] The name of the ID field in the array items.
+   * @returns {Promise<boolean>} True if the item was found and removed.
+   */
+  async removeItemFromArray(guildId, section, arrayKey, itemId, idField = 'id') {
+    const currentConfig = await this.getGuildConfig(guildId);
+    const newConfig = JSON.parse(JSON.stringify(currentConfig));
+
+    if (!newConfig[section]?.[arrayKey]) return false;
+
+    const originalLength = newConfig[section][arrayKey].length;
+    newConfig[section][arrayKey] = newConfig[section][arrayKey].filter(item => item[idField] !== itemId);
+
+    if (newConfig[section][arrayKey].length < originalLength) {
+      await this.saveGuildConfig(guildId, newConfig, `removeItemFromArray: ${section}.${arrayKey}[${itemId}]`);
+      return true;
+    }
+    return false;
+  }
+
+  /**
    * 指定されたギルドの設定キャッシュを無効化する
    * @param {string} guildId
    */

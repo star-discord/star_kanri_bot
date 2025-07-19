@@ -71,8 +71,8 @@ async function actualHandler(interaction) {
     // sendToMultipleChannels ユーティリティを使用して、すべてのチャンネルに一括送信します。
     await sendToMultipleChannels(interaction.client, allChannelIds, messagePayload);
     
-    // configManagerを使用して、すべての設定を永続化します。
-    await configManager.addTotusunaInstance(guildId, {
+    // totusunaConfigManagerを使用して、すべての設定を永続化します。
+    await totusunaConfigManager.addInstance(guildId, {
       id: instanceId,
       ...tempData.data,
       installChannelId: installChannel.id,

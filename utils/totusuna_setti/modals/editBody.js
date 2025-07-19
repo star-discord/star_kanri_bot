@@ -7,7 +7,7 @@ const {
   ButtonStyle,
   MessageFlagsBitField,
 } = require('discord.js');
-const { configManager } = require('../../configManager');
+const { totusunaConfigManager } = require('../totusunaConfigManager');
 
 module.exports = {
   customIdStart: 'totusuna_edit_modal:',
@@ -30,14 +30,14 @@ module.exports = {
         return await interaction.editReply({ content: '⚠️ 本文を空にすることはできません。' });
       }
 
-      const success = await configManager.updateTotusunaInstance(guildId, uuid, { body: inputText });
+      const success = await totusunaConfigManager.updateInstance(guildId, uuid, { body: inputText });
 
       if (!success) {
         return await interaction.editReply({ content: '⚠️ 指定された設置データが存在しません。' });
       }
 
       // Update the original message
-      const instance = await configManager.getTotusunaInstance(guildId, uuid);
+      const instance = await totusunaConfigManager.getInstance(guildId, uuid);
       if (instance?.messageId && instance.installChannelId) {
         try {
           const channel = await interaction.guild.channels.fetch(instance.installChannelId);
