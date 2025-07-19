@@ -14,11 +14,11 @@ class TotusunaMigration {
     let modified = false;
     const migratedData = { ...data };
 
-    // 1. 'totsuna' (古いキー) から 'totusuna' (新しいキー) への移行
-    if (migratedData.totsuna) {
+    // 1. 'totsuna' (古いキー) を 'totusuna' (新しいキー) にリネーム
+    if (migratedData.totsuna) { // 古いキーが存在するかチェック
       console.log(`  [totusuna] 🔧 古いキー 'totsuna' から新しいキー 'totusuna' へデータを移行します...`);
-      migratedData.totusuna = migratedData.totsuna;
-      delete migratedData.totsuna;
+      migratedData.totusuna = migratedData.totsuna; // 新しいキーにデータをコピー
+      delete migratedData.totsuna; // 古いキーを削除
       modified = true;
     }
 

@@ -6,9 +6,10 @@ const {
   ChannelType,
 } = require('discord.js');
 const { tempDataStore } = require('../../tempDataStore');
-const requireAdmin = require('../../permissions/requireAdmin');
 const { idManager } = require('../../idManager');
 const { logAndReplyError } = require('../../errorHelper');
+const { checkAdmin } = require('../../permissions/checkAdmin');
+const { createAdminRejectEmbed } = require('../../embedHelper');
 
 /**
  * "凸スナ設置" モーダルの送信を処理します。
@@ -18,6 +19,12 @@ async function actualHandler(interaction) {
   try {
     // タイムアウトを回避するため、即座に応答を遅延させます。
     await interaction.deferReply({ flags: MessageFlagsBitField.Flags.Ephemeral });
+
+    // 権限チェックは必ず遅延応答の後に行います
+    const isAdmin = await checkAdmin(interaction);
+    if (!isAdmin) {
+      return await interaction.editReply({ embeds: [createAdminRejectEmbed()] });
+    }
 
     const guildId = interaction.guildId;
     const userId = interaction.user.id;
@@ -62,5 +69,5 @@ async function actualHandler(interaction) {
 module.exports = {
   // このIDは、ボタンハンドラのidManagerによって生成されたものと一致する必要があります。
   customId: 'totusuna_modal_install',
-  handle: requireAdmin(actualHandler),
+  handle: actualHandler, // requireAdminラッパーを削除
 };
