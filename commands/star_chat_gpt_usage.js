@@ -1,6 +1,6 @@
 // commands/star_chat_gpt_usage.js
 
-const { SlashCommandBuilder } = require('discord.js');
+const { SlashCommandBuilder, PermissionFlagsBits } = require('discord.js');
 const { checkAdmin } = require('../utils/permissions/checkAdmin');
 const { getOpenAIUsage } = require('../utils/openaiUsage');
 const { configManager } = require('../utils/configManager');
@@ -13,9 +13,8 @@ const {
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('star_chat_gpt_使用率')
-    .setDescription('今月のOpenAI API使用量を表示します（管理者用）'),
-
-  isAdminCommand: true,  // ここを追加
+    .setDescription('今月のOpenAI API使用量を表示します')
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 
   async execute(interaction) {
     try {
