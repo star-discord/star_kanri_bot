@@ -135,16 +135,6 @@ else
 fi
 
 echo ""
-echo "📋 バックアップ状況:"
-backup_count=$(ls -1d $HOME/star_kanri_bot_data_backup_* 2>/dev/null | wc -l)
-if [ "$backup_count" -gt 0 ]; then
-  echo "  ✅ バックアップ: $backup_count 個"
-  echo "  最新: $(ls -t $HOME/star_kanri_bot_data_backup_* 2>/dev/null | head -1 | xargs basename)"
-else
-  echo "  ⚠️ バックアップ: 見つかりません"
-fi
-
-echo ""
 echo "💡 推奨アクション:"
 echo "================================"
 

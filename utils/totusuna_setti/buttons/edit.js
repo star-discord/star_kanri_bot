@@ -7,9 +7,7 @@ const {
   ActionRowBuilder,
   MessageFlagsBitField,
 } = require('discord.js');
-const { checkAdmin } = require('../../permissions/checkAdmin');
 const { totusunaConfigManager } = require('../totusunaConfigManager');
-const { createAdminRejectEmbed } = require('../../embedHelper');
 
 module.exports = {
   customIdStart: 'totusuna_setti:edit:',
@@ -21,14 +19,6 @@ module.exports = {
   async handle(interaction) {
     let uuid;
     try {
-      const isAdmin = await checkAdmin(interaction);
-      if (!isAdmin) {
-        return await interaction.reply({
-          embeds: [createAdminRejectEmbed()],
-          flags: MessageFlagsBitField.Flags.Ephemeral,
-        });
-      }
-
       uuid = interaction.customId.substring(module.exports.customIdStart.length);
 
       const instance = await totusunaConfigManager.getInstance(interaction.guildId, uuid);
