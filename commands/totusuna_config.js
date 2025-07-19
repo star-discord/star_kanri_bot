@@ -60,7 +60,7 @@ module.exports = {
       }
 
       const selectMenu = new StringSelectMenuBuilder()
-        .setCustomId(idManager.createButtonId('totusuna_config', 'select'))
+        .setCustomId(idManager.createSelectId('totusuna_config', 'select'))
         .setPlaceholder('設定を変更する凸スナを選択してください')
         .addOptions(options);
 

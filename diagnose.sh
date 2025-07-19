@@ -24,6 +24,11 @@ for tool in git node npm pm2; do
     echo "  ❌ $tool: 未インストール"
   fi
 done
+if command -v jq > /dev/null 2>&1; then
+  echo "  ✅ jq: $(jq --version)"
+else
+  echo "  ⚠️ jq: 未インストール (JSON構文チェックに推奨: sudo apt-get install jq)"
+done
 
 echo ""
 echo "📂 ファイル・ディレクトリ状況:"
@@ -37,6 +42,11 @@ if [ -d ~/star_kanri_bot ]; then
       if [ -f "$file" ]; then
         size=$(ls -lh "$file" | awk '{print $5}')
         echo "      ✅ $file ($size)"
+        # .envファイルの中身を特別にチェック
+        if [ "$file" = ".env" ]; then
+          # DISCORD_TOKENが設定されているか（空でないか）を確認
+          grep -q "DISCORD_TOKEN=.*[^ ]" .env && echo "        - ✅ DISCORD_TOKEN: 設定済み" || echo "        - ❌ DISCORD_TOKEN: 未設定または空です"
+        fi
       else
         echo "      ❌ $file: 見つかりません"
       fi
@@ -69,6 +79,32 @@ if [ -d ~/star_kanri_bot ]; then
   )
 else
   echo "  ❌ ~/star_kanri_bot: 見つかりません"
+fi
+
+echo ""
+echo "🗂️ データファイル構文チェック:"
+if ! command -v jq > /dev/null 2>&1; then
+  echo "  ⚠️ jq が未インストールのためスキップします。 (sudo apt-get install jq)"
+else
+  if [ -d ~/star_kanri_bot/data ]; then
+    json_files=$(find ~/star_kanri_bot/data -type f -name "*.json")
+    if [ -z "$json_files" ]; then
+      echo "    ✅ JSONファイルが見つかりません。"
+    else
+      error_found=false
+      echo "    🔍 JSONファイルの構文をチェック中..."
+      for file in $json_files; do
+        relative_path=${file#$HOME/star_kanri_bot/}
+        if jq -e . >/dev/null 2>&1 < "$file"; then
+          : # 正常な場合は何も表示しない
+        else
+          echo "    ❌ ${relative_path}: 構文エラー"
+          error_found=true
+        fi
+      done
+      [ "$error_found" = false ] && echo "    ✅ すべてのJSONファイルの構文は正常です。"
+    fi
+  fi
 fi
 
 echo ""

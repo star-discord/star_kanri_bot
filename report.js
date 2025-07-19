@@ -76,14 +76,3 @@ module.exports = {
   customIdStart: 'totusuna:report:',
   handle: actualHandler,
 };
-
-  await safeReply(interaction, {
-    embeds: [embed],
-    ephemeral: true,
-  });
-
-
-module.exports = {
-  customIdStart: 'totusuna:report:',
-  handle: actualHandler,
-};

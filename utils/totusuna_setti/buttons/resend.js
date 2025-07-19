@@ -1,16 +1,10 @@
 // utils/totusuna_setti/buttons/resend.js
-const {
-  EmbedBuilder,
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  MessageFlagsBitField,
-} = require('discord.js');
+const { MessageFlagsBitField } = require('discord.js');
 const { totusunaConfigManager } = require('../totusunaConfigManager');
-const { idManager } = require('../../idManager');
 const { safeReply, safeDefer } = require('../../safeReply');
 const { logAndReplyError } = require('../../errorHelper');
 const { createErrorEmbed } = require('../../embedHelper');
+const { buildTotusunaMessage } = require('../totusunaMessageHelper');
 
 module.exports = {
   customIdStart: 'totusuna_setti:resend:',
@@ -49,21 +43,11 @@ module.exports = {
         }
       }
 
-      // Embed作成
-      const embed = new EmbedBuilder()
-        .setTitle('📣 凸スナ報告受付中')
-        .setDescription(instance.body || '報告は下のボタンからお願いします。')
-        .setColor(0x00bfff);
-
-      // idManagerを使用して安全にIDを生成
-      const button = new ButtonBuilder()
-        .setCustomId(idManager.createButtonId('totusuna_report', 'report', uuid))
-        .setLabel('凸スナ報告')
-        .setStyle(ButtonStyle.Primary);
-      const row = new ActionRowBuilder().addComponents(button);
+      // ヘルパー関数を使用してメッセージペイロードを構築
+      const messagePayload = buildTotusunaMessage(instance);
 
       // 新しいメッセージを送信
-      const sentMessage = await channel.send({ embeds: [embed], components: [row] });
+      const sentMessage = await channel.send(messagePayload);
       console.log(`[resend.js] 新規メッセージ投稿完了: ${sentMessage.id}`);
 
       // configManagerを使用して新しいメッセージIDを安全に保存

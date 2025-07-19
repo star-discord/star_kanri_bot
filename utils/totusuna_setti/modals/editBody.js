@@ -1,13 +1,8 @@
 // utils/totusuna_setti/modals/editBody.js
 
-const {
-  EmbedBuilder,
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  MessageFlagsBitField,
-} = require('discord.js');
+const { MessageFlagsBitField } = require('discord.js');
 const { totusunaConfigManager } = require('../totusunaConfigManager');
+const { updateTotusunaMessage } = require('../totusunaMessageHelper');
 
 module.exports = {
   customIdStart: 'totusuna_edit_modal:',
@@ -30,36 +25,17 @@ module.exports = {
         return await interaction.editReply({ content: '⚠️ 本文を空にすることはできません。' });
       }
 
-      const success = await totusunaConfigManager.updateInstance(guildId, uuid, { body: inputText });
+      const updateSuccess = await totusunaConfigManager.updateInstance(guildId, uuid, { body: inputText });
 
-      if (!success) {
+      if (!updateSuccess) {
         return await interaction.editReply({ content: '⚠️ 指定された設置データが存在しません。' });
       }
 
-      // Update the original message
+      // 更新されたインスタンスを取得し、Discord上のメッセージを更新します
       const instance = await totusunaConfigManager.getInstance(guildId, uuid);
-      if (instance?.messageId && instance.installChannelId) {
-        try {
-          const channel = await interaction.guild.channels.fetch(instance.installChannelId);
-          const message = await channel.messages.fetch(instance.messageId);
-
-          const embed = new EmbedBuilder()
-            .setTitle('📣 凸スナ報告受付中')
-            .setDescription(inputText)
-            .setColor(0x00bfff);
-
-          const button = new ButtonBuilder()
-            .setCustomId(`totusuna_report_button_${uuid}`)
-            .setLabel('凸スナ報告')
-            .setStyle(ButtonStyle.Primary);
-
-          const row = new ActionRowBuilder().addComponents(button);
-
-          await message.edit({ embeds: [embed], components: [row] });
-        } catch (msgError) {
-          console.warn(`[editBody] メッセージの更新に失敗しました (instance: ${uuid}):`, msgError.message);
-          return await interaction.editReply({ content: '✅ 本文の保存には成功しましたが、設置メッセージの更新には失敗しました。' });
-        }
+      const messageUpdateResult = await updateTotusunaMessage(interaction.client, instance);
+      if (!messageUpdateResult.success) {
+        return await interaction.editReply({ content: '✅ 本文の保存には成功しましたが、設置メッセージの更新には失敗しました。' });
       }
 
       await interaction.editReply({ content: '✅ 本文を更新し、表示も変更しました。' });

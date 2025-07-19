@@ -1,11 +1,5 @@
 // utils/totusuna_setti/selects/select_replicate_channels.js
-const {
-  EmbedBuilder,
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  ChannelType,
-} = require('discord.js');
+const { ChannelType } = require('discord.js');
 const { tempDataStore } = require('../../tempDataStore');
 const requireAdmin = require('../../permissions/requireAdmin');
 const { idManager } = require('../../idManager');
@@ -13,6 +7,7 @@ const { totusunaConfigManager } = require('../totusunaConfigManager');
 const { logAndReplyError } = require('../../errorHelper');
 const { sendToMultipleChannels } = require('../../sendToMultipleChannels');
 const { safeDefer } = require('../../safeReply');
+const { buildTotusunaMessage } = require('../totusunaMessageHelper');
 
 /**
  * 連携チャンネルの選択を処理し、凸スナの設置を完了させます。
@@ -48,42 +43,47 @@ async function actualHandler(interaction) {
     // 凸スナの一意なIDを生成します。
     const instanceId = idManager.generateUUID();
 
-    // チャンネルに投稿するメッセージ（Embedとボタン）を作成します。
-    const embed = new EmbedBuilder()
-      .setTitle(tempData.data.title)
-      .setDescription(tempData.data.body)
-      .setColor(0x00bfff)
-      .setFooter({ text: `ID: ${instanceId}` });
-
-    const reportButton = new ButtonBuilder()
-      .setCustomId(idManager.createButtonId('totusuna_report', 'report', instanceId))
-      .setLabel('凸スナ報告')
-      .setStyle(ButtonStyle.Primary);
-
-    const messagePayload = {
-      embeds: [embed],
-      components: [new ActionRowBuilder().addComponents(reportButton)],
+    // 保存するインスタンスデータを構築します。
+    const instanceData = {
+      id: instanceId,
+      ...tempData.data,
+      installChannelId: installChannel.id,
+      replicateChannelIds: replicateChannelIds,
+      messageId: null, // この時点ではまだ不明
+      createdBy: userId,
+      createdAt: new Date().toISOString(),
     };
+
+    // ヘルパーを使用してメッセージペイロードを構築します。
+    const messagePayload = buildTotusunaMessage(instanceData);
 
     // メインチャンネルと連携チャンネルのIDを結合します。
     const allChannelIds = [installChannel.id, ...replicateChannelIds];
 
     // sendToMultipleChannels ユーティリティを使用して、すべてのチャンネルに一括送信します。
-    await sendToMultipleChannels(interaction.client, allChannelIds, messagePayload);
+    const { sent, failed } = await sendToMultipleChannels(interaction.client, allChannelIds, messagePayload);
+
+    // メインの設置チャンネルに投稿されたメッセージのIDを取得して、データに追加します。
+    const mainMessage = sent.find(m => m.channel.id === installChannel.id);
+    if (mainMessage) {
+      instanceData.messageId = mainMessage.id;
+    }
     
     // totusunaConfigManagerを使用して、すべての設定を永続化します。
-    await totusunaConfigManager.addInstance(guildId, {
-      id: instanceId,
-      ...tempData.data,
-      installChannelId: installChannel.id,
-      replicateChannelIds: replicateChannelIds,
-      createdBy: userId,
-      createdAt: new Date().toISOString(),
-    });
+    await totusunaConfigManager.addInstance(guildId, instanceData);
+
+    // ユーザーへの完了メッセージを構築します。
+    let replyContent = `✅ 凸スナを <#${installChannel.id}> に設置しました！`;
+    if (replicateChannelIds.length > 0) {
+      replyContent += `\n連携チャンネル: ${replicateChannelIds.map(id => `<#${id}>`).join(', ')}`;
+    }
+    if (failed.length > 0) {
+      replyContent += `\n\n⚠️ **警告:** 一部のチャンネルへの送信に失敗しました: ${failed.map(f => `<#${f.channelId}>`).join(', ')}`;
+    }
 
     // 完了メッセージをユーザーに送信します。
     await interaction.editReply({
-      content: `✅ 凸スナを <#${installChannel.id}> に設置しました！\n${replicateChannelIds.length > 0 ? `連携チャンネル: ${replicateChannelIds.map(id => `<#${id}>`).join(', ')}` : ''}`,
+      content: replyContent,
       components: [],
     });
 
