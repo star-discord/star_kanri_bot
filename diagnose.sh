@@ -37,6 +37,11 @@ if [ -d ~/star_kanri_bot ]; then
       if [ -f "$file" ]; then
         size=$(ls -lh "$file" | awk '{print $5}')
         echo "      ✅ $file ($size)"
+        # .envファイルの中身を特別にチェック
+        if [ "$file" = ".env" ]; then
+          # DISCORD_TOKENが設定されているか（空でないか）を確認
+          grep -q "DISCORD_TOKEN=.*[^ ]" .env && echo "        - ✅ DISCORD_TOKEN: 設定済み" || echo "        - ❌ DISCORD_TOKEN: 未設定または空です"
+        fi
       else
         echo "      ❌ $file: 見つかりません"
       fi
