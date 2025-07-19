@@ -63,6 +63,10 @@ echo -e "\n${YELLOW}3. 重要ファイルを復元しています...${NC}"
 rm -rf "$TEMP_BACKUP"
 echo -e "${GREEN}✅ 復元完了。${NC}"
 
+# --- スクリプト権限の確認 ---
+echo -e "\n${YELLOW}* スクリプトの実行権限を確認・設定しています...${NC}"
+find . -type f -name "*.sh" -exec chmod +x {} \;
+
 # --- 5. Install Dependencies & Deploy Commands ---
 echo -e "\n${YELLOW}4. 依存関係のインストールとコマンドのデプロイ...${NC}"
 echo "📦 npm パッケージをインストール中..."

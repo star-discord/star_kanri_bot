@@ -65,7 +65,8 @@ echo "📂 ログディレクトリを作成します"
 mkdir -p logs
 
 echo "🔑 スクリプトに実行権限を付与します"
-chmod +x *.sh
+find . -type f -name "*.sh" -exec chmod +x {} \;
+echo "✅ すべてのシェルスクリプトに実行権限を付与しました。"
 
 echo -e "\n${YELLOW}*** 重要: .env ファイルを編集してください ***${NC}"
 echo "Botのトークンや各種IDを設定する必要があります。"
