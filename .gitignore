@@ -6,17 +6,22 @@ node_modules/
 
 # Google Cloud 認証ファイルを無視
 star-discord-bot-*.json
-data/star-discord-bot-*.json
 
 # ユーザーデータはGitで管理しない（backup_handler.shで保護）
 data/
 
-# chat gpt
+# VS Code Copilot Chatの履歴
 copilot_chatgpt/
-copilot_chatgpt/*.md
 
 # ログファイル
 logs/
 
 # 一時的なバックアップファイル
 *.bak
+
+# OS生成ファイル
+.DS_Store
+Thumbs.db
+
+# エディタ設定
+.vscode/
