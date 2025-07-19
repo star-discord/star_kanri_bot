@@ -14,10 +14,11 @@ class TotusunaMigration {
     let modified = false;
     const migratedData = { ...data };
 
-    // 1. totsunaデータ構造の正規化
-    if (migratedData.totusuna && !migratedData.totsuna.instances) {
-      console.log(`  [totusuna] 🔧 データ構造を { instances: [...] } 形式に移行中...`);
-      migratedData.totusuna = { instances: Array.isArray(migratedData.totsuna) ? migratedData.totusuna : [] };
+    // 1. 'totsuna' (古いキー) から 'totusuna' (新しいキー) への移行
+    if (migratedData.totsuna) {
+      console.log(`  [totusuna] 🔧 古いキー 'totsuna' から新しいキー 'totusuna' へデータを移行します...`);
+      migratedData.totusuna = migratedData.totsuna;
+      delete migratedData.totsuna;
       modified = true;
     }
 

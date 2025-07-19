@@ -102,11 +102,11 @@ echo "📦 PM2プロセス状況:"
 if command -v pm2 > /dev/null 2>&1; then
   echo "  PM2バージョン: $(pm2 --version)"
   
-  if pm2 list | grep -q "star-kanri-bot"; then
-    echo "  ✅ star-kanri-bot プロセス: 実行中"
+  if pm2 list | grep "star-kanri-bot" | grep -q "online"; then
+    echo "  ✅ star-kanri-bot プロセス: オンライン"
     pm2 show star-kanri-bot 2>/dev/null | grep -E "(status|uptime|restarts)" || true
   else
-    echo "  ⚠️ star-kanri-bot プロセス: 見つかりません"
+    echo "  ⚠️ star-kanri-bot プロセス: オフラインまたは未登録"
   fi
   
   echo "  登録済みプロセス:"
