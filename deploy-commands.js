@@ -36,7 +36,6 @@ function loadCommandFiles(dir) {
  */
 async function main() {
   const commands = [];
-  const adminCommandsTagged = [];
   const commandsPath = path.join(__dirname, 'commands');
   const commandFiles = loadCommandFiles(commandsPath);
 
@@ -47,14 +46,6 @@ async function main() {
     try {
       const command = require(filePath);
       if ('data' in command && 'execute' in command) {
-        // 管理者コマンドに "(管理者専用)" を自動付加
-        if (command.isAdminCommand) {
-          const desc = command.data.description;
-          if (!desc.includes('（管理者専用）')) {
-            command.data.setDescription(`${desc}（管理者専用）`);
-            adminCommandsTagged.push(command.data.name);
-          }
-        }
         commands.push(command.data.toJSON());
       } else {
         console.warn(`[⚠️警告] スラッシュコマンドの形式が不正です: ${path.relative(__dirname, filePath)}`);
@@ -62,11 +53,6 @@ async function main() {
     } catch (error) {
       console.error(`[❌エラー] コマンドの読み込みに失敗しました: ${path.relative(__dirname, filePath)}`, error);
     }
-  }
-
-  if (adminCommandsTagged.length > 0) {
-    console.log('🔧 以下のコマンドに「(管理者専用)」タグを自動付加しました:');
-    adminCommandsTagged.forEach(name => console.log(`   - /${name}`));
   }
   console.log(`✅ 合計 ${commands.length} 個のコマンドを読み込みました。`);
 
