@@ -3,8 +3,9 @@ const { MessageFlagsBitField } = require('discord.js');
 const { totusunaConfigManager } = require('../totusunaConfigManager');
 const { safeReply, safeDefer } = require('../../safeReply');
 const { logAndReplyError } = require('../../errorHelper');
-const { createErrorEmbed } = require('../../embedHelper');
+const { createErrorEmbed, createAdminRejectEmbed } = require('../../embedHelper');
 const { buildTotusunaMessage } = require('../totusunaMessageHelper');
+const { checkAdmin } = require('../../permissions/checkAdmin');
 
 module.exports = {
   customIdStart: 'totusuna_setti:resend:',
@@ -16,6 +17,12 @@ module.exports = {
   async handle(interaction) {
     console.log(`[${__filename.split('/').pop()}] 開始: ${interaction.customId} by ${interaction.user.tag}`);
     await safeDefer(interaction, { ephemeral: true });
+
+    // 権限チェックは遅延応答の後に行います
+    const isAdmin = await checkAdmin(interaction);
+    if (!isAdmin) {
+      return await safeReply(interaction, { embeds: [createAdminRejectEmbed()] });
+    }
 
     const { guild, customId } = interaction;
     const uuid = customId.substring(module.exports.customIdStart.length);

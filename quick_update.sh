@@ -39,6 +39,9 @@ if [ ! -d "$PROJECT_DIR" ]; then
 fi
 cd "$PROJECT_DIR"
 
+# --- Pre-flight Checks ---
+./scripts/pre-flight-check.sh
+
 # --- 2. Safe Backup of Critical Files ---
 TEMP_BACKUP="/tmp/star_kanri_quick_update_backup_$$"
 echo -e "\n${YELLOW}1. 重要ファイルを一時バックアップしています...${NC}"

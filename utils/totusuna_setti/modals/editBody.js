@@ -3,6 +3,8 @@
 const { MessageFlagsBitField } = require('discord.js');
 const { totusunaConfigManager } = require('../totusunaConfigManager');
 const { updateTotusunaMessage } = require('../totusunaMessageHelper');
+const { checkAdmin } = require('../../permissions/checkAdmin');
+const { createAdminRejectEmbed } = require('../../embedHelper');
 
 module.exports = {
   customIdStart: 'totusuna_edit_modal:',
@@ -13,6 +15,12 @@ module.exports = {
    */
   async handle(interaction) {
     await interaction.deferReply({ flags: MessageFlagsBitField.Flags.Ephemeral });
+
+    // 権限チェックは遅延応答の後に行います
+    const isAdmin = await checkAdmin(interaction);
+    if (!isAdmin) {
+      return await interaction.editReply({ embeds: [createAdminRejectEmbed()] });
+    }
 
     const modalId = interaction.customId;
     const uuid = modalId.replace(module.exports.customIdStart, '');

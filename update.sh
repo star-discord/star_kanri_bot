@@ -56,6 +56,9 @@ if [ ! -d "$PROJECT_DIR/.git" ]; then
 fi
 cd "$PROJECT_DIR"
 
+# --- Pre-flight Checks ---
+./scripts/pre-flight-check.sh
+
 # --- 2. Backup ---
 TEMP_BACKUP="/tmp/star_kanri_update_backup_$$"
 echo -e "\n${YELLOW}2. 重要ファイルを一時バックアップしています...${NC}"
