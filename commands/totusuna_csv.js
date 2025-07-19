@@ -1,9 +1,9 @@
 // commands/totusuna_csv.js
 const { SlashCommandBuilder, AttachmentBuilder } = require('discord.js');
-const requireAdmin = require('../utils/permissions/requireAdmin');
 const { generateCsvForGuild } = require('../utils/totusuna_csv/csvGenerator');
 const { logAndReplyError } = require('../utils/errorHelper');
-const { createSuccessEmbed, createWarningEmbed } = require('../utils/embedHelper');
+const { createSuccessEmbed, createWarningEmbed, createAdminRejectEmbed } = require('../utils/embedHelper');
+const { checkAdmin } = require('../utils/permissions/checkAdmin');
 
 /**
  * The actual handler for the command.
@@ -11,6 +11,12 @@ const { createSuccessEmbed, createWarningEmbed } = require('../utils/embedHelper
  */
 async function actualHandler(interaction) {
   await interaction.deferReply({ ephemeral: true });
+
+  // 権限チェックは遅延応答の後に行います
+  const isAdmin = await checkAdmin(interaction);
+  if (!isAdmin) {
+    return await interaction.editReply({ embeds: [createAdminRejectEmbed()] });
+  }
 
   const { guildId } = interaction;
 
@@ -45,5 +51,5 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('凸スナcsv')
     .setDescription('すべての凸スナ報告データをCSVファイルとして一括で出力します（管理者専用）'),
-  execute: requireAdmin(actualHandler),
+  execute: actualHandler,
 };

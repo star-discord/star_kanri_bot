@@ -1,7 +1,6 @@
 // utils/totusuna_setti/buttons/install.js
 const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
 const { idManager } = require('../../idManager');
-const requireAdmin = require('../../permissions/requireAdmin');
 
 /**
  * @param {import('discord.js').ButtonInteraction} interaction
@@ -35,5 +34,5 @@ async function actualHandler(interaction) {
 
 module.exports = {
   customId: 'totusuna_setti:install',
-  handle: requireAdmin(actualHandler),
+  handle: actualHandler,
 };

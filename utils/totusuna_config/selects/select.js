@@ -8,7 +8,9 @@ const {
 const { totusunaConfigManager } = require('../../totusuna_setti/totusunaConfigManager');
 const { idManager } = require('../../idManager');
 const { logAndReplyError } = require('../../errorHelper');
-const requireAdmin = require('../../permissions/requireAdmin');
+const { checkAdmin } = require('../../permissions/checkAdmin');
+const { createAdminRejectEmbed } = require('../../embedHelper');
+const { safeFollowUp } = require('../../safeReply');
 
 /**
  * 設置済み凸スナを選択した後の処理
@@ -18,6 +20,13 @@ async function actualHandler(interaction) {
   try {
     // 応答を更新する準備ができたことをDiscordに伝えます
     await interaction.deferUpdate();
+
+    // 権限チェックは遅延応答の後に行います
+    const isAdmin = await checkAdmin(interaction);
+    if (!isAdmin) {
+      // deferUpdate後はfollowUpで応答するのが適切
+      return await safeFollowUp(interaction, { embeds: [createAdminRejectEmbed()], ephemeral: true });
+    }
 
     const { guildId, values } = interaction;
     const selectedUuid = values[0];
@@ -76,5 +85,5 @@ async function actualHandler(interaction) {
 
 module.exports = {
   customId: 'totusuna_config:select',
-  handle: requireAdmin(actualHandler),
+  handle: actualHandler,
 };

@@ -112,154 +112,34 @@ fi
 echo "📡 スラッシュコマンドをDiscordに登録中..."
 node deploy-commands.js
 
-  exit 1
-fi
-
-# スラッシュコマンド登録（改善版）
-echo ""
-echo "📡 スラッシュコマンドをデプロイ中..."
-
-# deploy-commands.jsの存在確認
-if [ ! -f deploy-commands.js ]; then
-  echo "❌ deploy-commands.js が見つかりません"
-  exit 1
-fi
-
-# .envファイルの確認
-if [ ! -f .env ]; then
-  echo "⚠️ .env ファイルが見つかりません"
-  echo "💡 DISCORD_TOKEN を設定してください"
-fi
-
-# デプロイ実行
-if timeout 60 node deploy-commands.js; then
-  echo "✅ スラッシュコマンドのデプロイ成功"
-else
-  echo "❌ スラッシュコマンドのデプロイに失敗しました"
-  echo "💡 以下を確認してください:"
-  echo "  - DISCORD_TOKEN が正しく設定されているか"
-  echo "  - Botがサーバーに参加しているか"
-  echo "  - インターネット接続が正常か"
-  echo ""
-  echo "手動実行: cd ~/star_kanri_bot && node deploy-commands.js"
-  exit 1
-fi
-
-# ファイルの最新反映を確認
-echo ""
-echo "🔍 更新ファイルの確認中..."
-CHECK_FILES=(
-  "utils/totusuna_setti/buttons/install.js"
-  "commands/star_config.js"
-  "index.js"
-)
-
-for file in "${CHECK_FILES[@]}"; do
-  if [ -f "$file" ]; then
-    echo "✅ $file (存在)"
-  else
-    echo "⚠️ $file (見つかりません)"
-  fi
-done
-
 # PM2操作（スキップオプション対応）
 if [ "$SKIP_PM2" = false ]; then
-  echo ""
-  echo "🔄 PM2 Botプロセスを再起動中..."
+  echo -e "\n${YELLOW}6. Botプロセスを再起動しています...${NC}"
   
   # PM2プロセスの確認
   if command -v pm2 > /dev/null 2>&1; then
     # 既存のプロセス確認
     if pm2 list | grep -q "star-kanri-bot"; then
-      echo "🧹 PM2ログをクリア中..."
-      pm2 flush star-kanri-bot
-      
-      echo "🔁 PM2プロセス再起動中..."
-      if pm2 restart star-kanri-bot; then
-        pm2 save
-        echo "✅ PM2再起動完了"
-      else
-        echo "❌ PM2再起動失敗"
-        echo "💡 手動実行: pm2 restart star-kanri-bot"
-      fi
+      pm2 restart star-kanri-bot
+      pm2 save
+      echo -e "${GREEN}✅ Botが正常に再起動されました。${NC}"
     else
-      echo "⚠️ star-kanri-bot プロセスが見つかりません"
-      echo "💡 手動起動: pm2 start ecosystem.config.js"
+      echo -e "${YELLOW}⚠️ PM2プロセスが見つかりません。手動で起動してください:${NC}"
+      echo "   cd $PROJECT_DIR && pm2 start ecosystem.config.js"
     fi
   else
-    echo "⚠️ PM2がインストールされていません"
-    echo "💡 インストール: npm install -g pm2"
+    echo -e "${YELLOW}⚠️ PM2がインストールされていません。手動で起動してください:${NC}"
+    echo "   cd $PROJECT_DIR && node index.js"
   fi
 else
-  echo "⏭️ PM2操作をスキップしました"
+  echo -e "\n${YELLOW}6. PM2操作をスキップしました。${NC}"
 fi
 
-# 最新バックアップからdataフォルダを復元（改善版）
-echo ""
-echo "📥 最新バックアップからdataフォルダを復元中..."
-
-LATEST_BACKUP=$(ls -t "$HOME"/star_kanri_bot_data_backup_* 2>/dev/null | head -n 1)
-if [ -n "$LATEST_BACKUP" ] && [ -d "$LATEST_BACKUP/data" ]; then
-  echo "復元元: $(basename "$LATEST_BACKUP")"
-  
-  # 現在のdataフォルダをバックアップ
-  if [ -d ~/star_kanri_bot/data ]; then
-    echo "🔄 現在のdataフォルダを一時退避中..."
-    mv ~/star_kanri_bot/data ~/star_kanri_bot/data.old.$$
-  fi
-  
-  # バックアップから復元
-  if cp -r "$LATEST_BACKUP/data" ~/star_kanri_bot/; then
-    echo "✅ dataフォルダの復元完了"
-    
-    # 古い一時ファイルを削除
-    if [ -d ~/star_kanri_bot/data.old.$$ ]; then
-      rm -rf ~/star_kanri_bot/data.old.$$
-    fi
-  else
-    echo "❌ dataフォルダの復元に失敗"
-    # 復元失敗時は元のdataフォルダを戻す
-    if [ -d ~/star_kanri_bot/data.old.$$ ]; then
-      mv ~/star_kanri_bot/data.old.$$ ~/star_kanri_bot/data
-      echo "🔄 元のdataフォルダを復元しました"
-    fi
-  fi
-else
-  echo "⚠️ 復元可能なバックアップが見つかりません"
-  if [ ! -d ~/star_kanri_bot/data ]; then
-    echo "📁 新しいdataフォルダを作成します"
-    mkdir -p ~/star_kanri_bot/data
-  fi
-fi
-
-# 最終ステータス確認
-echo ""
-echo "🔍 更新後のシステム状況:"
-echo "📂 ワーキングディレクトリ: $(pwd)"
-echo "📦 package.json: $([ -f package.json ] && echo "存在" || echo "見つかりません")"
-echo "📋 .env: $([ -f .env ] && echo "存在" || echo "見つかりません")"
-echo "📁 data/: $([ -d data ] && echo "存在 ($(ls -1 data 2>/dev/null | wc -l) アイテム)" || echo "見つかりません")"
-
-# PM2ログ確認（スキップされていない場合のみ）
-if [ "$SKIP_PM2" = false ] && command -v pm2 > /dev/null 2>&1; then
-  echo ""
-  echo "📄 最新PM2ログ（最新20行）:"
-  if pm2 logs star-kanri-bot --lines 20 --nostream 2>/dev/null; then
-    :  # ログ表示成功
-  else
-    echo "⚠️ PM2ログの取得に失敗しました"
-  fi
-fi
-
-echo ""
-echo "✅ star_kanri_bot 更新処理完了"
-echo ""
-echo "💡 使用可能なオプション:"
+echo -e "\n${GREEN}✅ star_kanri_bot 更新処理完了${NC}"
+echo -e "\n💡 使用可能なオプション:"
 echo "  ./update.sh          : 通常更新"
 echo "  ./update.sh -f       : 強制同期（ローカル変更破棄）"
 echo "  ./update.sh -s       : PM2操作スキップ"
-echo ""
-echo "🔧 トラブルシューティング:"
+echo -e "\n🔧 トラブルシューティング:"
 echo "  Bot起動確認: pm2 status"
 echo "  ログ確認: pm2 logs star-kanri-bot"
-echo "  手動起動: pm2 start ecosystem.config.js"

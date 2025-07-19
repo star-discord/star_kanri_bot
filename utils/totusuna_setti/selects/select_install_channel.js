@@ -5,7 +5,6 @@ const {
   ChannelType,
 } = require('discord.js');
 const { tempDataStore } = require('../../tempDataStore');
-const requireAdmin = require('../../permissions/requireAdmin');
 const { idManager } = require('../../idManager');
 const { logAndReplyError } = require('../../errorHelper');
 
@@ -57,5 +56,5 @@ async function actualHandler(interaction) {
 
 module.exports = {
   customId: 'totusuna_setti:select_install_channel',
-  handle: requireAdmin(actualHandler),
+  handle: actualHandler,
 };
