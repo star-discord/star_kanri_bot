@@ -71,6 +71,10 @@ echo -e "\n${YELLOW}3. 重要ファイルを復元しています...${NC}"
 rm -rf "$TEMP_BACKUP"
 echo -e "${GREEN}✅ 復元完了。${NC}"
 
+# --- スクリプト権限の確認 ---
+echo -e "\n${YELLOW}* スクリプトの実行権限を確認・設定しています...${NC}"
+find . -type f -name "*.sh" -exec chmod +x {} \;
+
 # --- 5. Final Message ---
 echo -e "\n${GREEN}🎉 GitHubとの安全な強制同期が完了しました！${NC}"
 echo "💡 Botを更新・再起動するには、'./update.sh' または './quick_update.sh' を実行してください。"
