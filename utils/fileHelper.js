@@ -1,6 +1,8 @@
+// utils/fileHelper.js
+
 const fs = require('fs/promises');
 const path = require('path');
-const logger = require('./logger');  // ここを追加
+const logger = require('./logger');
 
 /**
  * 指定パスの破損ファイルをバックアップフォルダに移動
@@ -13,42 +15,22 @@ async function backupCorruptedFile(filePath, error) {
     const backupDir = path.join(path.dirname(filePath), 'backup_errors');
     await fs.mkdir(backupDir, { recursive: true });
 
-    const backupPath = path.join(backupDir, `${path.basename(filePath)}.${Date.now()}.corrupted`);
+    const backupPath = path.join(
+      backupDir,
+      `${path.basename(filePath)}.${Date.now()}.corrupted`
+    );
     await fs.rename(filePath, backupPath);
     logger.info(`💾 破損ファイルをバックアップ: ${backupPath}`);
-    logger.error(
-      `[backupCorruptedFile] ❌ 破損ファイル "${filePath}" をバックアップしました:`,
-      { errorMessage: error.message }
-    );
+    logger.error(`[backupCorruptedFile] 破損ファイル "${filePath}" をバックアップしました。`, {
+      errorMessage: error.message,
+      stack: error.stack,
+    });
+
     return backupPath;
   } catch (err) {
     logger.error(`❌ バックアップ失敗: ${filePath}`, { error: err });
     return null;
   }
-}
-
-/**
- * 読み込み失敗・破損時に使う初期データ構造
- * @returns {Object}
- */
-function getInitialGuildData() {
-  return {
-    star: {
-      adminRoleIds: [],
-      notifyChannelId: null,
-    },
-    chatgpt: {
-      apiKey: '',
-      maxTokens: 150,
-      temperature: 0.7,
-    },
-    totusuna: {
-      instances: [],
-    },
-    kpi: {
-      settings: {},
-    },
-  };
 }
 
 /**
@@ -75,14 +57,12 @@ async function readJSON(filePath, initialData = {}) {
       logger.warn(`[readJSON] ファイル未発見 → 初期データ使用: ${filePath}`);
       return initialData;
     }
-
     if (err instanceof SyntaxError) {
       logger.error(`❌ JSONパースエラー: ${filePath}`, { error: err });
       await backupCorruptedFile(filePath, err);
       logger.warn(`[readJSON] パース不能 → 初期データで復元: ${filePath}`);
       return initialData;
     }
-
     logger.error(`❌ 読み込み失敗: ${filePath}`, { error: err });
     throw err;
   }
@@ -107,10 +87,12 @@ async function writeJSON(filePath, data) {
 
 /**
  * ギルドごとの初期データファイルを保証・返却
+ * ファイルが存在しない場合は、渡された初期データで新規作成します。
  * @param {string} guildId
- * @returns {Promise<string>} - JSONファイルのパス
+ * @param {object} initialData - 新規作成時に使用するデータ
+ * @returns {Promise<string>} JSONファイルのパス
  */
-async function ensureGuildJSON(guildId) {
+async function ensureGuildJSON(guildId, initialData) {
   const dir = path.join('data', guildId);
   const filePath = path.join(dir, `${guildId}.json`);
 
@@ -119,9 +101,12 @@ async function ensureGuildJSON(guildId) {
 
     try {
       await fs.access(filePath);
-      logger.info(`📄 JSONファイル発見: ${filePath}`);
     } catch {
-      const initialData = getInitialGuildData();
+      if (!initialData) {
+        const err = new Error('Cannot create new guild file without initial data.');
+        logger.error(`[ensureGuildJSON] initialData was not provided for new file creation: ${filePath}`, { error: err });
+        throw err;
+      }
       await fs.writeFile(filePath, prettyStringify(initialData), 'utf-8');
       logger.info(`✅ 新規JSONファイル作成: ${filePath}`);
     }
@@ -137,5 +122,4 @@ module.exports = {
   readJSON,
   writeJSON,
   ensureGuildJSON,
-  getInitialGuildData, // 他モジュールが初期値のみ利用可
 };

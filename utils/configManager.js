@@ -51,7 +51,7 @@ class ConfigManager {
    */
   async getJsonPath(guildId) {
     if (!this.pathCache.has(guildId)) {
-      const path = await ensureGuildJSON(guildId);
+      const path = await ensureGuildJSON(guildId, this.defaultConfig);
       this.pathCache.set(guildId, path);
     }
     return this.pathCache.get(guildId);
