@@ -3,68 +3,60 @@
 const { v4: uuidv4 } = require('uuid');
 
 class IdManager {
+  constructor() {
+    this.formats = {
+      button: {
+        star_config: (a, u) => `star_config:${a}${u ? `:${u}` : ''}`,
+        star_chat_gpt_config: (a, u) => `star_chat_gpt_config:${a}${u ? `:${u}` : ''}`,
+        totusuna_setti: (a, u) => (a === 'report' ? `report_totsuna_button_${u || this.generateUUID()}` : `totusuna_setti:${a}${u ? `:${u}` : ''}`),
+        totusuna_config: (a, u) => `totusuna_config:${a}${u ? `:${u}` : ''}`,
+        kpi: (a, u) => `kpi_${a}${u ? `_${u}` : ''}`,
+      },
+      modal: {
+        star_config: (a, u) => `star_config_modal${a ? `_${a}` : ''}${u ? `:${u}` : ''}`,
+        star_chat_gpt_config: (a, u) => `star_chat_gpt_config_modal${a ? `_${a}` : ''}${u ? `:${u}` : ''}`,
+        totusuna_setti: (a, u) => `totusuna_modal_${a}${u ? `:${u}` : ''}`,
+        totusuna_config: (a, u) => `totusuna_config_edit_modal${u ? `_${u}` : ''}`,
+        kpi: (a, u) => `kpi_modal_${a}${u ? `:${u}` : ''}`,
+      },
+      select: {
+        star_config: (a, u) => `star_config:${a}${u ? `:${u}` : ''}`,
+        totusuna_setti: (a, u) => `totusuna_setti:${a}${u ? `:${u}` : ''}`,
+        totusuna_config: (a, u) => `totusuna_config:${a}${u ? `:${u}` : ''}`,
+      },
+    }
+  }
+
   generateUUID() {
     return uuidv4();
   }
 
-  createButtonId(category, action, uuid = null) {
-    switch (category) {
-      case 'star_config':
-        return uuid ? `star_config:${action}:${uuid}` : `star_config:${action}`;
-      case 'star_chat_gpt_config':
-        return uuid ? `star_chat_gpt_config:${action}:${uuid}` : `star_chat_gpt_config:${action}`;
-      case 'totusuna_setti':
-        if (action === 'report') {
-          return `report_totsuna_button_${uuid || this.generateUUID()}`;
-        }
-        return uuid ? `totusuna_setti:${action}:${uuid}` : `totusuna_setti:${action}`;
-      case 'totusuna_config':
-        return uuid ? `totusuna_config:${action}:${uuid}` : `totusuna_config:${action}`;
-      case 'kpi':
-        return uuid ? `kpi_${action}_${uuid}` : `kpi_${action}`;
-      default:
-        throw new Error(`[IdManager] Unknown button category: "${category}"`);
+  /**
+   * 汎用的なID生成関数
+   * @param {'button'|'modal'|'select'} type - コンポーネントのタイプ
+   * @param {string} category - 機能カテゴリ
+   * @param {string} action - アクション
+   * @param {string|null} [uuid=null] - UUID
+   * @returns {string}
+   */
+  createId(type, category, action, uuid = null) {
+    const formatters = this.formats[type];
+    if (!formatters || !formatters[category]) {
+      throw new Error(`[IdManager] Unknown ${type} category: "${category}"`);
     }
+    return formatterscategory;
+  }
+
+  createButtonId(category, action, uuid = null) {
+    return this.createId('button', category, action, uuid);
   }
 
   createModalId(category, action = '', uuid = null) {
-    switch (category) {
-      case 'star_config':
-        return uuid
-          ? `star_config_modal${action ? `_${action}` : ''}:${uuid}`
-          : `star_config_modal${action ? `_${action}` : ''}`;
-      case 'star_chat_gpt_config':
-        return uuid
-          ? `star_chat_gpt_config_modal${action ? `_${action}` : ''}:${uuid}`
-          : `star_chat_gpt_config_modal${action ? `_${action}` : ''}`;
-      case 'totusuna_setti':
-        return uuid
-          ? `totusuna_modal_${action}:${uuid}`
-          : `totusuna_modal_${action}`;
-      case 'totusuna_config':
-        return uuid
-          ? `totusuna_config_edit_modal_${uuid}`
-          : `totusuna_config_edit_modal`;
-      case 'kpi':
-        return uuid
-          ? `kpi_modal_${action}:${uuid}`
-          : `kpi_modal_${action}`;
-      default:
-        throw new Error(`[IdManager] Unknown modal category: "${category}"`);
-    }
+    return this.createId('modal', category, action, uuid);
   }
 
   createSelectId(category, action, uuid = null) {
-    switch (category) {
-      case 'star_config':
-        return uuid ? `star_config:${action}:${uuid}` : `star_config:${action}`;
-      case 'totusuna_setti':
-        return uuid ? `totusuna_setti:${action}:${uuid}` : `totusuna_setti:${action}`;
-      case 'totusuna_config':
-        return uuid ? `totusuna_config:${action}:${uuid}` : `totusuna_config:${action}`;
-      default:
-        throw new Error(`[IdManager] Unknown select category: "${category}"`);
-    }
+    return this.createId('select', category, action, uuid);
   }
 
   /**
