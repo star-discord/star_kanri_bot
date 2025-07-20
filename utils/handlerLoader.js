@@ -1,6 +1,6 @@
 // utils/handlerLoader.js
 
-const fsp = require('fs/promises');
+const fs = require('fs');
 const path = require('path');
 
 // 除外ファイル一覧
@@ -19,23 +19,26 @@ const EXCLUDED_FILES = new Set(['index.js', 'handleSelect.js', 'install_channel.
  * @returns {boolean}
  */
 function isValidHandler(mod) {
-  return mod && typeof mod.handle === 'function' &&
-    (typeof mod.customId === 'string' || typeof mod.customIdStart === 'string');
+  return (
+    mod &&
+    typeof mod.handle === 'function' &&
+    (typeof mod.customId === 'string' || typeof mod.customIdStart === 'string')
+  );
 }
 
 /**
  * 指定ディレクトリからハンドラを読み込んでルーティング関数を返す
- * @description この関数は非同期になり、呼び出し元での `await` が必要です。
+ * @description この関数は同期的に実行されます。
  * @param {string} dirPath - ディレクトリの絶対パス
- * @returns {Promise<(customId: string) => Handler|null>}
+ * @returns {(customId: string) => Handler|null}
  */
-async function loadHandlers(dirPath) {
+function loadHandlers(dirPath) {
   const handlers = {};
   const startsWithHandlers = [];
 
   let fileNames;
   try {
-    fileNames = await fsp.readdir(dirPath);
+    fileNames = fs.readdirSync(dirPath);
   } catch (err) {
     if (err.code === 'ENOENT') {
       console.warn(`⚠️ [handlerLoader] ディレクトリが存在しません: ${dirPath}`);
@@ -63,13 +66,19 @@ async function loadHandlers(dirPath) {
 
       if (mod.customId) {
         if (handlers[mod.customId]) {
-          console.warn(`⚠️ [handlerLoader] ${file} の customId "${mod.customId}" が重複しています。上書きします。`);
+          console.warn(
+            `⚠️ [handlerLoader] ${file} の customId "${mod.customId}" が重複しています。上書きします。`
+          );
         }
         handlers[mod.customId] = mod;
       } else if (mod.customIdStart) {
         const duplicate = startsWithHandlers.find(h => h.key === mod.customIdStart);
         if (duplicate) {
-          console.warn(`⚠️ [handlerLoader] customIdStart "${mod.customIdStart}" が '${path.basename(duplicate.filePath)}' と重複。'${file}' はスキップされます。`);
+          console.warn(
+            `⚠️ [handlerLoader] customIdStart "${mod.customIdStart}" が '${path.basename(
+              duplicate.filePath
+            )}' と重複。'${file}' はスキップされます。`
+          );
           continue;
         }
         startsWithHandlers.push({ key: mod.customIdStart, handler: mod, filePath: modulePath });
@@ -85,10 +94,14 @@ async function loadHandlers(dirPath) {
 
   const dirName = path.basename(dirPath);
   if (Object.keys(handlers).length > 0) {
-    console.log(`[handlerLoader] 読み込み完了: ${dirName} 完全一致 -> ${Object.keys(handlers).join(', ')}`);
+    console.log(
+      `[handlerLoader] 読み込み完了: ${dirName} 完全一致 -> ${Object.keys(handlers).join(', ')}`
+    );
   }
   if (startsWithHandlers.length > 0) {
-    console.log(`[handlerLoader] 読み込み完了: ${dirName} 前方一致 -> ${startsWithHandlers.map(h => h.key).join(', ')}`);
+    console.log(
+      `[handlerLoader] 読み込み完了: ${dirName} 前方一致 -> ${startsWithHandlers.map(h => h.key).join(', ')}`
+    );
   }
 
   const total = Object.keys(handlers).length + startsWithHandlers.length;

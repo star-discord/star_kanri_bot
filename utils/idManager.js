@@ -29,11 +29,13 @@ class IdManager {
       case 'star_chat_gpt_config':
         return `star_chat_gpt_config:${action}`;
       case 'totusuna_setti':
+        // 新しい凸スナ報告ボタンのID形式に対応
+        if (action === 'report') {
+          return `report_totsuna_button_${uuid}`;
+        }
         return uuid ? `totusuna_setti:${action}:${uuid}` : `totusuna_setti:${action}`;
       case 'totusuna_config':
         return uuid ? `totusuna_config:${action}:${uuid}` : `totusuna_config:${action}`;
-      case 'totusuna_report':
-        return `totusuna:report:${uuid}`;
       case 'kpi':
         return `kpi_${action}`;
       default:
@@ -59,8 +61,6 @@ class IdManager {
         return `totusuna_modal_${action}${uuid ? `:${uuid}` : ''}`;
       case 'totusuna_config':
         return `totusuna_config_edit_modal_${uuid}`;
-      case 'totusuna_report':
-        return `totusuna_report_modal:${action || 'submit'}:${uuid}`;
       case 'kpi':
         return `kpi_modal_${action}`;
       default:

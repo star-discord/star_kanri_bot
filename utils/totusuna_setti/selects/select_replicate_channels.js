@@ -33,7 +33,8 @@ async function actualHandler(interaction) {
     const tempData = tempDataStore.get(tempKey);
     if (!tempData || !tempData.installChannelId) {
       return await interaction.editReply({
-        content: '⚠️ 設定データが見つからないか、不完全です。時間切れの可能性がありますので、最初からやり直してください。',
+        content:
+          '⚠️ 設定データが見つからないか、不完全です。時間切れの可能性がありますので、最初からやり直してください。',
         components: [],
       });
     }
@@ -42,9 +43,13 @@ async function actualHandler(interaction) {
     const replicateChannelIds = interaction.values;
 
     // 設置先チャンネルを取得し、検証します。
-    const installChannel = await interaction.guild.channels.fetch(tempData.installChannelId).catch(() => null);
+    const installChannel = await interaction.guild.channels
+      .fetch(tempData.installChannelId)
+      .catch(() => null);
     if (!installChannel || installChannel.type !== ChannelType.GuildText) {
-      return await interaction.editReply({ content: '❌ 設置先チャンネルが見つからないか、テキストチャンネルではありません。' });
+      return await interaction.editReply({
+        content: '❌ 設置先チャンネルが見つからないか、テキストチャンネルではありません。',
+      });
     }
 
     // 凸スナの一意なIDを生成します。
@@ -68,7 +73,11 @@ async function actualHandler(interaction) {
     const allChannelIds = [installChannel.id, ...replicateChannelIds];
 
     // sendToMultipleChannels ユーティリティを使用して、すべてのチャンネルに一括送信します。
-    const { sent, failed } = await sendToMultipleChannels(interaction.client, allChannelIds, messagePayload);
+    const { sent, failed } = await sendToMultipleChannels(
+      interaction.client,
+      allChannelIds,
+      messagePayload
+    );
 
     // メインの設置チャンネルに投稿されたメッセージのIDを取得して、データに追加します。
     const mainMessage = sent.find(m => m.channel.id === installChannel.id);
@@ -85,7 +94,9 @@ async function actualHandler(interaction) {
       replyContent += `\n連携チャンネル: ${replicateChannelIds.map(id => `<#${id}>`).join(', ')}`;
     }
     if (failed.length > 0) {
-      replyContent += `\n\n⚠️ **警告:** 一部のチャンネルへの送信に失敗しました: ${failed.map(f => `<#${f.channelId}>`).join(', ')}`;
+      replyContent += `\n\n⚠️ **警告:** 一部のチャンネルへの送信に失敗しました: ${failed
+        .map(f => `<#${f.channelId}>`)
+        .join(', ')}`;
     }
 
     // 完了メッセージをユーザーに送信します。
@@ -93,7 +104,6 @@ async function actualHandler(interaction) {
       content: replyContent,
       components: [],
     });
-
   } catch (error) {
     await logAndReplyError(interaction, error, '❌ 凸スナの設置中にエラーが発生しました。');
   } finally {

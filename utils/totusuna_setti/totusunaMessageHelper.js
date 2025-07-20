@@ -15,7 +15,9 @@ function buildTotusunaMessage(instance) {
     .setFooter({ text: `ID: ${instance.id}` });
 
   const reportButton = new ButtonBuilder()
-    .setCustomId(idManager.createButtonId('totusuna_report', 'report', instance.id))
+    // 新しいセレクトメニュー形式の報告フローを呼び出すボタンIDを生成
+    // カテゴリを 'totusuna_setti' に変更し、idManagerが新しいIDを返すようにする
+    .setCustomId(idManager.createButtonId('totusuna_setti', 'report', instance.id))
     .setLabel('凸スナ報告')
     .setStyle(ButtonStyle.Primary);
 

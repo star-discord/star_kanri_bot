@@ -3,7 +3,7 @@ const requireAdmin = require('../utils/permissions/requireAdmin');
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('kpi_setting')
+    .setName('star_KPI設定')
     .setDescription('KPI設定用のモーダルを表示します'),
 
   execute: requireAdmin(async (interaction) => {

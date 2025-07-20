@@ -19,7 +19,10 @@
 |-----------------------|----------------------------------------------------------------------|
 | /凸スナ設置           | 新しい凸スナ報告メッセージを、対話形式でチャンネルに設置します。        |
 | /凸スナ設定           | 設置済みの凸スナを一覧表示し、本文の編集や再送信、削除ができます。       |
-| 凸スナ報告ボタン      | 各種入力モーダルを開き、内容をCSVファイルに追記＋報告送信                   |
+| 凸スナ報告ボタン      | 組数・人数を選択後、詳細入力モーダルを開き報告。CSVに追記＋報告送信      |
+| /star_KPI設置         | KPI報告用の「目標設定」「実績申請」ボタンを設置します。                  |
+| /star_KPI設定         | KPIの目標（店舗、期間、人数）を設定します。                             |
+| KPI報告ボタン         | 店舗選択→実績入力モーダルで報告。CSVに追記します。                      |
 | /STAR管理bot設定     | 管理者ロールの追加・削除（RoleSelect UI対応）、リアクション設定など           |
 | 設定UI（ボタン）      | UI上で「再送信」「削除」「編集」などを操作可能                            |
 
@@ -52,17 +55,31 @@
         "createdBy": "123456789012345678",
         "createdAt": "2025-07-20T10:00:00.000Z"
       }
-    ]
+    ],
+    "kpi": {
+      "shops": ["店舗A", "店舗B"],
+      "targets": {
+        "店舗A": [
+          {
+            "date": "2025-07-20",
+            "target": 100,
+            "setBy": "user#1234",
+            "setAt": "2025-07-20T10:00:00.000Z"
+          }
+        ]
+      }
+    }
   }
 }
 
-2. 凸スナ報告CSVファイル
+### 2. 各種報告CSVファイル
 保存先：data/<GUILD_ID>/<GUILD_ID>-YYYY-MM-凸スナ報告.csv
-
 列構成（初回のみヘッダー出力）：
-
 報告者名,日時,何組,何名,卓1,卓2,卓3,卓4,詳細
 Alice,2025-07-10T12:00:00Z,2組,3名,あ,B,C,D,詳細内容
+
+保存先：data/<GUILD_ID>/<GUILD_ID>-YYYY-MM-KPI報告.csv
+列構成：報告者,報告時刻,店舗名,対象日,実績詳細
 
 🛠️ 使用コマンド詳細
 ✅ /凸スナ設置
@@ -82,16 +99,26 @@ Alice,2025-07-10T12:00:00Z,2組,3名,あ,B,C,D,詳細内容
 保存：`totusunaConfigManager` を通じて `tousuna.instances` を更新または削除。
 
 ✅ 凸スナ報告ボタン
-ボタンに紐づいたUUIDを元に、報告用のモーダルを表示。
+ボタンを押すと、本人にしか見えないメッセージで「組数」と「人数」のセレクトメニューを表示。
 
-モーダル送信後、報告内容を整形してEmbedを作成し、メインチャンネルと連携チャンネルに送信。
+両方を選択すると、詳細入力用のモーダルが表示されます。
 
-同時に、報告内容をCSVファイルに追記。
+モーダル送信後、報告内容を整形してEmbedを作成し、メインチャンネルと連携チャンネルに送信。同時に、報告内容をCSVファイルに追記。
 
 ✅ /STAR管理bot設定
 管理ロールを複数指定（RoleSelect）
 
 リアクション絵文字・文言も設定可能
+
+✅ /star_KPI設置 & /star_KPI設定
+`/star_KPI設置`で「KPI目標」「KPI申請」ボタンを設置。
+
+「KPI目標」ボタンまたは`/star_KPI設定`コマンドで、目標設定モーダルを表示。店舗の新規登録と、全店舗共通の目標日・目標人数を設定。
+
+「KPI申請」ボタンで、登録済みの店舗を選択するセレクトメニューを表示。
+
+店舗選択後、実績入力モーダルを表示。
+モーダル送信後、`data/<GUILD_ID>/<GUILD_ID>-YYYY-MM-KPI報告.csv`に内容を追記。
 
 保存先：star_config.adminRoleIds, reaction
 
@@ -102,21 +129,30 @@ Alice,2025-07-10T12:00:00Z,2組,3名,あ,B,C,D,詳細内容
 │   ├── star_config/
 │   │   └── star_config.js
 │
-├── utils/
-│   ├── star_config/
-│   │   ├── admin.js
-│   │   └── buttons/
-│   │       ├── 管理者ロール追加.js
-│   │       └── 管理者ロール削除.js
-│   ├── tousuna_setti/
+├── utils/ # ユーティリティ
+│   ├── totusuna_setti/ # 凸スナ機能関連
 │   │   ├── buttons/
-│   │   │   ├── 再送信.js
-│   │   │   ├── 本文入力をする.js
-│   │   │   └── reportButton.js
+│   │   │   ├── delete.js
+│   │   │   ├── edit.js
+│   │   │   ├── reportButton.js # 新しい報告ボタンの処理
+│   │   │   └── resend.js
 │   │   ├── modals/
-│   │   │   └── 本文入力をする.js
-│   │   └── spreadSheet.js
-│   └── buttonsHandler.js
+│   │   │   ├── editBody.js
+│   │   │   ├── install.js
+│   │   │   └── submit.js # 新しい報告モーダルの処理
+│   │   ├── selects/
+│   │   │   ├── reportSelectHandler.js # 新しいセレクトメニューの処理
+│   │   │   ├── select_install_channel.js
+│   │   │   └── select_replicate_channels.js
+│   │   ├── index.js # 機能ハンドラの集約
+│   │   └── totusunaConfigManager.js
+│   ├── star_kpi_setti/ # KPI機能関連
+│   │   ├── buttons/
+│   │   ├── modals/
+│   │   └── selects/
+│   │   └── index.js
+│   ├── kpiConfigManager.js
+│   └── unifiedInteractionHandler.js # 全インタラクションの司令塔
 │
 ├── data/
 │   └── <GUILD_ID>/

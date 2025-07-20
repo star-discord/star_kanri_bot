@@ -1,4 +1,4 @@
-// utils/star_kpi_setti/selects/index.js
+// utils/star_kpi_setti/buttons/index.js
 const path = require('path');
 const { loadHandlers } = require('../../handlerLoader');
 

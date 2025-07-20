@@ -4,6 +4,7 @@ const path = require('path');
 const { readJSON, writeJSON } = require('./fileHelper');
 const starConfigMigrator = require('./star_config/star_configMigration');
 const totusunaMigrator = require('./totusuna_setti/totusunaMigration');
+const logger = require('./logger');
 
 /**
  * データ移行クラス
@@ -24,10 +25,10 @@ class DataMigration {
    * @param {import('discord.js').Client} client
    */
   async migrateAllGuilds(client) {
-    console.log('🔄 データ移行処理を開始します...');
+    logger.info('🔄 データ移行処理を開始します...');
 
     if (!fs.existsSync(this.dataDir)) {
-      console.log('📁 データディレクトリが存在しません。移行をスキップします。');
+      logger.info('📁 データディレクトリが存在しません。移行をスキップします。');
       return;
     }
 
@@ -35,7 +36,7 @@ class DataMigration {
       .filter(entry => entry.isDirectory())
       .map(entry => entry.name);
 
-    console.log(`📊 移行対象ギルド数: ${guildDirs.length}`);
+    logger.info(`📊 移行対象ギルド数: ${guildDirs.length}`);
 
     let migratedCount = 0;
     let skippedCount = 0;
@@ -50,13 +51,13 @@ class DataMigration {
           skippedCount++;
         }
       } catch (error) {
-        console.error(`❌ ギルド移行エラー (${guildId}):`, error);
+        logger.error(`❌ ギルド移行エラー (${guildId}):`, { error });
         errorCount++;
       }
     }
 
-    console.log('✅ データ移行処理完了');
-    console.log(`📈 結果: 移行済み ${migratedCount}件 / スキップ ${skippedCount}件 / エラー ${errorCount}件`);
+    logger.info('✅ データ移行処理完了');
+    logger.info(`📈 結果: 移行済み ${migratedCount}件 / スキップ ${skippedCount}件 / エラー ${errorCount}件`);
   }
 
   /**
@@ -69,7 +70,7 @@ class DataMigration {
     const guildDataPath = path.join(this.dataDir, guildId, `${guildId}.json`);
 
     if (!fs.existsSync(guildDataPath)) {
-      console.log(`⚠️ データファイルが存在しません: ${guildId}`);
+      logger.warn(`⚠️ データファイルが存在しません: ${guildId}`);
       return false;
     }
 
@@ -77,7 +78,7 @@ class DataMigration {
     try {
       data = await readJSON(guildDataPath);
     } catch (error) {
-      console.error(`❌ データ読み込みエラー (${guildId}):`, error);
+      logger.error(`❌ データ読み込みエラー (${guildId}):`, { error });
       return false;
     }
 
@@ -87,7 +88,7 @@ class DataMigration {
       return false;
     }
 
-    console.log(`🔄 ギルドデータ移行中: ${guildId}`);
+    logger.info(`🔄 ギルドデータ移行中: ${guildId}`);
 
     // バックアップ作成
     await this.createBackup(guildDataPath);
@@ -102,10 +103,10 @@ class DataMigration {
     // 保存
     try {
       await writeJSON(guildDataPath, migratedData);
-      console.log(`✅ ギルドデータ移行完了: ${guildId}`);
+      logger.info(`✅ ギルドデータ移行完了: ${guildId}`);
       return true;
     } catch (error) {
-      console.error(`❌ 移行データ保存エラー (${guildId}):`, error);
+      logger.error(`❌ 移行データ保存エラー (${guildId}):`, { error });
       return false;
     }
   }
@@ -126,9 +127,9 @@ class DataMigration {
 
     try {
       fs.copyFileSync(filePath, backupPath);
-      console.log(`📦 バックアップ作成: ${path.basename(backupPath)}`);
+      logger.info(`📦 バックアップ作成: ${path.basename(backupPath)}`);
     } catch (error) {
-      console.error(`❌ バックアップ作成失敗:`, error);
+      logger.error(`❌ バックアップ作成失敗:`, { error });
     }
   }
 
@@ -156,9 +157,9 @@ class DataMigration {
     }
 
     if (migrationPerformed) {
-      console.log(`  ✅ 1つ以上の移行項目が実行されました`);
+      logger.info(`  ✅ 1つ以上の移行項目が実行されました`);
     } else {
-      console.log(`  ℹ️ 移行不要でした`);
+      logger.info(`  ℹ️ 移行不要でした`);
     }
 
     return migratedData;

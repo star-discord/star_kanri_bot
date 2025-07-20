@@ -1,10 +1,8 @@
 // utils/totusuna_setti/index.js
 
-const path = require('path');
-const { loadHandlers } = require('../handlerLoader');
-
+// 各インタラクションタイプのハンドラを、それぞれのindex.jsから読み込みます。
 module.exports = {
-  buttons: loadHandlers(path.join(__dirname, 'buttons')),
-  modals: loadHandlers(path.join(__dirname, 'modals')),
-  selects: loadHandlers(path.join(__dirname, 'selects')),
+  buttons: require('./buttons'),
+  modals: require('./modals'),
+  selects: require('./selects'),
 };

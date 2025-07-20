@@ -56,10 +56,10 @@ async function actualHandler(interaction) {
 
     // 遅延応答を更新して、チャンネル選択メニューを表示します。
     await interaction.editReply({
-      content: '✅ 本文を受け付けました。\n次に、この凸スナ案内を設置するチャンネルを選択してください。',
+      content:
+        '✅ 本文を受け付けました。\n次に、この凸スナ案内を設置するチャンネルを選択してください。',
       components: [row],
     });
-
   } catch (error) {
     // エラーをログに記録し、ユーザーに通知します。
     await logAndReplyError(interaction, error, '❌ モーダルの処理中にエラーが発生しました。');

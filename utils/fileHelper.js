@@ -1,5 +1,6 @@
 const fs = require('fs/promises');
 const path = require('path');
+const logger = require('./logger');
 
 /**
  * 指定パスの破損ファイルをバックアップフォルダに移動
@@ -13,11 +14,14 @@ async function backupCorruptedFile(filePath, error) {
 
     const backupPath = path.join(backupDir, `${path.basename(filePath)}.${Date.now()}.corrupted`);
     await fs.rename(filePath, backupPath);
-    console.log(`💾 破損ファイルをバックアップ: ${backupPath}`);
-    console.error(`[backupCorruptedFile] ❌ 破損ファイル "${filePath}" をバックアップしました:`, error.message);
+    logger.info(`💾 破損ファイルをバックアップ: ${backupPath}`);
+    logger.error(
+      `[backupCorruptedFile] ❌ 破損ファイル "${filePath}" をバックアップしました:`,
+      { errorMessage: error.message }
+    );
     return backupPath;
-  } catch (err) {    
-    console.error(`❌ バックアップ失敗: ${filePath}`, err);
+  } catch (err) {
+    logger.error(`❌ バックアップ失敗: ${filePath}`, { error: err });
     return null;
   }
 }
@@ -67,18 +71,18 @@ async function readJSON(filePath, initialData = {}) {
     return JSON.parse(content);
   } catch (err) {
     if (err.code === 'ENOENT') {
-      console.warn(`[readJSON] ファイル未発見 → 初期データ使用: ${filePath}`);
+      logger.warn(`[readJSON] ファイル未発見 → 初期データ使用: ${filePath}`);
       return initialData;
     }
 
     if (err instanceof SyntaxError) {
-      console.error(`❌ JSONパースエラー: ${filePath}`, err);
+      logger.error(`❌ JSONパースエラー: ${filePath}`, { error: err });
       await backupCorruptedFile(filePath, err);
-      console.warn(`[readJSON] パース不能 → 初期データで復元: ${filePath}`);
+      logger.warn(`[readJSON] パース不能 → 初期データで復元: ${filePath}`);
       return initialData;
     }
 
-    console.error(`❌ 読み込み失敗: ${filePath}`, err);
+    logger.error(`❌ 読み込み失敗: ${filePath}`, { error: err });
     throw err;
   }
 }
@@ -95,7 +99,7 @@ async function writeJSON(filePath, data) {
     await fs.mkdir(dir, { recursive: true });
     await fs.writeFile(filePath, prettyStringify(data), 'utf-8');
   } catch (err) {
-    console.error(`❌ 書き込み失敗: ${filePath}`, err);
+    logger.error(`❌ 書き込み失敗: ${filePath}`, { error: err });
     throw err;
   }
 }
@@ -114,16 +118,16 @@ async function ensureGuildJSON(guildId) {
 
     try {
       await fs.access(filePath);
-      console.log(`📄 JSONファイル発見: ${filePath}`);
+      logger.info(`📄 JSONファイル発見: ${filePath}`);
     } catch {
       const initialData = getInitialGuildData();
       await fs.writeFile(filePath, prettyStringify(initialData), 'utf-8');
-      console.log(`✅ 新規JSONファイル作成: ${filePath}`);
+      logger.info(`✅ 新規JSONファイル作成: ${filePath}`);
     }
 
     return filePath;
   } catch (err) {
-    console.error(`❌ ensureGuildJSON: 初期化失敗: ${filePath}`, err);
+    logger.error(`❌ ensureGuildJSON: 初期化失敗: ${filePath}`, { error: err });
     throw err;
   }
 }

@@ -2,6 +2,7 @@
 const { ensureGuildJSON, readJSON, writeJSON } = require('./fileHelper');
 const { v4: uuidv4 } = require('uuid');
 const { Mutex, withTimeout, E_TIMEOUT } = require('async-mutex');
+const logger = require('./logger');
 
 /**
  * 排他制御付きラップ関数
@@ -94,13 +95,15 @@ class ConfigManager {
         await writeJSON(jsonPath, config);
         // キャッシュを無効化する代わりに、保存した新しい設定で更新する
         this.configCache.set(guildId, config);
-        console.log(`[ConfigManager] Guild ${guildId} の設定キャッシュを更新しました。`);
+        logger.info(`[ConfigManager] Guild ${guildId} の設定キャッシュを更新しました。`);
       });
     } catch (e) {
       if (e === E_TIMEOUT) {
         // タイムアウトした場合、書き込みが成功したか不明なため、キャッシュを無効化して次の読み込みで再同期させるのが安全
         this.invalidateCache(guildId);
-        throw new Error(`ファイルロックの取得がタイムアウトしました (Context: ${context})`);
+        const error = new Error(`ファイルロックの取得がタイムアウトしました (Context: ${context})`);
+        logger.error(error.message, { error });
+        throw error;
       }
       throw e;
     }
@@ -127,7 +130,7 @@ class ConfigManager {
   async updateSectionConfig(guildId, section, sectionConfig) {
     const currentConfig = await this.getGuildConfig(guildId);
     // 不変性を保つため、キャッシュされたオブジェクトのディープコピーを作成して変更する
-    const newConfig = JSON.parse(JSON.stringify(currentConfig));
+    const newConfig = this._deepClone(currentConfig);
     newConfig[section] = { ...(newConfig[section] ?? {}), ...sectionConfig };
     await this.saveGuildConfig(guildId, newConfig, `updateSectionConfig: ${section}`);
   }
@@ -142,7 +145,7 @@ class ConfigManager {
    */
   async addItemToArray(guildId, section, arrayKey, itemData) {
     const currentConfig = await this.getGuildConfig(guildId);
-    const newConfig = JSON.parse(JSON.stringify(currentConfig));
+    const newConfig = this._deepClone(currentConfig);
 
     newConfig[section] = newConfig[section] ?? {};
     newConfig[section][arrayKey] = newConfig[section][arrayKey] ?? [];
@@ -164,7 +167,7 @@ class ConfigManager {
    */
   async updateItemInArray(guildId, section, arrayKey, itemId, updates, idField = 'id') {
     const currentConfig = await this.getGuildConfig(guildId);
-    const newConfig = JSON.parse(JSON.stringify(currentConfig));
+    const newConfig = this._deepClone(currentConfig);
 
     if (!newConfig[section]?.[arrayKey]) return false;
 
@@ -188,7 +191,7 @@ class ConfigManager {
    */
   async removeItemFromArray(guildId, section, arrayKey, itemId, idField = 'id') {
     const currentConfig = await this.getGuildConfig(guildId);
-    const newConfig = JSON.parse(JSON.stringify(currentConfig));
+    const newConfig = this._deepClone(currentConfig);
 
     if (!newConfig[section]?.[arrayKey]) return false;
 
@@ -209,8 +212,36 @@ class ConfigManager {
   invalidateCache(guildId) {
     if (this.configCache.has(guildId)) {
       this.configCache.delete(guildId);
-      console.log(`[ConfigManager] Guild ${guildId} の設定キャッシュを無効化しました。`);
+      logger.info(`[ConfigManager] Guild ${guildId} の設定キャッシュを無効化しました。`);
     }
+  }
+
+  /**
+   * Performs a deep clone of a JSON-compatible object.
+   * @private
+   * @param {any} obj The object to clone.
+   * @returns {any} The cloned object.
+   */
+  _deepClone(obj) {
+    if (obj === null || typeof obj !== 'object') {
+      return obj;
+    }
+
+    if (obj instanceof Date) {
+      return new Date(obj.getTime());
+    }
+
+    if (Array.isArray(obj)) {
+      return obj.map((item) => this._deepClone(item));
+    }
+
+    const clonedObj = {};
+    for (const key in obj) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        clonedObj[key] = this._deepClone(obj[key]);
+      }
+    }
+    return clonedObj;
   }
 
   /**

@@ -12,7 +12,7 @@ const { createAdminEmbed } = require('../utils/embedHelper');
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('kpi_設定')
+    .setName('star_KPI設置')
     .setDescription('KPI報告の案内メッセージを送信します'),
 
   async execute(interaction) {

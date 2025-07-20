@@ -1,6 +1,5 @@
-// utils/totusuna_report/modals/submit.js
 const { EmbedBuilder } = require('discord.js');
-const { totusunaConfigManager } = require('../../totusuna_setti/totusunaConfigManager');
+const { totusunaConfigManager } = require('../totusunaConfigManager');
 const { sendToMultipleChannels } = require('../../sendToMultipleChannels');
 const { writeTotusunaReport } = require('../../writeTotusunaReport');
 const { safeReply } = require('../../safeReply');
@@ -12,35 +11,40 @@ const { logAndReplyError } = require('../../errorHelper');
  */
 async function actualHandler(interaction) {
   try {
-    // ユーザーへの応答を即座に行い、タイムアウトを防ぎます。
     await interaction.deferReply({ ephemeral: true });
 
     const { guildId, customId, fields, user } = interaction;
 
-    // customIdからUUIDを抽出します。
-    const uuid = customId.split(':')[2];
-    if (!uuid) {
-      return await logAndReplyError(interaction, 'モーダルIDからUUIDが抽出できませんでした。', '❌ 報告の送信に失敗しました。ボタンが無効です。');
+    // customIdを解析して、UUID、組数、人数を抽出します。
+    // 形式: totusuna_report_modal:submit:UUID:team-X:member-Y
+    const parts = customId.split(':');
+    const uuid = parts[2];
+    const teamPart = parts.find(p => p.startsWith('team-'));
+    const memberPart = parts.find(p => p.startsWith('member-'));
+
+    if (!uuid || !teamPart || !memberPart) {
+      return await logAndReplyError(interaction, `モーダルIDの形式が不正です: ${customId}`, '❌ 報告の送信に失敗しました。ボタンが無効か、古いバージョンの可能性があります。');
     }
 
-    // モーダルから入力データを取得します。
+    const groupValue = teamPart.substring('team-'.length);
+    const nameValue = memberPart.substring('member-'.length);
+
+    // モーダルから入力データを取得し、customIdからの情報と結合します。
     const reportData = {
       username: user.tag,
       date: new Date().toISOString(),
-      group: fields.getTextInputValue('group'),
-      name: fields.getTextInputValue('name'),
+      group: `${groupValue}組`,
+      name: `${nameValue}名`,
       table1: fields.getTextInputValue('table1') || '',
       table2: fields.getTextInputValue('table2') || '',
       detail: fields.getTextInputValue('detail') || '',
     };
 
-    // 該当する凸スナ設定を取得します。
     const instance = await totusunaConfigManager.getInstance(guildId, uuid);
     if (!instance) {
       return await logAndReplyError(interaction, `凸スナインスタンスが見つかりません (UUID: ${uuid})`, '❌ 報告の送信に失敗しました。元の報告メッセージが削除された可能性があります。');
     }
 
-    // 報告用のEmbedを作成します。
     const reportEmbed = new EmbedBuilder()
       .setTitle(`📝 凸スナ報告がありました`)
       .setColor(0x3498db)
@@ -58,17 +62,14 @@ async function actualHandler(interaction) {
       reportEmbed.addFields({ name: '詳細', value: reportData.detail, inline: false });
     }
 
-    // 報告をチャンネルに送信します。
     const allChannelIds = [instance.installChannelId, ...(instance.replicateChannelIds || [])].filter(Boolean);
     if (allChannelIds.length > 0) {
       await sendToMultipleChannels(interaction.client, allChannelIds, { embeds: [reportEmbed] });
     }
 
-    // CSVファイルに報告を追記します。
     const yearMonth = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
     await writeTotusunaReport(guildId, yearMonth, reportData);
 
-    // ユーザーに完了を通知します。
     await safeReply(interaction, {
       content: '✅ 報告が送信されました。ご協力ありがとうございます！',
       ephemeral: true,
