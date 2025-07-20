@@ -1,73 +1,62 @@
-// utils/errorHelper.js
-
-const { MessageFlagsBitField } = require('discord.js');
-const { safeReply } = require('./safeReply'); // 共通のsafeReplyをインポート
-const fs = require('fs/promises');
-const path = require('path');
-
-const LOG_FILE = path.join(__dirname, '..', 'logs', 'error.log');
+const { EmbedBuilder, DiscordAPIError } = require('discord.js');
+const { safeReply } = require('./safeReply');
+const logger = require('./logger');
+const { v4: uuidv4 } = require('uuid');
 
 /**
- * ログファイルにエラーメッセージを出力
- * @param {string} message - フォーマット済みログ文字列
+ * Logs an error and replies to the interaction with a user-friendly message.
+ * @param {import('discord.js').Interaction} interaction The interaction that caused the error.
+ * @param {Error|string} error The error object or a string message.
+ * @param {string} userMessage The generic message to show to the user.
  */
-async function logErrorToFile(message) {
-  try {
-    const logDir = path.dirname(LOG_FILE);
-    await fs.mkdir(logDir, { recursive: true });
-    await fs.appendFile(LOG_FILE, message + '\n\n', 'utf8');
-  } catch (err) {
-    console.error('[logErrorToFile] ログファイル書き込み失敗:', err);
-  }
-}
+async function logAndReplyError(interaction, error, userMessage) {
+  const errorId = uuidv4();
+  const actualError = error instanceof Error ? error : new Error(String(error));
 
-/**
- * エラー出力（コンソール + ファイル）
- * @param {string} source - 発生元
- * @param {string} message - 簡易エラー説明
- * @param {Error} [error] - 詳細情報を持つ Error オブジェクト
- */
-async function logError(source, message, error) {
-  const timestamp = new Date().toISOString();
-  // error.stack には通常 message も含まれるため、stackを優先する
-  const details = error?.stack || message;
-  const fullMessage = `[${timestamp}] [${source}]\n${details}`;
-
-  console.error(fullMessage);
-  await logErrorToFile(fullMessage);
-}
-
-/**
- * エラーログ + ユーザーへの通知を一括で処理
- * @param {import('discord.js').Interaction} interaction
- * @param {string|Error} logMsg
- * @param {string} userMsg
- * @param {object} [options]
- */
-async function logAndReplyError(interaction, logMsg, userMsg, options = {}) {
-  const source = interaction.customId || interaction.commandName || 'unknown_interaction';
-  const guildId = interaction.guildId || 'DM';
-  const userId = interaction.user?.id || 'unknown_user';
-
-  const message = logMsg instanceof Error ? logMsg.message : logMsg;
-  // logMsgがErrorインスタンスでない場合でも、new Error()でラップすることで、
-  // 呼び出し元のスタックトレースをログに残すことができ、デバッグが容易になります。
-  const error = logMsg instanceof Error ? logMsg : new Error(logMsg);
-
-  await logError(`${source} [Guild:${guildId}] [User:${userId}]`, message, error);
-
-  // ユーザーへの応答ペイロードを作成
-  const replyPayload = {
-    content: userMsg,
-    flags: MessageFlagsBitField.Flags.Ephemeral,
-    ...options,
+  const interactionDetails = {
+    errorId,
+    guildId: interaction.guild?.id,
+    channelId: interaction.channel?.id,
+    userId: interaction.user?.id,
+    commandName: interaction.isCommand() ? interaction.commandName : 'N/A',
+    customId:
+      interaction.isMessageComponent() || interaction.isModalSubmit()
+        ? interaction.customId
+        : 'N/A',
   };
 
-  // 共通化されたsafeReplyで応答
-  await safeReply(interaction, replyPayload);
+  // Log detailed error information
+  if (actualError instanceof DiscordAPIError) {
+    logger.error('Discord API Error', {
+      ...interactionDetails,
+      message: actualError.message,
+      code: actualError.code,
+      status: actualError.status,
+      method: actualError.method,
+      url: actualError.url,
+      stack: actualError.stack,
+    });
+  } else {
+    logger.error('Unhandled Error', {
+      ...interactionDetails,
+      message: actualError.message,
+      stack: actualError.stack,
+    });
+  }
+
+  // Create a user-friendly embed
+  const errorEmbed = new EmbedBuilder()
+    .setColor(0xff0000) // Red
+    .setTitle('❌ エラーが発生しました')
+    .setDescription(userMessage)
+    .setFooter({ text: `サポートが必要な場合は、このIDをお知らせください: ${errorId}` });
+
+  await safeReply(interaction, {
+    embeds: [errorEmbed],
+    ephemeral: true,
+  });
 }
 
 module.exports = {
-  logError,
   logAndReplyError,
 };
