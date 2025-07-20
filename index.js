@@ -6,6 +6,8 @@ const { Client, Collection, GatewayIntentBits } = require('discord.js');
 const { unifiedHandler } = require('./utils/unifiedInteractionHandler');
 const logger = require('./utils/logger');
 const { DataMigration } = require('./utils/dataMigration');
+const { logAndReplyError } = require('./utils/errorHelper');
+const { StartupDiagnostics } = require('./utils/startupDiagnostics');
 
 // --- Client Initialization ---
 const client = new Client({
@@ -16,6 +18,27 @@ const client = new Client({
     GatewayIntentBits.MessageContent, // Required for some message-based interactions
   ],
 });
+
+/**
+ * The main entry point for the bot.
+ * Initializes diagnostics, loads commands, and logs in.
+ */
+async function main() {
+  // 1. Run startup diagnostics
+  const diagnostics = new StartupDiagnostics();
+  const { success } = await diagnostics.runDiagnostics();
+
+  if (!success) {
+    logger.error('❌ Startup diagnostics failed. Halting bot startup.');
+    process.exit(1);
+  }
+
+  // 2. Load commands
+  loadAllCommands();
+
+  // 3. Login to Discord
+  client.login(process.env.DISCORD_TOKEN);
+}
 
 // --- Command Loading ---
 client.commands = new Collection();
@@ -41,21 +64,25 @@ function loadCommandFiles(dir) {
   return commandFilePaths;
 }
 
-try {
-  const commandFiles = loadCommandFiles(commandsPath);
-  for (const filePath of commandFiles) {
-    const command = require(filePath);
-    if ('data' in command && 'execute' in command) {
-      client.commands.set(command.data.name, command);
-    } else {
-      logger.warn(
-        `[CommandLoad] The command at ${filePath} is missing a required "data" or "execute" property.`
-      );
+function loadAllCommands() {
+  try {
+    const commandFiles = loadCommandFiles(commandsPath);
+    for (const filePath of commandFiles) {
+      const command = require(filePath);
+      if ('data' in command && 'execute' in command) {
+        client.commands.set(command.data.name, command);
+      } else {
+        logger.warn(
+          `[CommandLoad] The command at ${filePath} is missing a required "data" or "execute" property.`
+        );
+      }
     }
+    logger.info(`[CommandLoad] Successfully loaded ${client.commands.size} commands.`);
+  } catch (error) {
+    logger.error('[CommandLoad] Failed to load commands.', { error });
+    // This is a critical error, so we should exit.
+    process.exit(1);
   }
-  logger.info(`[CommandLoad] Successfully loaded ${client.commands.size} commands.`);
-} catch (error) {
-  logger.error('[CommandLoad] Failed to load commands.', { error });
 }
 
 // --- Event Handlers ---
@@ -76,37 +103,39 @@ client.once('ready', async () => {
 client.on('interactionCreate', async (interaction) => {
   if (interaction.isChatInputCommand()) {
     const command = client.commands.get(interaction.commandName);
+
     if (!command) {
-      logger.error(`No command matching ${interaction.commandName} was found.`);
+      logger.error(`No command matching '${interaction.commandName}' was found.`, {
+        commandName: interaction.commandName,
+        user: interaction.user.tag,
+      });
+      // ユーザーにコマンドが存在しないことを通知
+      await interaction
+        .reply({
+          content: '❌ このコマンドは存在しないか、現在利用できません。',
+          ephemeral: true,
+        })
+        .catch((e) => logger.error('Failed to reply for non-existent command', { error: e }));
       return;
     }
+
     try {
       await command.execute(interaction);
     } catch (error) {
-      // The command's own error handler should catch this, but this is a fallback.
-      logger.error(`[CommandHandler] Uncaught error executing command: ${interaction.commandName}`, {
-        error,
-      });
+      // 個々のコマンドでエラーが捕捉されなかった場合の最終的なフォールバック
+      logger.error(`[CommandHandler] Uncaught error in command '${interaction.commandName}'`, { error });
+      await logAndReplyError(interaction, error, 'コマンドの実行中に予期せぬエラーが発生しました。');
     }
   } else if (interaction.isMessageComponent() || interaction.isModalSubmit()) {
     try {
       await unifiedHandler.handleInteraction(interaction);
     } catch (error) {
-      logger.error('[ComponentHandler] Uncaught error handling component interaction', {
-        customId: interaction.customId,
-        error,
-      });
+      // 個々のハンドラでエラーが捕捉されなかった場合の最終的なフォールバック
+      logger.error(`[ComponentHandler] Uncaught error in component '${interaction.customId}'`, { error });
+      await logAndReplyError(interaction, error, 'コンポーネントの操作中に予期せぬエラーが発生しました。');
     }
   }
 });
-
-// --- Bot Login ---
-if (!process.env.DISCORD_TOKEN) {
-  logger.error('❌ DISCORD_TOKEN is not set in .env file. Bot cannot start.');
-  process.exit(1);
-}
-
-client.login(process.env.DISCORD_TOKEN);
 
 // --- Process-level Error Handling ---
 process.on('unhandledRejection', (reason, promise) => {
@@ -128,3 +157,6 @@ const handleShutdown = (signal) => {
 
 process.on('SIGINT', handleShutdown);
 process.on('SIGTERM', handleShutdown);
+
+// --- Start the bot ---
+main();
