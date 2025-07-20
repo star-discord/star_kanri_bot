@@ -133,7 +133,11 @@ if [ ! -f package.json ]; then
   exit 1
 fi
 echo "📦 npm パッケージをインストール中..."
-npm install --no-audit --no-fund
+if ! npm install --no-audit --no-fund; then
+  echo -e "${RED}❌ 'npm install' に失敗しました。${NC}"
+  echo -e "💡 ネットワーク接続を確認するか、npmキャッシュをクリアしてみてください: ${YELLOW}npm cache clean --force${NC}"
+  exit 1
+fi
 
 if [ ! -f devcmdup.js ]; then
   echo -e "${RED}❌ devcmdup.js が見つかりません。リポジトリが破損している可能性があります。${NC}"
