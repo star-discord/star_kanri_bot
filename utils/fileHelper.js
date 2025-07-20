@@ -1,9 +1,11 @@
 const fs = require('fs/promises');
 const path = require('path');
+const logger = require('./logger');  // ここを追加
 
 /**
  * 指定パスの破損ファイルをバックアップフォルダに移動
  * @param {string} filePath
+ * @param {Error} error
  * @returns {Promise<string|null>} バックアップ先ファイルパス
  */
 async function backupCorruptedFile(filePath, error) {
@@ -135,5 +137,5 @@ module.exports = {
   readJSON,
   writeJSON,
   ensureGuildJSON,
-  getInitialGuildData, // オプション: 初期値だけ使いたい他モジュール用
+  getInitialGuildData, // 他モジュールが初期値のみ利用可
 };
