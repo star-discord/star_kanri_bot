@@ -43,7 +43,7 @@
     "eslint-plugin-prettier": "^5.1.3",
     "prettier": "^3.3.3",
     "husky": "^9.1.1",
-    "npm-check-updates": "^16.15.0"
+    "npm-check-updates": "^16.14.20"
   },
   "author": "RedStar HR <redstar.hoshir@gmail.com>",
   "license": "MIT"
