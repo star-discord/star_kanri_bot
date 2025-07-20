@@ -1,19 +1,11 @@
 // utils/star_config/selects/star_notify_channel_select.js
 
-const {
-  EmbedBuilder,
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-} = require('discord.js');
-const { totusunaConfigManager } = require('../../totusuna_setti/totusunaConfigManager');
+const { configManager } = require('../../configManager');
 const { idManager } = require('../../idManager');
 const { logAndReplyError } = require('../../errorHelper');
 const { checkAdmin } = require('../../permissions/checkAdmin');
-const { createAdminRejectEmbed } = require('../../embedHelper');
+const { createAdminRejectEmbed, createStarConfigEmbed } = require('../../embedHelper');
 const { safeFollowUp } = require('../../safeReply');
-
-const customId = idManager.createSelectId('totusuna_config', 'select', idManager.generateUUID());
 
 async function actualHandler(interaction) {
   try {
@@ -21,62 +13,36 @@ async function actualHandler(interaction) {
 
     const isAdmin = await checkAdmin(interaction);
     if (!isAdmin) {
-      return await safeFollowUp(interaction, { embeds: [createAdminRejectEmbed()], ephemeral: true });
-    }
-
-    const { guildId, values } = interaction;
-    const selectedUuid = values[0];
-
-    const instance = await totusunaConfigManager.getInstance(guildId, selectedUuid);
-
-    if (!instance) {
-      return await interaction.editReply({
-        content: '⚠️ 選択された凸スナデータが見つかりませんでした。削除された可能性があります。',
-        embeds: [],
-        components: [],
+      return await safeFollowUp(interaction, {
+        embeds: [createAdminRejectEmbed()],
+        ephemeral: true,
       });
     }
 
-    const detailEmbed = new EmbedBuilder()
-      .setTitle(`詳細: ${instance.title || '無題の凸スナ'}`)
-      .setColor(0x00bfff)
-      .addFields(
-        { name: '本文', value: `\`\`\`${(instance.body || '(本文なし)').slice(0, 1000)}\`\`\`` },
-        { name: 'ID', value: `\`${instance.id}\``, inline: true },
-        { name: '設置チャンネル', value: `<#${instance.installChannelId}>`, inline: true },
-        { name: '連携チャンネル数', value: `${instance.replicateChannelIds?.length || 0}件`, inline: true }
-      )
-      .setTimestamp(new Date(instance.createdAt));
+    const { guild, guildId, values } = interaction;
+    const selectedChannelId = values[0];
 
-    const actionRow = new ActionRowBuilder().addComponents(
-      new ButtonBuilder()
-        .setCustomId(idManager.createButtonId('totusuna_setti', 'edit', instance.id))
-        .setLabel('本文編集')
-        .setStyle(ButtonStyle.Primary)
-        .setEmoji('✏️'),
-      new ButtonBuilder()
-        .setCustomId(idManager.createButtonId('totusuna_setti', 'resend', instance.id))
-        .setLabel('再送信')
-        .setStyle(ButtonStyle.Secondary)
-        .setEmoji('📤'),
-      new ButtonBuilder()
-        .setCustomId(idManager.createButtonId('totusuna_setti', 'delete', instance.id))
-        .setLabel('削除')
-        .setStyle(ButtonStyle.Danger)
-        .setEmoji('🗑️')
-    );
+    // Get the current admin roles to rebuild the embed correctly
+    const currentConfig = await configManager.getSectionConfig(guildId, 'star');
+    const adminRoleIds = currentConfig?.adminRoleIds || [];
 
-    await interaction.editReply({
-      embeds: [detailEmbed],
-      components: [actionRow],
+    // Update only the notifyChannelId
+    await configManager.updateSectionConfig(guildId, 'star', {
+      notifyChannelId: selectedChannelId,
     });
 
+    const updatedEmbed = createStarConfigEmbed(guild, adminRoleIds, selectedChannelId);
+
+    await interaction.editReply({
+      embeds: [updatedEmbed],
+      components: interaction.message.components, // Keep the same components
+    });
   } catch (error) {
-    await logAndReplyError(interaction, error, '❌ 凸スナ詳細の表示中にエラーが発生しました。');
+    await logAndReplyError(interaction, error, '⚠️ 通知チャンネルの設定更新中にエラーが発生しました。');
   }
 }
 
 module.exports = {
-  customId,
+  customId: idManager.createSelectId('star_config', 'notify_channel_select'),
   handle: actualHandler,
 };

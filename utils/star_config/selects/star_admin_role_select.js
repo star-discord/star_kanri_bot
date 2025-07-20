@@ -7,8 +7,6 @@ const { checkAdmin } = require('../../permissions/checkAdmin');
 const { safeFollowUp } = require('../../safeReply');
 const { idManager } = require('../../idManager');
 
-const customId = idManager.createSelectId('star_config', 'admin_role_select', idManager.generateUUID());
-
 async function actualHandler(interaction) {
   try {
     await interaction.deferUpdate();
@@ -38,6 +36,6 @@ async function actualHandler(interaction) {
 }
 
 module.exports = {
-  customId,
+  customId: idManager.createSelectId('star_config', 'admin_role_select'),
   handle: actualHandler,
 };

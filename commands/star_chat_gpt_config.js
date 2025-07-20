@@ -8,7 +8,7 @@ const { idManager } = require('../utils/idManager');
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('star管理bot_chat_gpt設定')
+    .setName('star_chat_gpt_config')
     .setDescription('ChatGPTの応答設定を表示・編集します'),
 
   async execute(interaction) {

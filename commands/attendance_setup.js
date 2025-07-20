@@ -4,7 +4,7 @@ const { createAdminEmbed } = require('../utils/embedHelper');
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('退勤管理設置')
+    .setName('attendance_setup')
     .setDescription('出退勤管理パネルを設置します（管理者専用）'),
 
   async execute(interaction) {

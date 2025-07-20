@@ -49,7 +49,7 @@ async function actualHandler(interaction) {
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('凸スナcsv')
+    .setName('totusuna_csv')
     .setDescription('すべての凸スナ報告データをCSVファイルとして一括で出力します（管理者専用）'),
   execute: actualHandler,
 };

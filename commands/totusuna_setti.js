@@ -15,7 +15,7 @@ const { idManager } = require('../utils/idManager');
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('凸スナ設置')
+    .setName('totusuna_setti')
     .setDescription('凸スナの新規設置を行います（管理者専用）'),
 
   async execute(interaction) {

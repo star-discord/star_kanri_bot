@@ -18,7 +18,7 @@ const { logAndReplyError } = require('../utils/errorHelper');
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('star管理bot設定')
+    .setName('star_config')
     .setDescription('管理者のロールと通知チャンネルを設定します')
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 

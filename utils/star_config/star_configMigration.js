@@ -1,4 +1,5 @@
 // utils/star_config/star_configMigration.js
+const logger = require('../logger');
 
 /**
  * star_config 関連のデータ移行ロジック
@@ -18,7 +19,7 @@ class StarConfigMigration {
 
       // 1. 旧式のトップレベル設定を star_config に移行
       if (migratedData.adminRoleIds || migratedData.notifyChannelId) {
-        console.log(`  [star_config] 🔧 旧式管理者設定を移行中...`);
+        logger.info(`  [star_config] 🔧 Migrating legacy admin settings...`);
         if (!migratedData.star_config) {
           migratedData.star_config = {};
         }
@@ -46,7 +47,7 @@ class StarConfigMigration {
         }
       }
     } catch (error) {
-      console.error('❌ [star_configMigration] 移行処理中にエラーが発生しました:', error);
+      logger.error('❌ [star_configMigration] Error during migration process:', { error });
       // 万が一に備え元データ返却
       migratedData = data;
     }
@@ -65,13 +66,13 @@ class StarConfigMigration {
     if (Array.isArray(config.adminRoleIds)) {
       const validRoleIds = config.adminRoleIds.filter(roleId => guild.roles.cache.has(roleId));
       if (validRoleIds.length !== config.adminRoleIds.length) {
-        console.log(`  [star_config] 🧹 無効な管理者ロールID ${config.adminRoleIds.length - validRoleIds.length}件を削除`);
+        logger.info(`  [star_config] 🧹 Removed ${config.adminRoleIds.length - validRoleIds.length} invalid admin role IDs.`);
         config.adminRoleIds = validRoleIds;
         modified = true;
       }
     }
     if (config.notifyChannelId && !guild.channels.cache.has(config.notifyChannelId)) {
-      console.log(`  [star_config] 🧹 無効な通知チャンネルIDを削除`);
+      logger.info(`  [star_config] 🧹 Removed invalid notification channel ID.`);
       delete config.notifyChannelId;
       modified = true;
     }

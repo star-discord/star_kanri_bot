@@ -13,7 +13,7 @@ const { logAndReplyError } = require('../utils/errorHelper');
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('star_chat_gpt_使用率')
+    .setName('star_chat_gpt_usage')
     .setDescription('今月のOpenAI API使用量を表示します')
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
 

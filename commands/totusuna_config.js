@@ -13,7 +13,7 @@ const { logAndReplyError } = require('../utils/errorHelper.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('凸スナ設定')
+    .setName('totusuna_config')
     .setDescription('設置済みの凸スナ一覧を表示し、内容の確認・編集ができます（管理者専用）'),
 
   async execute(interaction) {
