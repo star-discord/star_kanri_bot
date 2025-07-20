@@ -16,7 +16,7 @@ class IdManager {
         star_config: (a, u) => `star_config_modal${a ? `_${a}` : ''}${u ? `:${u}` : ''}`,
         star_chat_gpt_config: (a, u) => `star_chat_gpt_config_modal${a ? `_${a}` : ''}${u ? `:${u}` : ''}`,
         totusuna_setti: (a, u) => `totusuna_modal_${a}${u ? `:${u}` : ''}`,
-        totusuna_config: (a, u) => `totusuna_config_edit_modal${u ? `_${u}` : ''}`,
+        totusuna_config: (a, u) => `totusuna_config_edit_modal${u ? `:${u}` : ''}`,
         kpi: (a, u) => `kpi_modal_${a}${u ? `:${u}` : ''}`,
       },
       select: {
