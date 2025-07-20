@@ -4,7 +4,7 @@ const { logAndReplyError } = require('../utils/errorHelper');
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('star_KPI設定')
+    .setName('star_kpi_config')
     .setDescription('KPI設定用のモーダルを表示します'),
 
   execute: requireAdmin(async (interaction) => {

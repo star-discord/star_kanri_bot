@@ -144,7 +144,11 @@ if [ ! -f devcmdup.js ]; then
   exit 1
 fi
 echo "📡 スラッシュコマンドをDiscordに登録中..."
-node devcmdup.js
+if ! node devcmdup.js; then
+  echo -e "${RED}❌ スラッシュコマンドの登録に失敗しました。${NC}"
+  echo "💡 上記のエラーログを確認し、コマンド定義ファイルを修正してください。"
+  exit 1
+fi
 
 # PM2操作（スキップオプション対応）
 if [ "$SKIP_PM2" = false ]; then
