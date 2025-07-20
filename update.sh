@@ -78,6 +78,10 @@ if [ ! -d "$PROJECT_DIR/.git" ]; then
 fi
 cd "$PROJECT_DIR"
 
+# --- スクリプト権限の事前設定 ---
+# git pullなどで失われた可能性のある実行権限を、処理の最初に設定します。
+find . -type f -name "*.sh" -exec chmod +x {} \;
+
 # --- Pre-flight Checks ---
 ./scripts/pre-flight-check.sh
 
@@ -111,18 +115,19 @@ else
   fi
 fi
 
-# --- 4. Restore Critical Files ---
-echo -e "\n${YELLOW}4. 重要ファイルを復元しています...${NC}"
+# --- 4. スクリプト権限の再設定 ---
+# git pullで変更された可能性のあるスクリプトの実行権限を再設定します
+echo -e "\n${YELLOW}4. スクリプトの実行権限を更新しています...${NC}"
+find . -type f -name "*.sh" -exec chmod +x {} \;
+
+# --- 5. Restore Critical Files ---
+echo -e "\n${YELLOW}5. 重要ファイルを復元しています...${NC}"
 ./scripts/backup_handler.sh restore "$TEMP_BACKUP"
 rm -rf "$TEMP_BACKUP"
 echo -e "${GREEN}✅ 復元完了。${NC}"
 
-# --- スクリプト権限の確認 ---
-echo -e "\n${YELLOW}* スクリプトの実行権限を確認・設定しています...${NC}"
-find . -type f -name "*.sh" -exec chmod +x {} \;
-
 # --- 5. Install Dependencies & Deploy Commands ---
-echo -e "\n${YELLOW}5. 依存関係のインストールとコマンドのデプロイ...${NC}"
+echo -e "\n${YELLOW}6. 依存関係のインストールとコマンドのデプロイ...${NC}"
 if [ ! -f package.json ]; then
   echo -e "${RED}❌ package.json が見つかりません。リポジトリが破損している可能性があります。${NC}"
   exit 1
@@ -139,7 +144,7 @@ node devcmdup.js
 
 # PM2操作（スキップオプション対応）
 if [ "$SKIP_PM2" = false ]; then
-  echo -e "\n${YELLOW}6. Botプロセスを再起動しています...${NC}"
+  echo -e "\n${YELLOW}7. Botプロセスを再起動しています...${NC}"
   
   # PM2プロセスの確認
   if command -v pm2 > /dev/null 2>&1; then
@@ -157,7 +162,7 @@ if [ "$SKIP_PM2" = false ]; then
     echo "   cd $PROJECT_DIR && node index.js"
   fi
 else
-  echo -e "\n${YELLOW}6. PM2操作をスキップしました。${NC}"
+  echo -e "\n${YELLOW}7. PM2操作をスキップしました。${NC}"
 fi
 
 echo -e "\n${GREEN}✅ star_kanri_bot 更新処理が正常に完了しました。${NC}"

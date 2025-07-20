@@ -79,7 +79,7 @@ perform_restore() {
                 mv "$file_in_backup" "$target_file"
                 echo "     - Restored by pattern: $target_file"
             fi
-        fi
+        done
     done
     shopt -u nullglob
 }
