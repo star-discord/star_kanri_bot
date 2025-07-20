@@ -153,8 +153,8 @@ if [ "$SKIP_PM2" = false ]; then
   # PM2プロセスの確認
   if command -v pm2 > /dev/null 2>&1; then
     # 既存のプロセス確認
-    if pm2 list | grep -q "star-kanri-bot"; then
-      pm2 restart star-kanri-bot
+    if pm2 describe star-kanri-bot > /dev/null 2>&1; then
+      pm2 restart star-kanri-bot --update-env
       pm2 save
       echo -e "${GREEN}✅ Botが正常に再起動されました。${NC}"
     else

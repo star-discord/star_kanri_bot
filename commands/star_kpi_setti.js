@@ -13,7 +13,7 @@ const { logAndReplyError } = require('../utils/errorHelper');
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('star_KPI設置')
+    .setName('star_kpi_setti')
     .setDescription('KPI報告の案内メッセージを送信します'),
 
   async execute(interaction) {

@@ -21,67 +21,52 @@ FILES_TO_PROTECT=(".env")
 DIRS_TO_PROTECT=("data")
 PATTERNS_TO_PROTECT=("star-discord-bot-*.json" "data/star-discord-bot-*.json")
 
+BACKUP_FILENAME="star_kanri_backup.tar.gz"
+
 perform_backup() {
     echo "  -> Backing up to $TEMP_BACKUP"
     mkdir -p "$TEMP_BACKUP"
 
-    for file in "${FILES_TO_PROTECT[@]}"; do
-        if [ -f "$file" ]; then
-            cp "$file" "$TEMP_BACKUP/"
-            echo "     - Protected file: $file"
+    # Create a list of files and directories to be archived.
+    # This approach handles cases where some files/dirs might not exist.
+    local backup_list=()
+    for item in "${FILES_TO_PROTECT[@]}" "${DIRS_TO_PROTECT[@]}"; do
+        if [ -e "$item" ]; then
+            backup_list+=("$item")
         fi
     done
 
-    for dir in "${DIRS_TO_PROTECT[@]}"; do
-        if [ -d "$dir" ]; then
-            rsync -a --delete "$dir/" "$TEMP_BACKUP/$dir/"
-            echo "     - Protected directory: $dir/"
-        fi
-    done
-
-    shopt -s nullglob
-    for pattern in "${PATTERNS_TO_PROTECT[@]}"; do
-        for file in $pattern; do
-            mkdir -p "$TEMP_BACKUP/$(dirname "$file")"
-            cp "$file" "$TEMP_BACKUP/$file"
-            echo "     - Protected by pattern: $file"
+    # Patterns need special handling with find
+    # We use a subshell to avoid changing the main shell's options
+    (
+        shopt -s nullglob
+        for pattern in "${PATTERNS_TO_PROTECT[@]}"; do
+            # Use find to handle patterns safely, even with spaces
+            while IFS= read -r -d $'\0' file; do
+                backup_list+=("$file")
+            done < <(find . -maxdepth 2 -path "./$pattern" -print0)
         done
-    done
-    shopt -u nullglob
+    )
+
+    if [ ${#backup_list[@]} -eq 0 ]; then
+        echo "     - No files or directories to back up."
+        return
+    fi
+
+    # Create a single compressed tarball.
+    tar -czf "$TEMP_BACKUP/$BACKUP_FILENAME" "${backup_list[@]}"
+    echo "     - Created compressed archive: $BACKUP_FILENAME"
 }
 
 perform_restore() {
     echo "  -> Restoring from $TEMP_BACKUP"
-
-    for file in "${FILES_TO_PROTECT[@]}"; do
-        if [ -f "$TEMP_BACKUP/$file" ]; then
-            mv "$TEMP_BACKUP/$file" .
-            echo "     - Restored file: $file"
-        fi
-    done
-
-    for dir in "${DIRS_TO_PROTECT[@]}"; do
-        if [ -d "$TEMP_BACKUP/$dir" ]; then
-            if [ -d "$dir" ]; then rm -rf "$dir"; fi
-            mv "$TEMP_BACKUP/$dir" .
-            echo "     - Restored directory: $dir/"
-        fi
-    done
-
-    shopt -s nullglob
-    # バックアップ時と同じパターン配列をループすることで、将来の変更に強くなる
-    for pattern in "${PATTERNS_TO_PROTECT[@]}"; do
-        for file_in_backup in "$TEMP_BACKUP"/$pattern; do
-            if [ -f "$file_in_backup" ]; then
-                # バックアップ元からの相対パスを復元
-                target_file="${file_in_backup#$TEMP_BACKUP/}"
-                mkdir -p "$(dirname "$target_file")"
-                mv "$file_in_backup" "$target_file"
-                echo "     - Restored by pattern: $target_file"
-            fi
-        done
-    done
-    shopt -u nullglob
+    if [ -f "$TEMP_BACKUP/$BACKUP_FILENAME" ]; then
+        # Extract the archive to the current directory.
+        tar -xzf "$TEMP_BACKUP/$BACKUP_FILENAME" -C .
+        echo "     - Extracted archive $BACKUP_FILENAME"
+    else
+        echo "     - No backup archive found to restore."
+    fi
 }
 
 if [[ "$ACTION" == "backup" ]]; then
