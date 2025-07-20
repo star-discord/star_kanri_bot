@@ -1,15 +1,14 @@
 const { MessageFlagsBitField } = require('discord.js');
+const logger = require('./logger');
 
 // 各機能のハンドラ群を読み込みます。
 // 新しい機能（例: star_config）を追加する際は、ここに追記します。
 const totusunaHandlers = require('./totusuna_setti');
-const kpiHandlers = require('./star_kpi_setti');
 // const starConfigHandlers = require('./star_config'); // 将来の拡張例
 
 // 検索するハンドラ群のリスト。順番が重要になる場合があります。
 const featureHandlers = [
   totusunaHandlers,
-  kpiHandlers,
   // starConfigHandlers,
 ];
 
@@ -24,7 +23,11 @@ class UnifiedInteractionHandler {
     if (handler) {
       await handler.handle(interaction);
     } else {
-      console.warn(`[UnifiedHandler] No handler found for interaction: ${interaction.customId}`);
+      logger.warn(`[UnifiedHandler] No handler found for interaction`, {
+        customId: interaction.customId,
+        user: interaction.user.tag,
+        type: interaction.type,
+      });
       // ユーザーに応答がない場合、コンポーネントが無効であることを通知します。
       if (!interaction.replied && !interaction.deferred) {
         await interaction.reply({

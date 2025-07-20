@@ -43,7 +43,7 @@ async function actualHandler(interaction) {
     });
 
   } catch (error) {
-    await logAndReplyError(interaction, error, '❌ CSVファイルの生成中にエラーが発生しました。');
+    await logAndReplyError(interaction, error, '凸スナ報告CSVファイルの生成中にエラーが発生しました。');
   }
 }
 

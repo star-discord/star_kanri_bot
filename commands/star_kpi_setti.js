@@ -9,6 +9,7 @@ const {
 const { MessageFlagsBitField } = require('discord.js');
 const { checkAdmin } = require('../utils/permissions/checkAdmin');
 const { createAdminEmbed } = require('../utils/embedHelper');
+const { logAndReplyError } = require('../utils/errorHelper');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -41,10 +42,7 @@ module.exports = {
         components: [row],
       });
     } catch (error) {
-      console.error('KPI設定コマンドエラー:', error);
-      if (interaction.deferred) {
-        await interaction.editReply({ content: '❌ KPI設定コマンドの実行中にエラーが発生しました。' });
-      }
+      await logAndReplyError(interaction, error, 'KPI報告UIの設置中にエラーが発生しました。');
     }
   },
 };

@@ -13,6 +13,7 @@ const { PermissionFlagsBits } = require('discord.js');
 const { configManager } = require('../utils/configManager');
 const { checkAdmin } = require('../utils/permissions/checkAdmin'); // 共通の管理者チェックをインポート
 const { createAdminRejectEmbed, createErrorEmbed, createStarConfigEmbed } = require('../utils/embedHelper');
+const logger = require('../utils/logger');
 const { logAndReplyError } = require('../utils/errorHelper');
 
 module.exports = {
@@ -40,7 +41,7 @@ module.exports = {
         config = await configManager.getGuildConfig(guildId);
       } catch (err) {
         // 共通のエラーEmbedを使用
-        console.error(`❌ [star_config] ファイル読み込みエラー (Guild: ${guildId}):`, err);
+        logger.error(`[star_config] 設定ファイルの読み込みに失敗しました (Guild: ${guildId})`, { error: err });
         return interaction.editReply({
           embeds: [createErrorEmbed('設定エラー', '設定ファイルの読み込みに失敗しました。')],
         });
@@ -73,7 +74,7 @@ module.exports = {
       });
 
     } catch (error) {
-      await logAndReplyError(interaction, error, '❌ コマンドの実行中に予期せぬエラーが発生しました。');
+      await logAndReplyError(interaction, error, '設定画面の表示中にエラーが発生しました。');
     }
   }
 };

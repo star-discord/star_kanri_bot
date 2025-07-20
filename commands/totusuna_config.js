@@ -9,6 +9,7 @@ const { idManager } = require('../utils/idManager.js');
 const { totusunaConfigManager } = require('../utils/totusuna_setti/totusunaConfigManager.js');
 const { checkAdmin } = require('../utils/permissions/checkAdmin.js');
 const { createAdminEmbed } = require('../utils/embedHelper.js');
+const { logAndReplyError } = require('../utils/errorHelper.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -76,13 +77,7 @@ module.exports = {
         components: [row],
       });
     } catch (error) {
-      console.error('凸スナ設定コマンドエラー:', error);
-      const errorMessage = {
-        content: '❌ 凸スナ設定の読み込み中にエラーが発生しました。'
-      };
-      if (interaction.deferred) {
-        await interaction.editReply(errorMessage);
-      }
+      await logAndReplyError(interaction, error, '凸スナ設定の読み込み中にエラーが発生しました。');
     }
   },
 };

@@ -1,6 +1,8 @@
 // commands/star_migration.js
 const { SlashCommandBuilder, PermissionFlagsBits, MessageFlagsBitField } = require('discord.js');
 const { DataMigration } = require('../utils/dataMigration');
+const logger = require('../utils/logger');
+const { logAndReplyError } = require('../utils/errorHelper');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -26,7 +28,7 @@ module.exports = {
       
       // 現在のギルドのみ移行
       const guildId = interaction.guild.id;
-      console.log(`🔄 手動データ移行開始: ${guildId}`);
+      logger.info(`🔄 手動データ移行開始: ${guildId}`);
 
       const migrated = await migration.migrateGuildData(guildId, interaction.client);
 
@@ -43,12 +45,7 @@ module.exports = {
       }
 
     } catch (error) {
-      console.error('❌ 手動データ移行エラー:', error);
-      
-      await interaction.editReply({
-        content: '❌ データ移行中にエラーが発生しました。\n' +
-                'サーバーログを確認してください。'
-      });
+      await logAndReplyError(interaction, error, 'データ移行中にエラーが発生しました。');
     }
   }
 };

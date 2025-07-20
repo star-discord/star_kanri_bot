@@ -1,4 +1,5 @@
 // utils/tempDataStore.js
+const logger = require('./logger');
 
 /**
  * @description
@@ -17,7 +18,7 @@ function cleanup() {
   for (const [key, value] of store.entries()) {
     if (!value.timestamp || now - value.timestamp > EXPIRATION_TIME_MS) {
       store.delete(key);
-      console.log(`[tempDataStore] Expired key removed: ${key}`);
+      logger.info(`[tempDataStore] Expired temporary key removed: ${key}`);
     }
   }
 }

@@ -24,7 +24,7 @@ async function safeOpenAICall(apiCall, fallbackResponse) {
   try {
     return await apiCall();
   } catch (error) {
-    console.error('❌ OpenAI APIエラー:', error.message || error, error.code);
+    logger.error('OpenAI API Error', { message: error.message, code: error.code, error });
 
     let message = 'OpenAI APIエラーが発生しました。';
     switch (error.code) {

@@ -6,6 +6,7 @@ const { logAndReplyError } = require('../../errorHelper');
 const { createErrorEmbed, createAdminRejectEmbed } = require('../../embedHelper');
 const { buildTotusunaMessage } = require('../totusunaMessageHelper');
 const { checkAdmin } = require('../../permissions/checkAdmin');
+const logger = require('../../logger');
 
 module.exports = {
   customIdStart: 'totusuna_setti:resend:',
@@ -15,7 +16,7 @@ module.exports = {
    * @param {import('discord.js').ButtonInteraction} interaction
    */
   async handle(interaction) {
-    console.log(`[${__filename.split('/').pop()}] 開始: ${interaction.customId} by ${interaction.user.tag}`);
+    logger.info(`[resend.js] 開始: ${interaction.customId} by ${interaction.user.tag}`);
     await safeDefer(interaction, { ephemeral: true });
 
     // 権限チェックは遅延応答の後に行います
@@ -44,9 +45,9 @@ module.exports = {
         try {
           const oldMessage = await channel.messages.fetch(instance.messageId);
           await oldMessage.delete();
-          console.log(`[resend.js] 古いメッセージ削除完了: ${instance.messageId}`);
+          logger.info(`[resend.js] 古いメッセージ削除完了: ${instance.messageId}`);
         } catch (err) {
-          console.warn(`[resend.js] 古いメッセージ削除失敗 or 既に削除済み: ${instance.messageId}`);
+          logger.warn(`[resend.js] 古いメッセージ削除失敗 or 既に削除済み: ${instance.messageId}`);
         }
       }
 
@@ -55,14 +56,14 @@ module.exports = {
 
       // 新しいメッセージを送信
       const sentMessage = await channel.send(messagePayload);
-      console.log(`[resend.js] 新規メッセージ投稿完了: ${sentMessage.id}`);
+      logger.info(`[resend.js] 新規メッセージ投稿完了: ${sentMessage.id}`);
 
       // configManagerを使用して新しいメッセージIDを安全に保存
       await totusunaConfigManager.updateInstance(guild.id, uuid, { messageId: sentMessage.id });
-      console.log(`[resend.js] 新規メッセージIDを保存完了: ${uuid}`);
+      logger.info(`[resend.js] 新規メッセージIDを保存完了: ${uuid}`);
 
       await safeReply(interaction, { content: '📤 再送信しました。' });
-      console.log(`[${__filename.split('/').pop()}] 完了: ${interaction.customId}`);
+      logger.info(`[resend.js] 完了: ${interaction.customId}`);
 
     } catch (err) {
       await logAndReplyError(interaction, err, '❌ 凸スナの再送信中にエラーが発生しました。');

@@ -6,6 +6,7 @@ const {
 } = require('discord.js');
 const { kpiConfigManager } = require('../../kpiConfigManager');
 const { createErrorEmbed } = require('../../embedHelper');
+const { logAndReplyError } = require('../../errorHelper');
 
 async function handle(interaction) {
   const { guildId } = interaction;
@@ -43,8 +44,7 @@ async function handle(interaction) {
       ephemeral: true,
     });
   } catch (error) {
-    console.error('[reportStart.js] KPI報告開始ボタン処理エラー:', error);
-    await interaction.reply({ embeds: [createErrorEmbed('処理エラー', '店舗リストの取得中にエラーが発生しました。')], ephemeral: true });
+    await logAndReplyError(interaction, error, '店舗リストの取得中にエラーが発生しました。');
   }
 }
 

@@ -14,7 +14,7 @@ const isGCSConfigured = Boolean(BUCKET_NAME && PROJECT_ID && isKeyFileValid);
 
 // 警告ログ（初期化時に1度だけ表示）
 if (!isGCSConfigured) {
-  console.warn('[storage] ⚠️ GCS設定が不完全なため、ストレージ機能は無効化されます。');
+  logger.warn('[storage] ⚠️ GCS設定が不完全なため、ストレージ機能は無効化されます。');
 }
 
 // GCSストレージインスタンスとバケット
@@ -33,12 +33,12 @@ const bucket = isGCSConfigured ? storage.bucket(BUCKET_NAME) : null;
  */
 async function uploadFile(localFilePath, destinationPath) {
   if (!isGCSConfigured) {
-    console.warn('[storage] ストレージが未構成のため uploadFile はスキップされました');
+    logger.warn('[storage] ストレージが未構成のため uploadFile はスキップされました');
     return false;
   }
 
   if (!fs.existsSync(localFilePath)) {
-    console.warn(`[storage] ⚠️ アップロード対象のファイルが存在しません: ${localFilePath}`);
+    logger.warn(`[storage] ⚠️ アップロード対象のファイルが存在しません: ${localFilePath}`);
     return false;
   }
 
@@ -50,10 +50,10 @@ async function uploadFile(localFilePath, destinationPath) {
         cacheControl: 'no-cache',
       },
     });
-    console.log(`[storage] ✅ アップロード成功: ${destinationPath}`);
+    logger.info(`[storage] ✅ アップロード成功: ${destinationPath}`);
     return true;
   } catch (error) {
-    console.error(`[storage] ❌ アップロード失敗: ${destinationPath}`, error);
+    logger.error(`[storage] ❌ アップロード失敗: ${destinationPath}`, { error });
     return false;
   }
 }
@@ -66,16 +66,16 @@ async function uploadFile(localFilePath, destinationPath) {
  */
 async function downloadFile(destinationPath, localFilePath) {
   if (!isGCSConfigured) {
-    console.warn('[storage] ストレージが未構成のため downloadFile はスキップされました');
+    logger.warn('[storage] ストレージが未構成のため downloadFile はスキップされました');
     return false;
   }
 
   try {
     await bucket.file(destinationPath).download({ destination: localFilePath });
-    console.log(`[storage] ✅ ダウンロード成功: ${destinationPath}`);
+    logger.info(`[storage] ✅ ダウンロード成功: ${destinationPath}`);
     return true;
   } catch (error) {
-    console.warn(`[storage] ⚠️ ダウンロード失敗（存在しない可能性あり）: ${destinationPath}`);
+    logger.warn(`[storage] ⚠️ ダウンロード失敗（存在しない可能性あり）: ${destinationPath}`);
     return false;
   }
 }

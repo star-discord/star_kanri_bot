@@ -5,6 +5,7 @@ const { totusunaConfigManager } = require('../totusunaConfigManager');
 const { updateTotusunaMessage } = require('../totusunaMessageHelper');
 const { checkAdmin } = require('../../permissions/checkAdmin');
 const { createAdminRejectEmbed } = require('../../embedHelper');
+const { logAndReplyError } = require('../../errorHelper');
 
 module.exports = {
   customIdStart: 'totusuna_edit_modal:',
@@ -49,10 +50,7 @@ module.exports = {
       await interaction.editReply({ content: '✅ 本文を更新し、表示も変更しました。' });
 
     } catch (error) {
-      console.error(`[editBody] 処理エラー (uuid: ${uuid}):`, error);
-      if (interaction.deferred) {
-        await interaction.editReply({ content: '❌ 本文の更新中に予期せぬエラーが発生しました。' });
-      }
+      await logAndReplyError(interaction, error, '本文の更新中に予期せぬエラーが発生しました。');
     }
   },
 };

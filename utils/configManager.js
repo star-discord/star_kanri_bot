@@ -2,7 +2,6 @@
 const { ensureGuildJSON, readJSON, writeJSON } = require('./fileHelper');
 const { v4: uuidv4 } = require('uuid');
 const { Mutex, withTimeout, E_TIMEOUT } = require('async-mutex');
-const logger = require('./logger');
 
 /**
  * 排他制御付きラップ関数

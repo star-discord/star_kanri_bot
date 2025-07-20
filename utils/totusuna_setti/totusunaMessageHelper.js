@@ -1,6 +1,7 @@
 // utils/totusuna_setti/totusunaMessageHelper.js
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { idManager } = require('../idManager');
+const logger = require('../logger');
 
 /**
  * 凸スナインスタンスのデータからメッセージペイロード（Embedとコンポーネント）を構築します。
@@ -47,7 +48,9 @@ async function updateTotusunaMessage(client, instance) {
     await message.edit(messagePayload);
     return { success: true };
   } catch (error) {
-    console.warn(`[updateTotusunaMessage] Failed to update message for instance ${instance.id}:`, error.message);
+    logger.warn(`[updateTotusunaMessage] Failed to update message for instance ${instance.id}`, {
+      errorMessage: error.message,
+    });
     return { success: false, error: error.message };
   }
 }

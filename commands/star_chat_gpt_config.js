@@ -48,23 +48,7 @@ module.exports = {
       await interaction.reply({ embeds: [embed], components: [buttonRow], flags: MessageFlagsBitField.Flags.Ephemeral });
 
     } catch (error) {
-      console.error('star_chat_gpt_config 実行エラー:', error);
-
-      try {
-        if (interaction.replied || interaction.deferred) {
-          await interaction.followUp({
-            content: 'エラーが発生しました。しばらくしてから再試行してください。',
-            ephemeral: true,
-          });
-        } else {
-          await interaction.reply({
-            content: 'エラーが発生しました。しばらくしてから再試行してください。',
-            ephemeral: true,
-          });
-        }
-      } catch (replyError) {
-        console.error('エラー応答の送信に失敗しました:', replyError);
-      }
+      await logAndReplyError(interaction, error, '設定の表示中にエラーが発生しました。');
     }
   },
 };

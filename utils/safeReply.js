@@ -1,5 +1,6 @@
 // utils/safeReply.js
 const { MessageFlagsBitField } = require('discord.js');
+const logger = require('./logger');
 
 /**
  * インタラクションに安全に応答または応答を編集します。
@@ -22,7 +23,7 @@ async function safeReply(interaction, options) {
     }
   } catch (error) {
     // "Unknown interaction"エラーなどを捕捉し、Botのクラッシュを防ぎます。
-    console.error(`[safeReply] 応答失敗:`, {
+    logger.error(`[safeReply] Failed to reply to interaction`, {
       message: error.message,
       stack: error.stack,
       interactionId: interaction?.id,
@@ -56,7 +57,7 @@ async function safeDefer(interaction, options = {}) {
 
     await interaction.deferReply(deferOptions);
   } catch (error) {
-    console.error(`[safeDefer] 遅延応答失敗:`, {
+    logger.error(`[safeDefer] Failed to defer reply`, {
       message: error.message,
       stack: error.stack,
       interactionId: interaction?.id,
@@ -82,7 +83,7 @@ async function safeDeferUpdate(interaction) {
     }
     await interaction.deferUpdate();
   } catch (error) {
-    console.error(`[safeDeferUpdate] 遅延更新失敗:`, {
+    logger.error(`[safeDeferUpdate] Failed to defer update`, {
       message: error.message,
       stack: error.stack,
       interactionId: interaction?.id,
@@ -103,14 +104,14 @@ async function safeFollowUp(interaction, options) {
   try {
     // followUpは最初の応答が完了している必要がある
     if (!interaction.replied && !interaction.deferred) {
-      console.warn('[safeFollowUp] 最初の応答がされていないため、followUpをスキップしました。代わりにsafeReplyを使用してください。');
+      logger.warn('[safeFollowUp] Interaction was not replied to or deferred. Skipping followup and using safeReply instead.');
       // この場合、通常の応答として処理を試みる
       await safeReply(interaction, options);
       return;
     }
     await interaction.followUp(options);
   } catch (error) {
-    console.error(`[safeFollowUp] フォローアップ失敗:`, {
+    logger.error(`[safeFollowUp] Failed to follow up`, {
       message: error.message,
       stack: error.stack,
       interactionId: interaction?.id,

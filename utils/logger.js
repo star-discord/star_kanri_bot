@@ -1,3 +1,6 @@
+// utils/logger.js
+// ログ出力のためのユーティリティモジュール
+
 const winston = require('winston');
 const path = require('path');
 

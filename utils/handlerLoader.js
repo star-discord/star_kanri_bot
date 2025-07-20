@@ -2,6 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const logger = require('./logger');
 
 // 除外ファイル一覧
 const EXCLUDED_FILES = new Set(['index.js', 'handleSelect.js', 'install_channel.js']);
@@ -41,9 +42,8 @@ function loadHandlers(dirPath) {
     fileNames = fs.readdirSync(dirPath);
   } catch (err) {
     if (err.code === 'ENOENT') {
-      console.warn(`⚠️ [handlerLoader] ディレクトリが存在しません: ${dirPath}`);
     } else {
-      console.error(`❌ [handlerLoader] ディレクトリ読み込み失敗: ${dirPath}`, err.stack);
+      logger.error(`[handlerLoader] Failed to read directory: ${dirPath}`, { error: err });
     }
     return () => null;
   }
@@ -60,24 +60,24 @@ function loadHandlers(dirPath) {
       const mod = require(modulePath);
 
       if (!isValidHandler(mod)) {
-        console.warn(`⚠️ [handlerLoader] 無効なハンドラ: ${file}`);
+        logger.warn(`[handlerLoader] Invalid handler, skipping: ${file}`);
         continue;
       }
 
       if (mod.customId) {
         if (handlers[mod.customId]) {
-          console.warn(
-            `⚠️ [handlerLoader] ${file} の customId "${mod.customId}" が重複しています。上書きします。`
+          logger.warn(
+            `[handlerLoader] Duplicate customId "${mod.customId}" in ${file}. It will be overwritten.`
           );
         }
         handlers[mod.customId] = mod;
       } else if (mod.customIdStart) {
         const duplicate = startsWithHandlers.find(h => h.key === mod.customIdStart);
         if (duplicate) {
-          console.warn(
-            `⚠️ [handlerLoader] customIdStart "${mod.customIdStart}" が '${path.basename(
+          logger.warn(
+            `[handlerLoader] Duplicate customIdStart "${mod.customIdStart}". '${file}' conflicts with '${path.basename(
               duplicate.filePath
-            )}' と重複。'${file}' はスキップされます。`
+            )}' and will be skipped.`
           );
           continue;
         }
@@ -85,7 +85,7 @@ function loadHandlers(dirPath) {
       }
 
     } catch (err) {
-      console.error(`❌ [handlerLoader] 読み込み失敗 (${file}):`, err.stack);
+      logger.error(`[handlerLoader] Failed to load handler: ${file}`, { error: err });
     }
   }
 
@@ -94,19 +94,19 @@ function loadHandlers(dirPath) {
 
   const dirName = path.basename(dirPath);
   if (Object.keys(handlers).length > 0) {
-    console.log(
-      `[handlerLoader] 読み込み完了: ${dirName} 完全一致 -> ${Object.keys(handlers).join(', ')}`
-    );
+    logger.info(`[handlerLoader] Loaded exact match handlers for ${dirName}:`, {
+      handlers: Object.keys(handlers),
+    });
   }
   if (startsWithHandlers.length > 0) {
-    console.log(
-      `[handlerLoader] 読み込み完了: ${dirName} 前方一致 -> ${startsWithHandlers.map(h => h.key).join(', ')}`
-    );
+    logger.info(`[handlerLoader] Loaded startsWith handlers for ${dirName}:`, {
+      handlers: startsWithHandlers.map(h => h.key),
+    });
   }
 
   const total = Object.keys(handlers).length + startsWithHandlers.length;
   if (total > 0) {
-    console.log(`[handlerLoader] ✅ ${dirName}: 全 ${total} 個のハンドラを登録`);
+    logger.info(`[handlerLoader] ✅ Registered ${total} handlers for ${dirName}.`);
   }
 
   /**

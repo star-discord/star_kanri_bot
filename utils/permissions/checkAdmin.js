@@ -1,5 +1,6 @@
 // utils/permissions/checkAdmin.js
 const { configManager } = require('../configManager');
+const logger = require('../logger');
 
 /**
  * Checks if the interaction user is an administrator.
@@ -21,7 +22,11 @@ async function checkAdmin(interaction) {
     return interaction.member.permissions.has('Administrator') ||
            adminRoleIds.some(roleId => interaction.member.roles.cache.has(roleId));
   } catch (error) {
-    console.error(`[checkAdmin] 権限チェック中にエラーが発生しました (Guild: ${interaction.guildId}, User: ${interaction.user.tag}):`, error);
+    logger.error(`[checkAdmin] 権限チェック中にエラーが発生しました`, {
+      guildId: interaction.guildId,
+      user: interaction.user.tag,
+      error,
+    });
     // エラー発生時は安全のため権限なしとみなす
     return false;
   }

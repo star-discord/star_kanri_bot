@@ -60,7 +60,7 @@ module.exports = {
       });
 
     } catch (error) {
-      await logAndReplyError(interaction, error, '❌ 処理中にエラーが発生しました。');
+      await logAndReplyError(interaction, error, '凸スナ設置UIの表示中にエラーが発生しました。');
     }
   }
 };

@@ -1,4 +1,5 @@
 // utils/sendToMultipleChannels.js
+const logger = require('./logger');
 
 /**
  * 複数のテキストチャンネルに同一メッセージを並列で送信するユーティリティ。
@@ -10,12 +11,12 @@
  */
 module.exports.sendToMultipleChannels = async (client, channelIds, message) => {
   if (!Array.isArray(channelIds) || channelIds.length === 0) {
-    console.warn('[sendToMultipleChannels] channelIds は配列である必要があります');
+    logger.warn('[sendToMultipleChannels] channelIds must be a non-empty array.');
     return { sent: [], failed: [] };
   }
 
   if (!client?.channels?.fetch) {
-    console.error('[sendToMultipleChannels] ❌ 無効な Discord クライアントが渡されました');
+    logger.error('[sendToMultipleChannels] Invalid Discord client provided.');
     // すべてのチャンネルIDを失敗として返す
     const failed = channelIds.map(id => ({ channelId: id, reason: '無効な Discord クライアント' }));
     return { sent: [], failed };
@@ -41,10 +42,13 @@ module.exports.sendToMultipleChannels = async (client, channelIds, message) => {
   results.forEach((result, index) => {
     if (result.status === 'fulfilled') {
       sent.push(result.value);
-      console.log(`[sendToMultipleChannels] ✅ メッセージ送信成功（チャンネルID: ${channelIds[index]}）`);
+      logger.info(`[sendToMultipleChannels] Successfully sent message to channel ${channelIds[index]}`);
     } else {
       failed.push({ channelId: channelIds[index], reason: result.reason.message });
-      console.error(`[sendToMultipleChannels] ❌ メッセージ送信失敗（チャンネルID: ${channelIds[index]}）`, result.reason.message);
+      logger.error(`[sendToMultipleChannels] Failed to send message to channel ${channelIds[index]}`, {
+        reason: result.reason.message,
+      }
+      );
     }
   });
 

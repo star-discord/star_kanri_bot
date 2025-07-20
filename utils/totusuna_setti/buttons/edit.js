@@ -8,6 +8,7 @@ const {
   MessageFlagsBitField,
 } = require('discord.js');
 const { totusunaConfigManager } = require('../totusunaConfigManager');
+const { logAndReplyError } = require('../../errorHelper');
 
 module.exports = {
   customIdStart: 'totusuna_setti:edit:',
@@ -17,9 +18,8 @@ module.exports = {
    * @param {import('discord.js').ButtonInteraction} interaction
    */
   async handle(interaction) {
-    let uuid;
     try {
-      uuid = interaction.customId.substring(module.exports.customIdStart.length);
+      const uuid = interaction.customId.substring(module.exports.customIdStart.length);
 
       const instance = await totusunaConfigManager.getInstance(interaction.guildId, uuid);
 
@@ -45,10 +45,7 @@ module.exports = {
 
       await interaction.showModal(modal);
     } catch (err) {
-      console.error(`[edit.js] モーダル表示失敗 (uuid: ${uuid}):`, err);
-      if (!interaction.replied) {
-        await interaction.reply({ content: '❌ モーダルの表示に失敗しました。', flags: MessageFlagsBitField.Flags.Ephemeral });
-      }
+      await logAndReplyError(interaction, err, 'モーダルの表示に失敗しました。');
     }
   },
 };

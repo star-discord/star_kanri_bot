@@ -9,6 +9,7 @@ const {
   createErrorEmbed,
   createSuccessEmbed,
 } = require('../utils/star_chat_gpt_usage/embedHelper');
+const { logAndReplyError } = require('../utils/errorHelper');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -61,12 +62,7 @@ module.exports = {
 
       await interaction.editReply({ embeds: [usageEmbed] });
     } catch (error) {
-      console.error('❌ [star_chat_gpt_使用率] エラー:', error);
-      const internalErrorEmbed = createErrorEmbed(
-        '内部エラー',
-        '処理中にエラーが発生しました。'
-      );
-      await interaction.editReply({ embeds: [internalErrorEmbed] });
+      await logAndReplyError(interaction, error, '処理中にエラーが発生しました。');
     }
   },
 };

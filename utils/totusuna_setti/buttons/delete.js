@@ -9,6 +9,8 @@ const {
 const { MessageFlagsBitField } = require('discord.js');
 const { checkAdmin } = require('../../permissions/checkAdmin');
 const { safeReply, safeDefer } = require('../../safeReply');
+const logger = require('../../logger');
+const { logAndReplyError } = require('../../errorHelper');
 
 module.exports = {
   customIdStart: 'totusuna_setti:delete:',
@@ -18,8 +20,8 @@ module.exports = {
    * @param {import('discord.js').ButtonInteraction} interaction
    */
   async handle(interaction) {
-    console.log(
-      `[${__filename.split('/').pop()}] 開始: ${interaction.customId} by ${interaction.user.tag}`
+    logger.info(
+      `[delete.js] 開始: ${interaction.customId} by ${interaction.user.tag}`
     );
     // safeDeferで3秒ルール回避
     await safeDefer(interaction, { flags: MessageFlagsBitField.Flags.Ephemeral });
@@ -45,18 +47,18 @@ module.exports = {
 
           if (message) {
             await message.delete();
-            console.log(
+            logger.info(
               `[delete.js] 設置メッセージ削除完了 (guild: ${guild.id}, uuid: ${uuid})`
             );
           } else {
-            console.warn(
+            logger.warn(
               `[delete.js] メッセージが存在しないため削除できません (guild: ${guild.id}, uuid: ${uuid})`
             );
           }
         } catch (err) {
-          console.warn(
+          logger.warn(
             `[delete.js] メッセージ削除失敗 (guild: ${guild.id}, uuid: ${uuid})`,
-            err
+            { error: err }
           );
           // チャンネルやメッセージ取得エラー → 致命的ではないので続行
         }
@@ -65,14 +67,14 @@ module.exports = {
       const success = await totusunaConfigManager.removeInstance(guild.id, uuid);
 
       if (success) {
-        console.log(
+        logger.info(
           `[delete.js] DBからインスタンス削除成功 (guild: ${guild.id}, uuid: ${uuid})`
         );
         await safeReply(interaction, {
           embeds: [createSuccessEmbed('削除完了', '凸スナの設置データを削除しました。')],
         });
       } else {
-        console.warn(
+        logger.warn(
           `[delete.js] DBからインスタンス削除失敗、または該当なし (guild: ${guild.id}, uuid: ${uuid})`
         );
         await safeReply(interaction, {
@@ -85,13 +87,8 @@ module.exports = {
         });
       }
     } catch (err) {
-      console.error(`[delete.js] インスタンス削除中にエラー (guild: ${guild.id}, uuid: ${uuid})`, err);
-      await safeReply(interaction, {
-        embeds: [
-          createErrorEmbed('処理エラー', '凸スナの削除中に予期せぬエラーが発生しました。'),
-        ],
-      });
+      await logAndReplyError(interaction, err, '凸スナの削除中に予期せぬエラーが発生しました。');
     }
-    console.log(`[${__filename.split('/').pop()}] 完了: ${interaction.customId}`);
+    logger.info(`[delete.js] 完了: ${interaction.customId}`);
   },
 };
