@@ -1,6 +1,7 @@
 const { SlashCommandBuilder, ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
 const requireAdmin = require('../utils/permissions/requireAdmin');
 const { logAndReplyError } = require('../utils/errorHelper');
+const { idManager } = require('../utils/idManager');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -11,7 +12,7 @@ module.exports = {
     try {
       // モーダル作成
       const modal = new ModalBuilder()
-        .setCustomId('kpi_setting_modal')
+        .setCustomId(idManager.createModalId('star_kpi', 'setting'))
         .setTitle('KPI設定');
 
       const newShopInput = new TextInputBuilder()

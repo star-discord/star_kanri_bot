@@ -10,6 +10,7 @@ const { MessageFlagsBitField } = require('discord.js');
 const { checkAdmin } = require('../utils/permissions/checkAdmin');
 const { createAdminEmbed } = require('../utils/embedHelper');
 const { logAndReplyError } = require('../utils/errorHelper');
+const { idManager } = require('../utils/idManager');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -26,12 +27,12 @@ module.exports = {
       }
 
       const targetButton = new ButtonBuilder()
-        .setCustomId('kpi_target_start_button')
+        .setCustomId(idManager.createButtonId('star_kpi', 'target_start'))
         .setLabel('KPI目標')
         .setStyle(ButtonStyle.Primary);
 
       const reportButton = new ButtonBuilder()
-        .setCustomId('kpi_report_start_button')
+        .setCustomId(idManager.createButtonId('star_kpi', 'report_start'))
         .setLabel('KPI申請')
         .setStyle(ButtonStyle.Success);
 

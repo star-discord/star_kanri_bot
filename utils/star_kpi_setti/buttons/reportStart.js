@@ -7,6 +7,7 @@ const {
 const { kpiConfigManager } = require('../../kpiConfigManager');
 const { createErrorEmbed } = require('../../embedHelper');
 const { logAndReplyError } = require('../../errorHelper');
+const { idManager } = require('../../idManager');
 
 async function handle(interaction) {
   const { guildId } = interaction;
@@ -28,7 +29,7 @@ async function handle(interaction) {
 
     // 店舗を選択するためのセレクトメニューを作成します。
     const shopSelectMenu = new StringSelectMenuBuilder()
-      .setCustomId('kpi_report_shop_select')
+      .setCustomId(idManager.createSelectId('star_kpi', 'report_shop_select'))
       .setPlaceholder('報告対象の店舗を選択してください');
 
     const options = shops.map((shop) =>
@@ -49,6 +50,6 @@ async function handle(interaction) {
 }
 
 module.exports = {
-  customId: 'kpi_report_start_button',
+  customId: idManager.createButtonId('star_kpi', 'report_start'),
   handle,
 };

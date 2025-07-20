@@ -5,10 +5,11 @@ const {
   TextInputStyle,
   ActionRowBuilder,
 } = require('discord.js');
+const { idManager } = require('../../idManager');
 
 async function handle(interaction) {
   // このモーダルは /star_KPI設定 コマンドと同じものを表示します。
-  const modal = new ModalBuilder().setCustomId('kpi_setting_modal').setTitle('KPI目標設定');
+  const modal = new ModalBuilder().setCustomId(idManager.createModalId('star_kpi', 'setting')).setTitle('KPI目標設定');
 
   const newShopInput = new TextInputBuilder()
     .setCustomId('newShop')
